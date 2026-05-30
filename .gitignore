@@ -1,0 +1,13 @@
+/node_modules
+/.next
+/out
+/build
+.DS_Store
+*.log
+.env*.local
+
+# internal build artifacts
+.aura-workflow.mjs
+.vercel
+.playwright-mcp
+shots
