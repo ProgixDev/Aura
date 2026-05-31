@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Aura",
+    "slug": "aura",
+    "version": "1.0.0",
+    "scheme": "aura",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.aura.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Aura a besoin d'accéder à vos photos pour personnaliser votre profil.",
+        "NSCameraUsageDescription": "Aura a besoin d'accéder à votre caméra pour les séances en visio.",
+        "NSMicrophoneUsageDescription": "Aura a besoin d'accéder à votre micro pour les séances en visio.",
+        "NSLocationWhenInUseUsageDescription": "Aura utilise votre position pour vous recommander des praticiens proches."
+      }
+    },
+    "android": {
+      "package": "com.aura.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#BBD4EE"
+      }
+    },
+    "plugins": [
+      [
+        "expo-router",
+        { "origin": false }
+      ],
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-eas-project-id"
+      }
+    }
+  }
+}
