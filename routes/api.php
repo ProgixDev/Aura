@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\PraticienController;
 use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\DisciplineController;
 use App\Http\Controllers\Api\EchangeController;
+use App\Http\Controllers\Api\ArticleController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -70,4 +71,15 @@ Route::prefix('echanges')->group(function () {
     Route::put('client/echanges/{id}', [EchangeController::class, 'update']);
     Route::patch('client/echanges/{id}', [EchangeController::class, 'update']);
     Route::delete('client/echanges/{id}', [EchangeController::class, 'destroy']);
+});
+
+
+Route::prefix('articles')->group(function () {
+    Route::get('/', [ArticleController::class, 'index']);   
+    Route::post('/create-article', [ArticleController::class, 'store']);  
+    Route::get('/{id}', [ArticleController::class, 'show']);     
+    Route::put('/{id}', [ArticleController::class, 'update']);  
+    Route::put('/{id}/{status}', [ArticleController::class, 'publish']);
+    Route::put('/{id}/{status}', [ArticleController::class, 'archive']);  
+    Route::delete('/{id}', [ArticleController::class, 'destroy']);      
 });
