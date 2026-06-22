@@ -68,4 +68,110 @@ class CercleController extends Controller
         }
     }
 
+
+    public function show($id)
+    {
+        try {
+            $cercle = Cercle::find($id);
+
+            if (!$cercle) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cercle non trouvé'
+                ], 404);
+            }
+
+            // Charger les relations si nécessaire (ex: membres, événements, etc.)
+            // $cercle->load(['membres', 'evenements']);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $cercle
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Une erreur est survenue lors de la récupération du cercle',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function update(Request $request, $id)
+    {
+        try {
+            $cercle = Cercle::find($id);
+
+            if (!$cercle) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cercle non trouvé'
+                ], 404);
+            }
+
+            $validated = $request->validate([
+                'nom' => [
+                    'sometimes',
+                    'string',
+                    'max:255',
+                    Rule::unique('cercles')->ignore($cercle->id)
+                ],
+                'description' => 'nullable|string',
+                'color' => 'nullable|string|max:50|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
+                'animateur' => 'nullable|string|max:255'
+            ]);
+
+            $cercle->update($validated);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Cercle mis à jour avec succès',
+                'data' => $cercle
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Erreur de validation',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Une erreur est survenue lors de la mise à jour du cercle',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $cercle = Cercle::find($id);
+
+            if (!$cercle) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cercle non trouvé'
+                ], 404);
+            }
+
+            $cercle->delete();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Cercle supprimé avec succès'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Une erreur est survenue lors de la suppression du cercle',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

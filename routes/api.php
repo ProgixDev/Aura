@@ -6,13 +6,17 @@ use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\PraticienController;
 use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\DisciplineController;
+use App\Http\Controllers\Api\EchangeController;
 
 use Illuminate\Support\Facades\Route;
 
 
 Route::prefix('cercles')->group(function () {
     Route::get('/', [CercleController::class, 'index']);           
-    Route::post('/', [CercleController::class, 'store']);           
+    Route::post('/', [CercleController::class, 'store']);   
+    Route::get('/{id}', [CercleController::class, 'show']);  
+    Route::put('/{id}', [CercleController::class, 'update']);      
+    Route::delete('/{id}', [CercleController::class, 'destroy']);         
 });
 
 Route::prefix('events')->group(function () {
@@ -47,4 +51,23 @@ Route::prefix('disciplines')->group(function () {
     Route::get('/{id}', [DisciplineController::class, 'show']);     
     Route::put('/{id}', [DisciplineController::class, 'update']);  
     Route::delete('/{id}', [DisciplineController::class, 'destroy']);      
+});
+
+
+Route::prefix('echanges')->group(function () {
+    Route::get('/', [EchangeController::class, 'adminIndex']);
+    Route::get('/{id}', [EchangeController::class, 'adminShow']);
+    Route::put('/{id}', [EchangeController::class, 'adminUpdate']);
+    Route::patch('/{id}', [EchangeController::class, 'adminUpdate']);
+    Route::delete('/{id}', [EchangeController::class, 'adminDestroy']);    
+    Route::post('/{id}/hide', [EchangeController::class, 'adminHide']);
+    Route::post('/{id}/report', [EchangeController::class, 'adminReport']);   
+    Route::get('/statistics', [EchangeController::class, 'adminStatistics']);  
+
+    Route::get('client/echanges', [EchangeController::class, 'index']);
+    Route::post('client/echanges', [EchangeController::class, 'store']);
+    Route::get('client/echanges/{id}', [EchangeController::class, 'show']);
+    Route::put('client/echanges/{id}', [EchangeController::class, 'update']);
+    Route::patch('client/echanges/{id}', [EchangeController::class, 'update']);
+    Route::delete('client/echanges/{id}', [EchangeController::class, 'destroy']);
 });
