@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\DisciplineController;
 use App\Http\Controllers\Api\EchangeController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\EmailTemplateController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -91,4 +92,13 @@ Route::prefix('notifications')->group(function () {
     Route::get('/{id}', [NotificationController::class, 'show']);  
     Route::put('/{id}', [NotificationController::class, 'update']);      
     Route::delete('/{id}', [NotificationController::class, 'destroy']);         
+});
+
+
+Route::prefix('emails')->group(function () {
+    Route::get('/', [EmailTemplateController::class, 'index']);           
+    Route::post('/', [EmailTemplateController::class, 'store']);   
+    Route::get('/{id}', [EmailTemplateController::class, 'show']);  
+    Route::put('/{id}', [EmailTemplateController::class, 'update']);      
+    Route::delete('/{id}', [EmailTemplateController::class, 'destroy']);         
 });
