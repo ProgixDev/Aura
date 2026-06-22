@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\DisciplineController;
 use App\Http\Controllers\Api\EchangeController;
 use App\Http\Controllers\Api\ArticleController;
+use App\Http\Controllers\Api\NotificationController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -82,4 +83,12 @@ Route::prefix('articles')->group(function () {
     Route::put('/{id}/{status}', [ArticleController::class, 'publish']);
     Route::put('/{id}/{status}', [ArticleController::class, 'archive']);  
     Route::delete('/{id}', [ArticleController::class, 'destroy']);      
+});
+
+Route::prefix('notifications')->group(function () {
+    Route::get('/', [NotificationController::class, 'index']);           
+    Route::post('/', [NotificationController::class, 'store']);   
+    Route::get('/{id}', [NotificationController::class, 'show']);  
+    Route::put('/{id}', [NotificationController::class, 'update']);      
+    Route::delete('/{id}', [NotificationController::class, 'destroy']);         
 });
