@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\EchangeController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\EmailTemplateController;
+use App\Http\Controllers\Api\PaiementController;
+use App\Http\Controllers\Api\RemboursementController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -101,4 +103,31 @@ Route::prefix('emails')->group(function () {
     Route::get('/{id}', [EmailTemplateController::class, 'show']);  
     Route::put('/{id}', [EmailTemplateController::class, 'update']);      
     Route::delete('/{id}', [EmailTemplateController::class, 'destroy']);         
+});
+
+
+Route::prefix('paiements')->group(function () {
+    Route::get('/', [PaiementController::class, 'adminIndex']);           
+    Route::get('/statistics', [PaiementController::class, 'adminStatistics']);   
+    Route::get('/export', [PaiementController::class, 'adminExport']);  
+    Route::get('/export/csv', [PaiementController::class, 'adminExportCsv']);      
+    Route::delete('/{id}', [PaiementController::class, 'destroy']);      
+    Route::get('/clients', [PaiementController::class, 'index']);
+    Route::get('/{id}', [PaiementController::class, 'show']);
+    Route::get('/export/comptable', [PaiementController::class, 'exportComptable']);   
+});
+
+
+Route::prefix('remboursements')->group(function () {
+    Route::get('client', [RemboursementController::class, 'index']);
+    Route::post('client', [RemboursementController::class, 'store']);
+    Route::get('client/{id}', [RemboursementController::class, 'show']);
+    Route::post('client/{id}/cancel', [RemboursementController::class, 'cancel']); 
+    Route::get('admin', [RemboursementController::class, 'adminIndex']);
+    Route::get('admin/{id}', [RemboursementController::class, 'adminShow']);
+    Route::post('admin/{id}/approve', [RemboursementController::class, 'adminApprove']);
+    Route::post('admin/{id}/refuse', [RemboursementController::class, 'adminRefuse']);
+    Route::post('admi/{id}/complete', [RemboursementController::class, 'adminComplete']);
+    Route::get('admin/statistics', [RemboursementController::class, 'adminStatistics']);
+    Route::get('admin/export', [RemboursementController::class, 'adminExport']);  
 });
