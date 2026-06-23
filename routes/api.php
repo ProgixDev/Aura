@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\PaiementController;
 use App\Http\Controllers\Api\RemboursementController;
 use App\Http\Controllers\Api\PraticienAuthController;
 use App\Http\Controllers\Api\PraticienVerificationController;
+use App\Http\Controllers\Api\AdminAuthController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -154,5 +155,25 @@ Route::prefix('v1')->group(function () {
         Route::post('praticiens/verification/{id}/reject', [PraticienVerificationController::class, 'reject']);
         Route::post('praticiens/verification/{id}/relance', [PraticienVerificationController::class, 'relance']);
         Route::get('praticiens/verification/statistics', [PraticienVerificationController::class, 'statistics']);
+    });
+
+});
+
+Route::prefix('admin')->group(function () {
+
+    Route::post('register', [AdminAuthController::class, 'register']);
+    Route::post('login', [AdminAuthController::class, 'login']);
+    
+    Route::middleware('auth:api')->group(function () {
+        Route::post('logout', [AdminAuthController::class, 'logout']);
+        Route::post('refresh', [AdminAuthController::class, 'refresh']);
+        Route::get('profile', [AdminAuthController::class, 'profile']);
+        Route::get('check-token', [AdminAuthController::class, 'checkToken']);
+        Route::post('change-password', [AdminAuthController::class, 'changePassword']);
+        
+        Route::get('list', [AdminAuthController::class, 'index']);
+        Route::delete('{id}', [AdminAuthController::class, 'destroy']);
+        Route::post('{id}/deactivate', [AdminAuthController::class, 'deactivate']);
+        Route::post('{id}/activate', [AdminAuthController::class, 'activate']);
     });
 });
