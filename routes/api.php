@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\EmailTemplateController;
 use App\Http\Controllers\Api\PaiementController;
 use App\Http\Controllers\Api\RemboursementController;
+use App\Http\Controllers\Api\PraticienAuthController;
+use App\Http\Controllers\Api\PraticienVerificationController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -130,4 +132,27 @@ Route::prefix('remboursements')->group(function () {
     Route::post('admi/{id}/complete', [RemboursementController::class, 'adminComplete']);
     Route::get('admin/statistics', [RemboursementController::class, 'adminStatistics']);
     Route::get('admin/export', [RemboursementController::class, 'adminExport']);  
+});
+
+
+Route::prefix('v1')->group(function () {
+    
+    Route::post('praticien/register', [PraticienAuthController::class, 'register']);
+    Route::post('praticien/login', [PraticienAuthController::class, 'login']);
+    
+    Route::middleware('auth:api')->prefix('praticien')->group(function () {
+        Route::post('logout', [PraticienAuthController::class, 'logout']);
+        Route::get('profile', [PraticienAuthController::class, 'profile']);
+        Route::post('refresh', [PraticienAuthController::class, 'refresh']);
+        Route::get('check-token', [PraticienAuthController::class, 'checkToken']);
+    });
+
+    Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
+        Route::get('praticiens/verification', [PraticienVerificationController::class, 'index']);
+        Route::get('praticiens/verification/{id}', [PraticienVerificationController::class, 'show']);
+        Route::post('praticiens/verification/{id}/verify', [PraticienVerificationController::class, 'verify']);
+        Route::post('praticiens/verification/{id}/reject', [PraticienVerificationController::class, 'reject']);
+        Route::post('praticiens/verification/{id}/relance', [PraticienVerificationController::class, 'relance']);
+        Route::get('praticiens/verification/statistics', [PraticienVerificationController::class, 'statistics']);
+    });
 });

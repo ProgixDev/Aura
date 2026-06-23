@@ -25,7 +25,11 @@ return new class extends Migration
             $table->decimal('tarif', 10, 2);   
             $table->integer('experience');     
             $table->text('bio');                
-            
+            $table->enum('statut_verification', ['en_attente', 'en_cours', 'valide', 'rejete'])->default('en_attente');
+            $table->timestamp('date_inscription')->nullable();
+            $table->timestamp('verifie_a')->nullable();
+            $table->foreignId('verifie_par')->nullable()->constrained('users')->onDelete('set null');
+            $table->text('motif_rejet')->nullable();
             $table->timestamps();
         });
     }
