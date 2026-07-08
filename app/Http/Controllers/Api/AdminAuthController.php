@@ -22,18 +22,7 @@ class AdminAuthController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|string|min:8|confirmed',
-                'admin_secret' => 'required|string' // Clé secrète pour créer un admin
             ]);
-
-            // Vérifier la clé secrète admin (à configurer dans .env)
-            $adminSecret = env('ADMIN_SECRET_KEY', 'admin-secret-key');
-            
-            if ($validated['admin_secret'] !== $adminSecret) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Clé secrète administrateur invalide'
-                ], 403);
-            }
 
             // Créer l'utilisateur admin
             $user = User::create([
