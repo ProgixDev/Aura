@@ -25,9 +25,12 @@ export class PromotionsService {
   }
 
   private assertFuture(dateExpiration: string) {
-    // Laravel 'after:today'
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    if (new Date(dateExpiration) <= today) {
+    // Laravel 'after:today' — compare UTC-normalized calendar dates so the
+    // check is timezone-independent (avoids mixing a local-clamped Date
+    // against a UTC-parsed one).
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const expirationStr = new Date(dateExpiration).toISOString().slice(0, 10);
+    if (expirationStr <= todayStr) {
       this.validationError({ date_expiration: ["La date d'expiration doit être postérieure à aujourd'hui."] });
     }
   }

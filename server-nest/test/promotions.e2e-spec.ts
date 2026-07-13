@@ -8,6 +8,8 @@ const future = () => {
   return d.toISOString().slice(0, 10);
 };
 
+const today = () => new Date().toISOString().slice(0, 10);
+
 describe('promotions', () => {
   let app: INestApplication;
   beforeAll(async () => { app = await createTestApp({ imports: [PromotionsModule] }); });
@@ -27,6 +29,12 @@ describe('promotions', () => {
     const badType = await http().post('/api/promotions')
       .send({ code: 'X', type: 'autre', valeur: 5, date_expiration: future() }).expect(422);
     expect(badType.body.errors.type).toBeDefined();
+  });
+
+  it('POST / rejects date_expiration set to today (must be strictly after today)', async () => {
+    const res = await http().post('/api/promotions')
+      .send({ code: 'TODAY1', type: 'fixe', valeur: 5, date_expiration: today() }).expect(422);
+    expect(res.body.errors.date_expiration).toBeDefined();
   });
 
   it('GET/PUT/DELETE lifecycle with French messages', async () => {
