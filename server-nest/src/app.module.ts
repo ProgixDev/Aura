@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { buildDataSourceOptions } from './database/typeorm.config';
 import { AuthModule } from './auth/auth.module';
 import { AdminAuthModule } from './auth/admin-auth/admin-auth.module';
+import { PraticienAuthModule } from './auth/praticien-auth/praticien-auth.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { AdminAuthModule } from './auth/admin-auth/admin-auth.module';
     TypeOrmModule.forRoot({ ...buildDataSourceOptions(), autoLoadEntities: true }),
     AuthModule,
     AdminAuthModule,
+    PraticienAuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

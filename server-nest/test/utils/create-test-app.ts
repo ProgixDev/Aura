@@ -24,6 +24,7 @@ import * as bcrypt from 'bcryptjs';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret';
 process.env.JWT_TTL_MINUTES = '60';
+process.env.UPLOAD_DIR = process.env.UPLOAD_DIR ?? require('os').tmpdir() + '/aura-test-uploads';
 
 // All entities are listed explicitly (in addition to autoLoadEntities: true) so that every
 // e2e test built on this factory gets the full schema, regardless of which feature module(s)
