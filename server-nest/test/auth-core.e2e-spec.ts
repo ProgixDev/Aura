@@ -15,6 +15,10 @@ class ProbeController {
   @Get('me')
   me(@CurrentUser() user: any) { return { id: user.id, email: user.email }; }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('me-raw')
+  meRaw(@CurrentUser() user: any) { return user; }
+
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Get('admin')
   admin() { return { ok: true }; }
@@ -41,6 +45,17 @@ describe('auth core', () => {
     const res = await request(app.getHttpServer())
       .get('/api/probe/me').set('Authorization', `Bearer ${token}`).expect(200);
     expect(res.body).toEqual({ id: user.id, email: user.email });
+  });
+
+  it('strips password/remember_token from the @CurrentUser() object before it reaches a handler', async () => {
+    const { user, token } = await seedAdmin(app, 'admin-raw@test.io');
+    const res = await request(app.getHttpServer())
+      .get('/api/probe/me-raw').set('Authorization', `Bearer ${token}`).expect(200);
+    expect(res.body.id).toBe(user.id);
+    expect(res.body.email).toBe(user.email);
+    expect(res.body.is_admin).toBe(true);
+    expect(res.body).not.toHaveProperty('password');
+    expect(res.body).not.toHaveProperty('remember_token');
   });
 
   it('AdminGuard blocks non-admin with 403 envelope', async () => {

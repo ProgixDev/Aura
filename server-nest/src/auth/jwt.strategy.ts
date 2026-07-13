@@ -18,6 +18,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: { sub: string }): Promise<User> {
     const user = await this.users.findOneBy({ id: Number(payload.sub) });
     if (!user) throw new UnauthorizedException({ status: 'error', message: 'Token invalide ou expiré' });
-    return user;
+    const { password, remember_token, ...safe } = user;
+    return safe as User;
   }
 }
