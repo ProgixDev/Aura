@@ -4957,7 +4957,7 @@ git commit -m "feat(server-nest): email templates CRUD with variable extraction"
 
 Route paths preserved from PHP (including the odd nesting): client endpoints live at `/api/echanges/client/echanges[...]` and require `JwtAuthGuard + ClientGuard` (D2). Admin endpoints (`/api/echanges...`) were public in PHP — kept public (D17), but use `OptionalJwtGuard` so `traite_par`/`signale_par` capture the acting user when a token IS supplied (mirrors PHP's `auth()->check()`). `statistics` declared before `:id` (D7). Soft deletes.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/echanges.e2e-spec.ts`:
 
@@ -5071,12 +5071,12 @@ describe('echanges', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json echanges`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/auth/guards/optional-jwt.guard.ts` (add to AuthModule providers+exports):
 
@@ -5503,12 +5503,12 @@ export class EchangesModule {}
 
 Add `OptionalJwtGuard` to `auth.module.ts` providers + exports. Register `EchangesModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json echanges`
 Expected: 5 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
