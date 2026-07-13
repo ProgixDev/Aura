@@ -95,7 +95,7 @@ Feature modules are self-contained (controller+service+DTOs together). Entities 
 - Create: `server-nest/` (via CLI), `server-nest/.env`, `server-nest/.env.example`
 - Modify: `server-nest/package.json`, `server-nest/.gitignore`
 
-- [ ] **Step 1: Generate the app and install dependencies**
+- [x] **Step 1: Generate the app and install dependencies**
 
 ```bash
 cd /d/Others/Aura
@@ -107,7 +107,7 @@ npm i -D better-sqlite3 @types/passport-jwt @types/bcryptjs @types/multer supert
 
 Expected: `npm i` exits 0, `server-nest/src/main.ts` exists.
 
-- [ ] **Step 2: Add env files**
+- [x] **Step 2: Add env files**
 
 `server-nest/.env.example` (create a real `server-nest/.env` copying `DB_*` and `JWT_SECRET` values from `server/.env`):
 
@@ -129,12 +129,12 @@ Append to `server-nest/.gitignore`:
 storage/uploads/
 ```
 
-- [ ] **Step 3: Verify scaffold builds**
+- [x] **Step 3: Verify scaffold builds**
 
 Run: `cd server-nest && npm run build`
 Expected: exit 0, no TS errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add server-nest docs/superpowers/plans
