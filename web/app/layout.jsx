@@ -1,5 +1,6 @@
 import { Cormorant_Garamond, Outfit } from 'next/font/google';
 import './globals.css';
+import Providers from './providers';
 import ModalRoot from '@/components/modals/ModalRoot';
 import ToastRoot from '@/components/ui/ToastRoot';
 
@@ -31,9 +32,11 @@ export default function RootLayout({ children }) {
           antivirus) inject attributes like bis_register/__processed_* onto
           <body> before React hydrates — this ignores those benign diffs. */}
       <body suppressHydrationWarning>
-        {children}
-        <ModalRoot />
-        <ToastRoot />
+        <Providers>
+          {children}
+          <ModalRoot />
+          <ToastRoot />
+        </Providers>
       </body>
     </html>
   );
