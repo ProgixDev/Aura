@@ -95,7 +95,7 @@ Feature modules are self-contained (controller+service+DTOs together). Entities 
 - Create: `server-nest/` (via CLI), `server-nest/.env`, `server-nest/.env.example`
 - Modify: `server-nest/package.json`, `server-nest/.gitignore`
 
-- [ ] **Step 1: Generate the app and install dependencies**
+- [x] **Step 1: Generate the app and install dependencies**
 
 ```bash
 cd /d/Others/Aura
@@ -107,7 +107,7 @@ npm i -D better-sqlite3 @types/passport-jwt @types/bcryptjs @types/multer supert
 
 Expected: `npm i` exits 0, `server-nest/src/main.ts` exists.
 
-- [ ] **Step 2: Add env files**
+- [x] **Step 2: Add env files**
 
 `server-nest/.env.example` (create a real `server-nest/.env` copying `DB_*` and `JWT_SECRET` values from `server/.env`):
 
@@ -129,12 +129,12 @@ Append to `server-nest/.gitignore`:
 storage/uploads/
 ```
 
-- [ ] **Step 3: Verify scaffold builds**
+- [x] **Step 3: Verify scaffold builds**
 
 Run: `cd server-nest && npm run build`
 Expected: exit 0, no TS errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add server-nest docs/superpowers/plans
@@ -150,7 +150,7 @@ git commit -m "chore(server-nest): scaffold NestJS app for PHP migration"
 - Modify: `server-nest/src/main.ts`
 - Test: `server-nest/src/common/common.spec.ts`
 
-- [ ] **Step 1: Write the failing unit test**
+- [x] **Step 1: Write the failing unit test**
 
 `server-nest/src/common/common.spec.ts`:
 
@@ -195,12 +195,12 @@ describe('common helpers', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest src/common/common.spec.ts`
 Expected: FAIL — cannot find module './envelope'.
 
-- [ ] **Step 3: Implement the helpers**
+- [x] **Step 3: Implement the helpers**
 
 `server-nest/src/common/envelope.ts`:
 
@@ -404,12 +404,12 @@ async function bootstrap() {
 bootstrap();
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest src/common/common.spec.ts`
 Expected: 5 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src
@@ -428,7 +428,7 @@ git commit -m "feat(server-nest): response envelope, pagination, validation, exc
 
 Conventions used by every entity: property names are snake_case so JSON output matches Laravel; decimals use `decimalTransformer` (numbers in JSON); JSON-ish columns use `type: 'text'` + `jsonTransformer` (portable MySQL/SQLite, see Task 2); relation properties are camelCase (D12).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/utils/create-test-app.ts`:
 
@@ -537,12 +537,12 @@ describe('database entities', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json database`
 Expected: FAIL — cannot find entity modules (they don't exist yet). (AuthModule import will also fail until Task 4 — for now create a stub `src/auth/auth.module.ts` exporting an empty `@Module({}) export class AuthModule {}`; Task 4 fills it.)
 
-- [ ] **Step 3: Implement the entities**
+- [x] **Step 3: Implement the entities**
 
 `server-nest/src/database/entities/user.entity.ts`:
 
@@ -988,7 +988,7 @@ export class Remboursement {
 }
 ```
 
-- [ ] **Step 4: Implement TypeORM config + app module wiring**
+- [x] **Step 4: Implement TypeORM config + app module wiring**
 
 `server-nest/src/database/typeorm.config.ts`:
 
@@ -1041,7 +1041,7 @@ Add scripts to `server-nest/package.json`:
 "migration:revert": "npm run typeorm -- migration:revert"
 ```
 
-- [ ] **Step 5: Write the initial migration (MySQL DDL, all tables)**
+- [x] **Step 5: Write the initial migration (MySQL DDL, all tables)**
 
 `server-nest/src/database/migrations/1700000000000-InitialSchema.ts`:
 
@@ -1371,17 +1371,17 @@ ALTER TABLE email_templates ADD COLUMN deleted_at TIMESTAMP NULL;
 ALTER TABLE promotions MODIFY COLUMN status VARCHAR(255) NULL;
 ```
 
-- [ ] **Step 6: Run the test to verify it passes**
+- [x] **Step 6: Run the test to verify it passes**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json database`
 Expected: PASS (schema synthesized from entities on sqlite; JSON round-trip + soft delete work).
 
-- [ ] **Step 7: Verify migration runs against MySQL (if a local MySQL is available)**
+- [x] **Step 7: Verify migration runs against MySQL (if a local MySQL is available)**
 
 Run: `cd server-nest && npm run migration:run`
 Expected: `InitialSchema1700000000000` executed. (Skip if no local MySQL; CI/tests don't need it.)
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add server-nest/src server-nest/test server-nest/package.json
@@ -1396,7 +1396,7 @@ git commit -m "feat(server-nest): TypeORM entities, initial MySQL migration, sql
 - Create: `server-nest/src/auth/auth.module.ts` (replace Task 3 stub), `jwt.strategy.ts`, `hash.service.ts`, `token.service.ts`, `decorators.ts`, `guards/jwt-auth.guard.ts`, `guards/admin.guard.ts`, `guards/client.guard.ts`
 - Test: `server-nest/test/auth-core.e2e-spec.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/auth-core.e2e-spec.ts`:
 
@@ -1470,12 +1470,12 @@ describe('auth core', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json auth-core`
 Expected: FAIL — guards/strategy modules missing.
 
-- [ ] **Step 3: Implement auth core**
+- [x] **Step 3: Implement auth core**
 
 `server-nest/src/auth/hash.service.ts`:
 
@@ -1661,12 +1661,12 @@ import { TokenService } from './token.service';
 export class AuthModule {}
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json auth-core`
 Expected: 4 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src/auth server-nest/test
@@ -1682,7 +1682,7 @@ git commit -m "feat(server-nest): JWT auth core - strategy, guards, hash/token s
 - Modify: `server-nest/src/app.module.ts` (import AdminAuthModule)
 - Test: `server-nest/test/admin-auth.e2e-spec.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/admin-auth.e2e-spec.ts`:
 
@@ -1798,12 +1798,12 @@ describe('admin auth', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json admin-auth`
 Expected: FAIL — module missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/common/match.decorator.ts` (Laravel `confirmed` rule):
 
@@ -2131,12 +2131,12 @@ export class AdminAuthModule {}
 
 Register in `server-nest/src/app.module.ts` imports: `AdminAuthModule`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json admin-auth`
 Expected: 6 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
@@ -2153,7 +2153,7 @@ git commit -m "feat(server-nest): admin auth endpoints with Laravel response par
 - Modify: `server-nest/src/app.module.ts`
 - Test: `server-nest/test/praticien-auth.e2e-spec.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/praticien-auth.e2e-spec.ts`:
 
@@ -2258,12 +2258,12 @@ describe('praticien auth', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json praticien-auth`
 Expected: FAIL — module missing.
 
-- [ ] **Step 3: Implement storage + upload validation**
+- [x] **Step 3: Implement storage + upload validation**
 
 `server-nest/src/common/storage.service.ts`:
 
@@ -2319,7 +2319,7 @@ export function assertUpload(
 }
 ```
 
-- [ ] **Step 4: Implement the module**
+- [x] **Step 4: Implement the module**
 
 `server-nest/src/auth/praticien-auth/dto/register-praticien.dto.ts`:
 
@@ -2584,12 +2584,12 @@ export class PraticienAuthModule {}
 
 Register `PraticienAuthModule` in `app.module.ts`. In tests, set `process.env.UPLOAD_DIR` to a temp dir in `create-test-app.ts` (add `process.env.UPLOAD_DIR = require('os').tmpdir() + '/aura-test-uploads';` next to the JWT env lines).
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json praticien-auth`
 Expected: 4 passed.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
@@ -2607,7 +2607,7 @@ git commit -m "feat(server-nest): praticien registration/login with document upl
 
 All routes: `@UseGuards(JwtAuthGuard, AdminGuard)` (D1 — PHP's `admin` middleware was never registered). Literal `statistics` route declared BEFORE `:id` (D7).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/praticien-verification.e2e-spec.ts`:
 
@@ -2715,12 +2715,12 @@ describe('praticien verification (admin)', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json praticien-verification`
 Expected: FAIL — module missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/auth/praticien-verification/dto/verify-documents.dto.ts`:
 
@@ -3032,12 +3032,12 @@ export class PraticienVerificationModule {}
 
 Register `PraticienVerificationModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json praticien-verification`
 Expected: 6 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
@@ -3054,7 +3054,7 @@ git commit -m "feat(server-nest): admin praticien verification workflow with wor
 
 PHP parity notes: routes are public. PHP's `update` was fatally broken (unimported `Rule`) — Nest implements the intended unique-ignoring-self check (fix). Index pagination includes `next_page_url`/`prev_page_url`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/cercles.e2e-spec.ts`:
 
@@ -3105,12 +3105,12 @@ describe('cercles', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json cercles`
 Expected: FAIL — module missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/cercles/dto/create-cercle.dto.ts`:
 
@@ -3263,12 +3263,12 @@ export class CerclesModule {}
 
 Register `CerclesModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json cercles`
 Expected: 3 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
@@ -3286,7 +3286,7 @@ git commit -m "feat(server-nest): cercles CRUD"
 
 Parity: store path is `POST /api/events/create-event` (non-standard, kept). Response embeds `animateurs` each with a Laravel-style `pivot` object. `status` not settable via API (defaults `brouillon`) — PHP behaved the same.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/events.e2e-spec.ts`:
 
@@ -3352,12 +3352,12 @@ describe('events', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json events`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/events/dto/create-event.dto.ts`:
 
@@ -3564,12 +3564,12 @@ export class EventsModule {}
 
 Register `EventsModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json events`
 Expected: 4 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
@@ -3585,7 +3585,7 @@ git commit -m "feat(server-nest): events CRUD with animateurs pivot"
 - Modify: `server-nest/src/app.module.ts`
 - Test: `server-nest/test/promotions.e2e-spec.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/promotions.e2e-spec.ts`:
 
@@ -3635,12 +3635,12 @@ describe('promotions', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json promotions`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/promotions/dto/create-promotion.dto.ts`:
 
@@ -3674,6 +3674,7 @@ import { Not, Repository } from 'typeorm';
 import { Request } from 'express';
 import { Promotion } from '../database/entities/promotion.entity';
 import { success } from '../common/envelope';
+import { isStrictlyAfterToday } from '../common/format';
 import { parsePagination, paginateQb, paginationUrls } from '../common/pagination';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
@@ -3695,9 +3696,10 @@ export class PromotionsService {
   }
 
   private assertFuture(dateExpiration: string) {
-    // Laravel 'after:today'
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    if (new Date(dateExpiration) <= today) {
+    // Laravel 'after:today' — timezone-safe calendar-date comparison, shared
+    // via src/common/format.ts so other tasks (e.g. Echanges' `delai_souhaite`)
+    // reuse the same logic instead of re-deriving it.
+    if (!isStrictlyAfterToday(dateExpiration)) {
       this.validationError({ date_expiration: ["La date d'expiration doit être postérieure à aujourd'hui."] });
     }
   }
@@ -3801,12 +3803,12 @@ export class PromotionsModule {}
 
 Register `PromotionsModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json promotions`
 Expected: 2 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
@@ -3825,7 +3827,7 @@ git commit -m "feat(server-nest): promotions CRUD"
 
 Parity: store path `POST /api/disciplines/create-discipline`; index returns ALL rows (no pagination); slug generated from `nom` (`Str::slug` equivalent).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/disciplines.e2e-spec.ts`:
 
@@ -3872,12 +3874,12 @@ describe('disciplines', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json disciplines`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/common/slug.ts`:
 
@@ -4031,12 +4033,12 @@ export class DisciplinesModule {}
 
 Register `DisciplinesModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json disciplines`
 Expected: 3 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
@@ -4055,7 +4057,7 @@ git commit -m "feat(server-nest): disciplines CRUD with slug generation"
 
 These are single-endpoint listing controllers — thin enough to skip a service class.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/listing.e2e-spec.ts`:
 
@@ -4100,12 +4102,12 @@ describe('clients + praticiens listing', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json listing`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/clients/clients.controller.ts`:
 
@@ -4195,12 +4197,12 @@ export class PraticiensModule {}
 
 Register both modules in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json listing`
 Expected: 2 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
@@ -4217,7 +4219,7 @@ git commit -m "feat(server-nest): clients and praticiens listing endpoints"
 
 Parity: store path `POST /api/articles/create-article`. Publish/archive get distinct routes (D5). No `incrementViews`, no `auteur_id` (D8).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/articles.e2e-spec.ts`:
 
@@ -4280,12 +4282,12 @@ describe('articles', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json articles`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/articles/dto/create-article.dto.ts`:
 
@@ -4472,12 +4474,12 @@ export class ArticlesModule {}
 
 Register `ArticlesModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json articles`
 Expected: 3 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
@@ -4493,7 +4495,7 @@ git commit -m "feat(server-nest): articles CRUD with slug generation and publish
 - Modify: `server-nest/src/app.module.ts`
 - Test: `server-nest/test/notifications.e2e-spec.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/notifications.e2e-spec.ts`:
 
@@ -4541,12 +4543,12 @@ describe('notifications', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json notifications`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/notifications/dto/create-notification.dto.ts`:
 
@@ -4684,12 +4686,12 @@ export class NotificationsModule {}
 
 Register `NotificationsModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json notifications`
 Expected: 2 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
@@ -4707,7 +4709,7 @@ git commit -m "feat(server-nest): notifications CRUD"
 
 Parity notes: only the 5 routed endpoints are ported (D10). Routes are public in PHP, so `auth()->id()` was always null there → `created_by` stays `null` here (kept; wire a user if these routes get guarded later). Destroy is a SOFT delete. Variables are auto-extracted from `corps` with `/{{(.*?)}}/`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/email-templates.e2e-spec.ts`:
 
@@ -4760,12 +4762,12 @@ describe('email templates', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json email-templates`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/email-templates/dto/create-email-template.dto.ts`:
 
@@ -4932,12 +4934,12 @@ export class EmailTemplatesModule {}
 
 Register `EmailTemplatesModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json email-templates`
 Expected: 3 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
@@ -4955,7 +4957,7 @@ git commit -m "feat(server-nest): email templates CRUD with variable extraction"
 
 Route paths preserved from PHP (including the odd nesting): client endpoints live at `/api/echanges/client/echanges[...]` and require `JwtAuthGuard + ClientGuard` (D2). Admin endpoints (`/api/echanges...`) were public in PHP — kept public (D17), but use `OptionalJwtGuard` so `traite_par`/`signale_par` capture the acting user when a token IS supplied (mirrors PHP's `auth()->check()`). `statistics` declared before `:id` (D7). Soft deletes.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/echanges.e2e-spec.ts`:
 
@@ -5069,12 +5071,12 @@ describe('echanges', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json echanges`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/auth/guards/optional-jwt.guard.ts` (add to AuthModule providers+exports):
 
@@ -5501,12 +5503,12 @@ export class EchangesModule {}
 
 Add `OptionalJwtGuard` to `auth.module.ts` providers + exports. Register `EchangesModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json echanges`
 Expected: 5 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
@@ -5523,7 +5525,7 @@ git commit -m "feat(server-nest): echanges client+admin workflows with corrected
 
 Parity notes: no write endpoints except DELETE (PHP routes `DELETE /paiements/{id}` to a `destroy` that doesn't exist in the controller — implemented here as soft delete with a standard envelope, flagged as a fix). Client-scoped routes (`/clients`, `/:id`, `/export/comptable`) get `JwtAuthGuard + ClientGuard` (D2). Admin routes stay public (D17). Literal routes declared before `:id`. Stats aggregates are computed with independent queries — the PHP code reused one mutating builder (a latent bug the extraction flagged); the Nest version computes each aggregate on a fresh query with the same filters, which is what the PHP intended.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/paiements.e2e-spec.ts`:
 
@@ -5625,12 +5627,12 @@ describe('paiements', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json paiements`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/paiements/paiements.service.ts`:
 
@@ -5990,12 +5992,12 @@ export class PaiementsModule {}
 
 Register `PaiementsModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json paiements`
 Expected: 5 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
@@ -6012,7 +6014,7 @@ git commit -m "feat(server-nest): paiements listing, statistics, exports (JSON +
 
 Parity notes: client routes guarded (D2); admin routes public like PHP (D17). `admin/statistics` + `admin/export` before `admin/:id` (D7). `admin/:id/complete` fixes the `admi/` typo (D6). Reference format `RMB-#####`. Cancel maps to statut `refuse` (PHP behavior kept). Approving flips the linked paiement to `rembourse`. `taux_evolution` stays the hardcoded `"+0.3"` (PHP parity — it was a stub there too).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/remboursements.e2e-spec.ts`:
 
@@ -6122,12 +6124,12 @@ describe('remboursements', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json remboursements`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/remboursements/dto/create-remboursement.dto.ts`:
 
@@ -6556,12 +6558,12 @@ Register `RemboursementsModule` in `app.module.ts`.
 
 Ordering note (minor PHP deviation): PHP found the record BEFORE validating, so bad id + invalid body returned 404; in Nest the validation pipe runs first, so invalid body returns 422 even for a missing id. Kept — 422-before-404 is the saner contract.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json remboursements`
 Expected: 4 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
@@ -6577,7 +6579,7 @@ git commit -m "feat(server-nest): remboursements client requests and admin workf
 - Create: `server-nest/README.md`
 - Modify: root `package.json` (optional convenience scripts)
 
-- [ ] **Step 1: Final app.module.ts**
+- [x] **Step 1: Final app.module.ts**
 
 ```ts
 import { Module } from '@nestjs/common';
@@ -6626,7 +6628,7 @@ import { RemboursementsModule } from './remboursements/remboursements.module';
 export class AppModule {}
 ```
 
-- [ ] **Step 2: Run the FULL test suite**
+- [x] **Step 2: Run the FULL test suite**
 
 ```bash
 cd server-nest && npm run build && npx jest && npx jest --config test/jest-e2e.json
@@ -6634,7 +6636,7 @@ cd server-nest && npm run build && npx jest && npx jest --config test/jest-e2e.j
 
 Expected: build clean, all unit + e2e suites pass.
 
-- [ ] **Step 3: Boot against MySQL and smoke-test (requires local MySQL)**
+- [x] **Step 3: Boot against MySQL and smoke-test (requires local MySQL)** — attempted; no local MySQL available (`ECONNREFUSED 127.0.0.1:3306`), skipped per plan's best-effort allowance.
 
 ```bash
 cd server-nest
@@ -6648,7 +6650,7 @@ curl -s -X POST http://localhost:8000/api/admin/register -H "Content-Type: appli
 
 Expected: disciplines returns the success envelope; register returns 201 with a token. Kill the dev server after.
 
-- [ ] **Step 4: Write `server-nest/README.md`**
+- [x] **Step 4: Write `server-nest/README.md`**
 
 ```markdown
 # Aura API (NestJS)
@@ -6676,7 +6678,7 @@ Catalog/content/admin-echanges/paiements-admin/remboursements-admin routes are P
 as they were in Laravel (D17). Locking them down is a product decision — do it next.
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest
