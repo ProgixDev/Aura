@@ -41,7 +41,7 @@ export class Remboursement {
   @ManyToOne(() => Paiement, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'paiement_id' })
   paiement: Paiement;
-  @ManyToOne(() => Praticien, { nullable: true })
+  @ManyToOne(() => Praticien, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'praticien_id' })
   praticien: Praticien | null;
 }

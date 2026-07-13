@@ -36,7 +36,9 @@ const ALL_ENTITIES = [
   Remboursement,
 ];
 
-export async function createTestApp(metadata: ModuleMetadata = {}): Promise<INestApplication> {
+export async function createTestApp(
+  metadata: Pick<ModuleMetadata, 'imports'> = {},
+): Promise<INestApplication> {
   const moduleRef = await Test.createTestingModule({
     imports: [
       TypeOrmModule.forRoot({

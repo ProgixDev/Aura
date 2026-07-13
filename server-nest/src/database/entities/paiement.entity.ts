@@ -29,7 +29,7 @@ export class Paiement {
   @ManyToOne(() => Client, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'client_id' })
   client: Client;
-  @ManyToOne(() => Praticien, { nullable: true })
+  @ManyToOne(() => Praticien, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'praticien_id' })
   praticien: Praticien | null;
 }

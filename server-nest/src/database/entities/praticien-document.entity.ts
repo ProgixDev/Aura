@@ -21,10 +21,10 @@ export class PraticienDocument {
   @CreateDateColumn({ name: 'created_at' }) created_at: Date;
   @UpdateDateColumn({ name: 'updated_at' }) updated_at: Date;
 
-  @ManyToOne(() => Praticien, (p) => p.documents)
+  @ManyToOne(() => Praticien, (p) => p.documents, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'praticien_id' })
   praticien: Praticien;
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'verifie_par' })
   verifiePar: User | null;
 }

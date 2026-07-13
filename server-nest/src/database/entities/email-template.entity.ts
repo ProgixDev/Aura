@@ -18,7 +18,7 @@ export class EmailTemplate {
   @UpdateDateColumn({ name: 'updated_at' }) updated_at: Date;
   @DeleteDateColumn({ name: 'deleted_at' }) deleted_at: Date | null;
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'created_by' })
   createdBy: User | null;
 }
