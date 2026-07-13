@@ -8,6 +8,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AdminGuard } from './guards/admin.guard';
 import { ClientGuard } from './guards/client.guard';
+import { OptionalJwtGuard } from './guards/optional-jwt.guard';
 import { HashService } from './hash.service';
 import { TokenService } from './token.service';
 
@@ -23,7 +24,7 @@ import { TokenService } from './token.service';
       }),
     }),
   ],
-  providers: [JwtStrategy, JwtAuthGuard, AdminGuard, ClientGuard, HashService, TokenService],
-  exports: [JwtModule, TypeOrmModule, JwtAuthGuard, AdminGuard, ClientGuard, HashService, TokenService],
+  providers: [JwtStrategy, JwtAuthGuard, AdminGuard, ClientGuard, OptionalJwtGuard, HashService, TokenService],
+  exports: [JwtModule, TypeOrmModule, JwtAuthGuard, AdminGuard, ClientGuard, OptionalJwtGuard, HashService, TokenService],
 })
 export class AuthModule {}

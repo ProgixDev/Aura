@@ -17,6 +17,7 @@ import { PraticiensModule } from './praticiens/praticiens.module';
 import { ArticlesModule } from './articles/articles.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { EmailTemplatesModule } from './email-templates/email-templates.module';
+import { EchangesModule } from './echanges/echanges.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { EmailTemplatesModule } from './email-templates/email-templates.module';
     ArticlesModule,
     NotificationsModule,
     EmailTemplatesModule,
+    EchangesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
