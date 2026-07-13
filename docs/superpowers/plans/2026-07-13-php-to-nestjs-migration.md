@@ -2607,7 +2607,7 @@ git commit -m "feat(server-nest): praticien registration/login with document upl
 
 All routes: `@UseGuards(JwtAuthGuard, AdminGuard)` (D1 — PHP's `admin` middleware was never registered). Literal `statistics` route declared BEFORE `:id` (D7).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/praticien-verification.e2e-spec.ts`:
 
@@ -2715,12 +2715,12 @@ describe('praticien verification (admin)', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json praticien-verification`
 Expected: FAIL — module missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/auth/praticien-verification/dto/verify-documents.dto.ts`:
 
@@ -3032,12 +3032,12 @@ export class PraticienVerificationModule {}
 
 Register `PraticienVerificationModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json praticien-verification`
 Expected: 6 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
