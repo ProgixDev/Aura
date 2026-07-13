@@ -52,7 +52,7 @@ export function BookingFlow({ p }) {
       <div className="container">
         {/* Top bar */}
         <div className="between wrap gap-3" style={{ marginBottom: 24 }}>
-          <Link href={`/praticiens/${p.id}`} className="btn btn-ghost btn-sm">
+          <Link href={`/praticien/${p.id}`} className="btn btn-ghost btn-sm">
             <Icon name="chevronLeft" size={16} /> Retour au profil
           </Link>
           <div className="row gap-2" style={{ color: 'var(--muted)' }}>

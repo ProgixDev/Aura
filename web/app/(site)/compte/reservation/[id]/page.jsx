@@ -111,7 +111,7 @@ export default async function ReservationDetail({ params }) {
             ) : b.status === 'completed' ? (
               <ModalButton modal="review" payload={{ name: prat.name }} className="btn btn-primary btn-block">Laisser un avis</ModalButton>
             ) : (
-              <Button href="/recherche" variant="primary" block>Réserver à nouveau</Button>
+              <Button href="/praticiens" variant="primary" block>Réserver à nouveau</Button>
             )}
           </section>
 

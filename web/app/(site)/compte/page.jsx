@@ -13,7 +13,7 @@ import { dateFr, euro, tone } from '@/lib/format';
 export const metadata = { title: 'Mon espace — AURA' };
 
 const SHORTCUTS = [
-  { href: '/recherche', icon: 'search', label: 'Trouver un praticien', tint: 'tint-violet', glyph: 'glyph-violet' },
+  { href: '/praticiens', icon: 'search', label: 'Trouver un praticien', tint: 'tint-violet', glyph: 'glyph-violet' },
   { href: '/compte/reservations', icon: 'calendar', label: 'Mes réservations', tint: 'tint-sky', glyph: 'glyph-sky' },
   { href: '/compte/messages', icon: 'message', label: 'Mes messages', tint: 'tint-sage', glyph: 'glyph-sage' },
   { href: '/compte/favoris', icon: 'heart', label: 'Mes favoris', tint: 'tint-gold', glyph: 'glyph-gold' },

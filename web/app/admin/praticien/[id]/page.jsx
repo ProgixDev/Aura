@@ -38,7 +38,7 @@ export default async function PractitionerDetailPage({ params }) {
         subtitle={`${p.specialties.join(' · ')} · ${p.city}`}
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Praticiens', href: '/admin/praticiens' }, { label: p.name }]}
         actions={<>
-          <Link href={`/praticiens/${p.id}`} className="btn btn-soft btn-sm"><Icon name="user" size={15} /> Profil public</Link>
+          <Link href={`/praticien/${p.id}`} className="btn btn-soft btn-sm"><Icon name="user" size={15} /> Profil public</Link>
           <ModalButton modal="contact" payload={{ name: p.name }} className="btn btn-soft btn-sm"><Icon name="mail" size={15} /> Contacter</ModalButton>
           <ModalButton modal="payout" payload={{ name: p.name }} successToast="Versement programmé" className="btn btn-soft btn-sm"><Icon name="euro" size={15} /> Versement</ModalButton>
           <ModalButton modal="suspendUser" payload={{ name: p.name }} className="btn btn-danger-soft btn-sm"><Icon name="shield" size={15} /> Suspendre</ModalButton>

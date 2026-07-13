@@ -70,7 +70,7 @@ export default async function AdminPaiementDetailPage({ params }) {
           {booking && (
             <div className="card card-pad">
               <h3 className="h-3" style={{ marginBottom: 12 }}>Réservation liée</h3>
-              <Link href={'/admin/reservations/' + booking.id} className="row gap-3 between">
+              <Link href={'/admin/reservation/' + booking.id} className="row gap-3 between">
                 <div>
                   <div style={{ fontWeight: 500, fontSize: 14 }}>{booking.ref}</div>
                   <div className="tiny">{booking.discipline} · {dateFr(booking.date)} · {booking.slot}</div>

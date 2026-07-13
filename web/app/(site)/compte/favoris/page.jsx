@@ -21,7 +21,7 @@ export default function FavorisPage() {
           <h1 className="h-1">Mes favoris</h1>
           <p className="lead" style={{ marginTop: 4 }}>Les praticiens que vous gardez <span className="serif italic accent">près du cœur</span>.</p>
         </div>
-        <Button href="/recherche" variant="soft" size="sm"><Icon name="search" size={15} /> Explorer</Button>
+        <Button href="/praticiens" variant="soft" size="sm"><Icon name="search" size={15} /> Explorer</Button>
       </header>
 
       {favs.length ? (
@@ -55,7 +55,7 @@ export default function FavorisPage() {
         <div className="empty">
           <Icon name="heart" size={28} color="var(--muted)" />
           <p className="mt-2">Vous n'avez pas encore de favoris.</p>
-          <Button href="/recherche" variant="primary" size="sm">Découvrir les praticiens</Button>
+          <Button href="/praticiens" variant="primary" size="sm">Découvrir les praticiens</Button>
         </div>
       )}
     </div>

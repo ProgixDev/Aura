@@ -55,7 +55,7 @@ export default function ReservationsBody({ bookings }) {
         active === 'a' ? (
           <div className="stack gap-3 mt-3">
             {upcoming.length ? upcoming.map((b) => <BookingRow key={b.id} b={b} />) : (
-              <div className="empty">Aucune séance à venir. <Link className="more" href="/recherche">Trouver un praticien</Link></div>
+              <div className="empty">Aucune séance à venir. <Link className="more" href="/praticiens">Trouver un praticien</Link></div>
             )}
           </div>
         ) : (
