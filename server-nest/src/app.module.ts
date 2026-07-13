@@ -12,6 +12,8 @@ import { CerclesModule } from './cercles/cercles.module';
 import { EventsModule } from './events/events.module';
 import { PromotionsModule } from './promotions/promotions.module';
 import { DisciplinesModule } from './disciplines/disciplines.module';
+import { ClientsModule } from './clients/clients.module';
+import { PraticiensModule } from './praticiens/praticiens.module';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { DisciplinesModule } from './disciplines/disciplines.module';
     EventsModule,
     PromotionsModule,
     DisciplinesModule,
+    ClientsModule,
+    PraticiensModule,
   ],
   controllers: [AppController],
   providers: [AppService],
