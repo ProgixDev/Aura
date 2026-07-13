@@ -1,4 +1,8 @@
-export function success(data?: unknown, message?: string, extra?: Record<string, unknown>) {
+export function success(
+  data?: unknown,
+  message?: string,
+  extra?: Record<string, unknown>,
+) {
   return {
     status: 'success',
     ...(message !== undefined ? { message } : {}),
