@@ -6014,7 +6014,7 @@ git commit -m "feat(server-nest): paiements listing, statistics, exports (JSON +
 
 Parity notes: client routes guarded (D2); admin routes public like PHP (D17). `admin/statistics` + `admin/export` before `admin/:id` (D7). `admin/:id/complete` fixes the `admi/` typo (D6). Reference format `RMB-#####`. Cancel maps to statut `refuse` (PHP behavior kept). Approving flips the linked paiement to `rembourse`. `taux_evolution` stays the hardcoded `"+0.3"` (PHP parity — it was a stub there too).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/remboursements.e2e-spec.ts`:
 
@@ -6124,12 +6124,12 @@ describe('remboursements', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json remboursements`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/remboursements/dto/create-remboursement.dto.ts`:
 
@@ -6558,12 +6558,12 @@ Register `RemboursementsModule` in `app.module.ts`.
 
 Ordering note (minor PHP deviation): PHP found the record BEFORE validating, so bad id + invalid body returned 404; in Nest the validation pipe runs first, so invalid body returns 422 even for a missing id. Kept — 422-before-404 is the saner contract.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json remboursements`
 Expected: 4 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
