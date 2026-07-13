@@ -1,58 +1,52 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Aura API (NestJS)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+NestJS port of the Laravel API in `../server`. Same routes, same JSON envelopes, same French messages — endpoint-for-endpoint parity, with a documented set of deliberate fixes to real bugs found in the original PHP app during the port.
 
-## About Laravel
-
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Run
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+cp .env.example .env   # fill DB_* and JWT_SECRET (reuse values from ../server/.env if migrating an existing deployment)
+npm install
+npm run migration:run  # fresh DB only — see the migration plan doc for the existing-DB delta SQL
+npm run start:dev      # http://localhost:8000/api
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Test
 
-## Contributing
+```bash
+npx jest                             # unit tests (src/common/*.spec.ts)
+npx jest --config test/jest-e2e.json # e2e tests (in-memory sqlite, no external DB needed)
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Architecture
 
-## Code of Conduct
+- One NestJS module per original Laravel controller group (see `src/`).
+- Shared response envelope (`src/common/envelope.ts`) matches Laravel's `{status, message, data}` JSON shape.
+- Shared pagination helpers (`src/common/pagination.ts`) match Laravel's paginator shape (`current_page`, `last_page`, `per_page`, `total`, and optionally `next_page_url`/`prev_page_url`).
+- Auth: JWT (HS256, same secret as the original app for a smooth cutover), three guards — `JwtAuthGuard` (must be logged in), `AdminGuard` (must be `is_admin`), `ClientGuard` (must have a linked `clients` row by email — this is a NEW mechanism that doesn't map to anything in Laravel; see Known Deviations below).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Deliberate deviations from the PHP app
 
-## Security Vulnerabilities
+The full decision table (D1–D17) documenting every deliberate fix is in the migration plan at `docs/superpowers/plans/2026-07-13-php-to-nestjs-migration.md` in the git history of this branch. Highlights:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- **Admin verification routes actually enforce admin access now.** The Laravel `admin` middleware alias was referenced in routes but never registered — those routes crashed in production. Fixed here with real `AdminGuard` enforcement.
+- **Client-scoped endpoints (echanges, paiements, remboursements) actually work now.** Laravel referenced an `Auth::guard('client')` that was never configured in `config/auth.php` — every client-scoped endpoint 500'd. Fixed here via `ClientGuard`, which resolves the JWT-authenticated user's linked `clients` table row by email (mirroring how the Laravel app already linked praticiens to users by email).
+- **Schema corrections.** The `echanges` and `paiements` tables gained columns their Laravel controllers/models referenced but the original migrations never created (the PHP app would have thrown SQL errors on those code paths in production).
+- **Route-ordering fixes.** Several `GET .../statistics` endpoints were unreachable in Laravel because `{id}` was declared first and shadowed the literal path "statistics". Fixed here by declaring literal routes before parameterized ones.
+- **Broken/dead code dropped, not ported.** `Article::incrementViews()` (called but never defined), the `Reservation` model/controller (no table, no route), several controller methods with no matching route (`EmailTemplateController::restore/duplicate/preview/statistics/changeStatus`, `DisciplineController::search`, `ArticleController::showBySlug`).
+- **Praticien registration is now transactional.** The Laravel original had no DB transaction around User+Praticien+5-document creation, so a mid-write failure could orphan rows. Fixed here with `DataSource.transaction(...)`.
+- **File upload storage is hardened beyond the PHP original.** Path traversal via client-supplied filenames, missing file-size limits, and mimetype-only (spoofable) validation were all fixed during the port — see `src/common/storage.service.ts`/`src/common/upload.util.ts`.
+- **Timezone-safe date comparisons.** A couple of "must be strictly after today" validations (promotions expiration, echange `delai_souhaite`) were fixed to compare UTC calendar-date strings rather than mixing local-midnight and UTC-parsed `Date` objects, which could accept or reject today's date incorrectly depending on server timezone — see `isStrictlyAfterToday` in `src/common/format.ts`.
 
-## License
+## Known limitations / security debt (inherited from the PHP app, unchanged by this port)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- **Most catalog/content/admin-adjacent routes are PUBLIC** (cercles, events, promotions, disciplines, articles, notifications, email templates, and the admin-facing sides of echanges/paiements/remboursements) — this matches the real Laravel app's actual behavior, but it was never a deliberate security decision there, just an omission. Locking these down with proper auth is a follow-up, not something this migration took on unilaterally.
+- **Praticien entity has no relation back to its linked `User` row** (by email) the way `verifiePar`/`createdBy` relations exist elsewhere — this was a gap in the original migration plan carried through Task 7, not an implementer oversight. If the admin frontend needs anything off that nested `user` object (e.g. `last_login_at`), the `Praticien` entity needs an email-joined relation added.
+- **Reference number generation (`TX-#####`, `RMB-#####`) is not cryptographically unique** — 5 random digits, matching the Laravel original's `rand()`-based approach. Collision-possible at scale; a follow-up could switch to a sequence or UUID-based reference.
+
+## Next steps (explicitly out of scope for this migration)
+
+1. Auth hardening — put real guards on the currently-public admin/catalog surfaces once a decision is made about what should require auth.
+2. Data migration script — copy rows from the existing Laravel MySQL database into this schema (the delta SQL for reusing the existing DB in-place, rather than a fresh one, is documented in the migration plan).
+3. Point `web/`/`mobile/` frontends at this API's base URL and verify response-shape differences (numbers are JS numbers here vs. strings in Eloquent's JSON serialization in a few places; relation keys are camelCase here vs. snake_case in Laravel in a few places) don't break anything.
+4. Decommission `../server` (the Laravel app) once parity is verified in staging.
