@@ -150,7 +150,7 @@ git commit -m "chore(server-nest): scaffold NestJS app for PHP migration"
 - Modify: `server-nest/src/main.ts`
 - Test: `server-nest/src/common/common.spec.ts`
 
-- [ ] **Step 1: Write the failing unit test**
+- [x] **Step 1: Write the failing unit test**
 
 `server-nest/src/common/common.spec.ts`:
 
@@ -195,12 +195,12 @@ describe('common helpers', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest src/common/common.spec.ts`
 Expected: FAIL — cannot find module './envelope'.
 
-- [ ] **Step 3: Implement the helpers**
+- [x] **Step 3: Implement the helpers**
 
 `server-nest/src/common/envelope.ts`:
 
@@ -404,12 +404,12 @@ async function bootstrap() {
 bootstrap();
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest src/common/common.spec.ts`
 Expected: 5 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src
