@@ -1,6 +1,6 @@
 import { success, fail } from './envelope';
 import { formatValidationErrors } from './validation';
-import { numberFormat, formatDateFr, isStrictlyAfterToday } from './format';
+import { numberFormat, formatDateFr, isStrictlyAfterToday, isOnOrAfterToday } from './format';
 import { ValidationError } from 'class-validator';
 
 describe('common helpers', () => {
@@ -83,6 +83,27 @@ describe('common helpers', () => {
 
       const today = addDays(0);
       expect(isStrictlyAfterToday(`${today}T23:59:59`)).toBe(false);
+    });
+  });
+
+  describe('isOnOrAfterToday', () => {
+    const toDateStr = (d: Date) => d.toISOString().slice(0, 10);
+    const addDays = (n: number) => {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() + n);
+      return toDateStr(d);
+    };
+
+    it('returns true for today', () => {
+      expect(isOnOrAfterToday(addDays(0))).toBe(true);
+    });
+
+    it('returns false for yesterday', () => {
+      expect(isOnOrAfterToday(addDays(-1))).toBe(false);
+    });
+
+    it('returns true for tomorrow', () => {
+      expect(isOnOrAfterToday(addDays(1))).toBe(true);
     });
   });
 });

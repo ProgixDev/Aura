@@ -100,4 +100,33 @@ describe('remboursements', () => {
     expect(exp.body.data.remboursements[0].statut).toBe('Complété');
     expect(exp.body.data.remboursements[0].reference).toMatch(/^RMB-/);
   });
+
+  it('admin approve validates date_remboursement is today-or-later (after_or_equal:today)', async () => {
+    const ds = app.get(DataSource);
+    const toDateStr = (d: Date) => d.toISOString().slice(0, 10);
+    const yesterday = toDateStr(new Date(Date.now() - 24 * 60 * 60 * 1000));
+    const today = toDateStr(new Date());
+
+    const makeRequest = async (reference: string) => {
+      const paiementId = (await ds.getRepository(Paiement).save({
+        reference, client_id: clientId, montant_brut: 50, commission: 5,
+        montant_net_praticien: 45, moyen_paiement: 'Carte', statut: 'paid',
+        date_paiement: new Date(),
+      })).id;
+      const created = await asClient(http().post('/api/remboursements/client'))
+        .field('paiement_id', String(paiementId)).field('motif', 'Test date_remboursement')
+        .expect(201);
+      return created.body.data.id as number;
+    };
+
+    const yesterdayId = await makeRequest('TX-DATE-PAST');
+    const past = await http().post(`/api/remboursements/admin/${yesterdayId}/approve`)
+      .send({ date_remboursement: yesterday }).expect(422);
+    expect(past.body.errors.date_remboursement).toBeDefined();
+
+    const todayId = await makeRequest('TX-DATE-TODAY');
+    const present = await http().post(`/api/remboursements/admin/${todayId}/approve`)
+      .send({ date_remboursement: today }).expect(200);
+    expect(present.body.data.statut).toBe('approuve');
+  });
 });

@@ -10,7 +10,7 @@ import { success } from '../common/envelope';
 import { parsePagination, paginateQb } from '../common/pagination';
 import { StorageService } from '../common/storage.service';
 import { assertUpload } from '../common/upload.util';
-import { euro, formatDateFr, formatDateTimeFr, numberFormat } from '../common/format';
+import { euro, formatDateFr, formatDateTimeFr, isOnOrAfterToday, numberFormat } from '../common/format';
 import { CreateRemboursementDto } from './dto/create-remboursement.dto';
 import { ApproveRemboursementDto } from './dto/approve-remboursement.dto';
 import { RefuseRemboursementDto } from './dto/refuse-remboursement.dto';
@@ -166,6 +166,11 @@ export class RemboursementsService {
       id, statut: In(['en_attente', 'en_cours']),
     });
     if (!r) this.notFound('Remboursement non trouvé ou ne peut pas être approuvé');
+    if (dto.date_remboursement !== undefined && !isOnOrAfterToday(dto.date_remboursement)) {
+      this.validationError({
+        date_remboursement: ["Cette date doit être aujourd'hui ou postérieure."],
+      });
+    }
     await this.remboursements.update(id, {
       statut: 'approuve',
       commentaire_admin: dto.commentaire_admin ?? null,

@@ -43,3 +43,15 @@ export function isStrictlyAfterToday(dateStr: string): boolean {
   const dateOnly = dateStr.slice(0, 10);
   return dateOnly > todayStr;
 }
+
+/**
+ * Timezone-safe equivalent of Laravel's `after_or_equal:today` validation rule.
+ *
+ * Same string-slicing approach as {@link isStrictlyAfterToday}, but treats
+ * today itself as valid (`>=` instead of `>`).
+ */
+export function isOnOrAfterToday(dateStr: string): boolean {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const dateOnly = dateStr.slice(0, 10);
+  return dateOnly >= todayStr;
+}
