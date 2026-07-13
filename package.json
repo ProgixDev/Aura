@@ -1,0 +1,11 @@
+{
+  "name": "aura-monorepo",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix web && npm install --prefix mobile && npm install --prefix server && cd server && composer install",
+    "dev": "cd web && npm run dev",
+    "expo": "cd mobile && npm start",
+    "mobile": "cd mobile && npx expo run:android",
+    "server": "cd server && composer run dev"
+  }
+}
