@@ -1,98 +1,52 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Aura API (NestJS)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+NestJS port of the Laravel API in `../server`. Same routes, same JSON envelopes, same French messages — endpoint-for-endpoint parity, with a documented set of deliberate fixes to real bugs found in the original PHP app during the port.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## Run
 
 ```bash
-$ npm install
+cp .env.example .env   # fill DB_* and JWT_SECRET (reuse values from ../server/.env if migrating an existing deployment)
+npm install
+npm run migration:run  # fresh DB only — see the migration plan doc for the existing-DB delta SQL
+npm run start:dev      # http://localhost:8000/api
 ```
 
-## Compile and run the project
+## Test
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npx jest                             # unit tests (src/common/*.spec.ts)
+npx jest --config test/jest-e2e.json # e2e tests (in-memory sqlite, no external DB needed)
 ```
 
-## Run tests
+## Architecture
 
-```bash
-# unit tests
-$ npm run test
+- One NestJS module per original Laravel controller group (see `src/`).
+- Shared response envelope (`src/common/envelope.ts`) matches Laravel's `{status, message, data}` JSON shape.
+- Shared pagination helpers (`src/common/pagination.ts`) match Laravel's paginator shape (`current_page`, `last_page`, `per_page`, `total`, and optionally `next_page_url`/`prev_page_url`).
+- Auth: JWT (HS256, same secret as the original app for a smooth cutover), three guards — `JwtAuthGuard` (must be logged in), `AdminGuard` (must be `is_admin`), `ClientGuard` (must have a linked `clients` row by email — this is a NEW mechanism that doesn't map to anything in Laravel; see Known Deviations below).
 
-# e2e tests
-$ npm run test:e2e
+## Deliberate deviations from the PHP app
 
-# test coverage
-$ npm run test:cov
-```
+The full decision table (D1–D17) documenting every deliberate fix is in the migration plan at `docs/superpowers/plans/2026-07-13-php-to-nestjs-migration.md` in the git history of this branch. Highlights:
 
-## Deployment
+- **Admin verification routes actually enforce admin access now.** The Laravel `admin` middleware alias was referenced in routes but never registered — those routes crashed in production. Fixed here with real `AdminGuard` enforcement.
+- **Client-scoped endpoints (echanges, paiements, remboursements) actually work now.** Laravel referenced an `Auth::guard('client')` that was never configured in `config/auth.php` — every client-scoped endpoint 500'd. Fixed here via `ClientGuard`, which resolves the JWT-authenticated user's linked `clients` table row by email (mirroring how the Laravel app already linked praticiens to users by email).
+- **Schema corrections.** The `echanges` and `paiements` tables gained columns their Laravel controllers/models referenced but the original migrations never created (the PHP app would have thrown SQL errors on those code paths in production).
+- **Route-ordering fixes.** Several `GET .../statistics` endpoints were unreachable in Laravel because `{id}` was declared first and shadowed the literal path "statistics". Fixed here by declaring literal routes before parameterized ones.
+- **Broken/dead code dropped, not ported.** `Article::incrementViews()` (called but never defined), the `Reservation` model/controller (no table, no route), several controller methods with no matching route (`EmailTemplateController::restore/duplicate/preview/statistics/changeStatus`, `DisciplineController::search`, `ArticleController::showBySlug`).
+- **Praticien registration is now transactional.** The Laravel original had no DB transaction around User+Praticien+5-document creation, so a mid-write failure could orphan rows. Fixed here with `DataSource.transaction(...)`.
+- **File upload storage is hardened beyond the PHP original.** Path traversal via client-supplied filenames, missing file-size limits, and mimetype-only (spoofable) validation were all fixed during the port — see `src/common/storage.service.ts`/`src/common/upload.util.ts`.
+- **Timezone-safe date comparisons.** A couple of "must be strictly after today" validations (promotions expiration, echange `delai_souhaite`) were fixed to compare UTC calendar-date strings rather than mixing local-midnight and UTC-parsed `Date` objects, which could accept or reject today's date incorrectly depending on server timezone — see `isStrictlyAfterToday` in `src/common/format.ts`.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Known limitations / security debt (inherited from the PHP app, unchanged by this port)
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- **Most catalog/content/admin-adjacent routes are PUBLIC** (cercles, events, promotions, disciplines, articles, notifications, email templates, and the admin-facing sides of echanges/paiements/remboursements) — this matches the real Laravel app's actual behavior, but it was never a deliberate security decision there, just an omission. Locking these down with proper auth is a follow-up, not something this migration took on unilaterally.
+- **Praticien entity has no relation back to its linked `User` row** (by email) the way `verifiePar`/`createdBy` relations exist elsewhere — this was a gap in the original migration plan carried through Task 7, not an implementer oversight. If the admin frontend needs anything off that nested `user` object (e.g. `last_login_at`), the `Praticien` entity needs an email-joined relation added.
+- **Reference number generation (`TX-#####`, `RMB-#####`) is not cryptographically unique** — 5 random digits, matching the Laravel original's `rand()`-based approach. Collision-possible at scale; a follow-up could switch to a sequence or UUID-based reference.
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+## Next steps (explicitly out of scope for this migration)
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+1. Auth hardening — put real guards on the currently-public admin/catalog surfaces once a decision is made about what should require auth.
+2. Data migration script — copy rows from the existing Laravel MySQL database into this schema (the delta SQL for reusing the existing DB in-place, rather than a fresh one, is documented in the migration plan).
+3. Point `web/`/`mobile/` frontends at this API's base URL and verify response-shape differences (numbers are JS numbers here vs. strings in Eloquent's JSON serialization in a few places; relation keys are camelCase here vs. snake_case in Laravel in a few places) don't break anything.
+4. Decommission `../server` (the Laravel app) once parity is verified in staging.
