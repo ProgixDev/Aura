@@ -11,6 +11,7 @@ import { PraticienVerificationModule } from './auth/praticien-verification/prati
 import { CerclesModule } from './cercles/cercles.module';
 import { EventsModule } from './events/events.module';
 import { PromotionsModule } from './promotions/promotions.module';
+import { DisciplinesModule } from './disciplines/disciplines.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { PromotionsModule } from './promotions/promotions.module';
     CerclesModule,
     EventsModule,
     PromotionsModule,
+    DisciplinesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
