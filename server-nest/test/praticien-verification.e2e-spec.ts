@@ -13,7 +13,7 @@ async function seedPraticien(ds: DataSource, email: string, nDocs = 5) {
     tarif: 50, experience: 3, bio: 'b'.repeat(60), statut_verification: 'en_attente',
   });
   const types = ['piece_identite', 'certification', 'assurance', 'domicile', 'charte'];
-  const docs = [];
+  const docs: PraticienDocument[] = [];
   for (const type of types.slice(0, nDocs)) {
     docs.push(await ds.getRepository(PraticienDocument).save({
       praticien_id: praticien.id, type, nom_fichier: `${type}.pdf`,
