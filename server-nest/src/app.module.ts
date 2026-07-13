@@ -10,6 +10,7 @@ import { PraticienAuthModule } from './auth/praticien-auth/praticien-auth.module
 import { PraticienVerificationModule } from './auth/praticien-verification/praticien-verification.module';
 import { CerclesModule } from './cercles/cercles.module';
 import { EventsModule } from './events/events.module';
+import { PromotionsModule } from './promotions/promotions.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { EventsModule } from './events/events.module';
     PraticienVerificationModule,
     CerclesModule,
     EventsModule,
+    PromotionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
