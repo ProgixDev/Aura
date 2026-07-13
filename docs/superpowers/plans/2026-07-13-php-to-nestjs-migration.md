@@ -4219,7 +4219,7 @@ git commit -m "feat(server-nest): clients and praticiens listing endpoints"
 
 Parity: store path `POST /api/articles/create-article`. Publish/archive get distinct routes (D5). No `incrementViews`, no `auteur_id` (D8).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/articles.e2e-spec.ts`:
 
@@ -4282,12 +4282,12 @@ describe('articles', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json articles`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/articles/dto/create-article.dto.ts`:
 
@@ -4474,12 +4474,12 @@ export class ArticlesModule {}
 
 Register `ArticlesModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json articles`
 Expected: 3 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
