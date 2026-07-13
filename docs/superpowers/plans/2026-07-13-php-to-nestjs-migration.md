@@ -3674,6 +3674,7 @@ import { Not, Repository } from 'typeorm';
 import { Request } from 'express';
 import { Promotion } from '../database/entities/promotion.entity';
 import { success } from '../common/envelope';
+import { isStrictlyAfterToday } from '../common/format';
 import { parsePagination, paginateQb, paginationUrls } from '../common/pagination';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
@@ -3695,9 +3696,10 @@ export class PromotionsService {
   }
 
   private assertFuture(dateExpiration: string) {
-    // Laravel 'after:today'
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    if (new Date(dateExpiration) <= today) {
+    // Laravel 'after:today' — timezone-safe calendar-date comparison, shared
+    // via src/common/format.ts so other tasks (e.g. Echanges' `delai_souhaite`)
+    // reuse the same logic instead of re-deriving it.
+    if (!isStrictlyAfterToday(dateExpiration)) {
       this.validationError({ date_expiration: ["La date d'expiration doit être postérieure à aujourd'hui."] });
     }
   }
