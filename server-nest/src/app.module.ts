@@ -18,6 +18,7 @@ import { ArticlesModule } from './articles/articles.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { EmailTemplatesModule } from './email-templates/email-templates.module';
 import { EchangesModule } from './echanges/echanges.module';
+import { PaiementsModule } from './paiements/paiements.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { EchangesModule } from './echanges/echanges.module';
     NotificationsModule,
     EmailTemplatesModule,
     EchangesModule,
+    PaiementsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
