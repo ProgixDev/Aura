@@ -7,6 +7,7 @@ import { buildDataSourceOptions } from './database/typeorm.config';
 import { AuthModule } from './auth/auth.module';
 import { AdminAuthModule } from './auth/admin-auth/admin-auth.module';
 import { PraticienAuthModule } from './auth/praticien-auth/praticien-auth.module';
+import { PraticienVerificationModule } from './auth/praticien-verification/praticien-verification.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { PraticienAuthModule } from './auth/praticien-auth/praticien-auth.module
     AuthModule,
     AdminAuthModule,
     PraticienAuthModule,
+    PraticienVerificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
