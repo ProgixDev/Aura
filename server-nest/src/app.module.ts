@@ -14,6 +14,7 @@ import { PromotionsModule } from './promotions/promotions.module';
 import { DisciplinesModule } from './disciplines/disciplines.module';
 import { ClientsModule } from './clients/clients.module';
 import { PraticiensModule } from './praticiens/praticiens.module';
+import { ArticlesModule } from './articles/articles.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { PraticiensModule } from './praticiens/praticiens.module';
     DisciplinesModule,
     ClientsModule,
     PraticiensModule,
+    ArticlesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
