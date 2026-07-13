@@ -4709,7 +4709,7 @@ git commit -m "feat(server-nest): notifications CRUD"
 
 Parity notes: only the 5 routed endpoints are ported (D10). Routes are public in PHP, so `auth()->id()` was always null there → `created_by` stays `null` here (kept; wire a user if these routes get guarded later). Destroy is a SOFT delete. Variables are auto-extracted from `corps` with `/{{(.*?)}}/`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/email-templates.e2e-spec.ts`:
 
@@ -4762,12 +4762,12 @@ describe('email templates', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json email-templates`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/email-templates/dto/create-email-template.dto.ts`:
 
@@ -4934,12 +4934,12 @@ export class EmailTemplatesModule {}
 
 Register `EmailTemplatesModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json email-templates`
 Expected: 3 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
