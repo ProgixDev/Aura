@@ -1396,7 +1396,7 @@ git commit -m "feat(server-nest): TypeORM entities, initial MySQL migration, sql
 - Create: `server-nest/src/auth/auth.module.ts` (replace Task 3 stub), `jwt.strategy.ts`, `hash.service.ts`, `token.service.ts`, `decorators.ts`, `guards/jwt-auth.guard.ts`, `guards/admin.guard.ts`, `guards/client.guard.ts`
 - Test: `server-nest/test/auth-core.e2e-spec.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/auth-core.e2e-spec.ts`:
 
@@ -1470,12 +1470,12 @@ describe('auth core', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json auth-core`
 Expected: FAIL — guards/strategy modules missing.
 
-- [ ] **Step 3: Implement auth core**
+- [x] **Step 3: Implement auth core**
 
 `server-nest/src/auth/hash.service.ts`:
 
@@ -1661,12 +1661,12 @@ import { TokenService } from './token.service';
 export class AuthModule {}
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json auth-core`
 Expected: 4 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src/auth server-nest/test
