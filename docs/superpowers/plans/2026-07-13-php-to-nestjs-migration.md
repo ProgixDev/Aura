@@ -1682,7 +1682,7 @@ git commit -m "feat(server-nest): JWT auth core - strategy, guards, hash/token s
 - Modify: `server-nest/src/app.module.ts` (import AdminAuthModule)
 - Test: `server-nest/test/admin-auth.e2e-spec.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/admin-auth.e2e-spec.ts`:
 
@@ -1798,12 +1798,12 @@ describe('admin auth', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json admin-auth`
 Expected: FAIL — module missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/common/match.decorator.ts` (Laravel `confirmed` rule):
 
@@ -2131,12 +2131,12 @@ export class AdminAuthModule {}
 
 Register in `server-nest/src/app.module.ts` imports: `AdminAuthModule`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json admin-auth`
 Expected: 6 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
