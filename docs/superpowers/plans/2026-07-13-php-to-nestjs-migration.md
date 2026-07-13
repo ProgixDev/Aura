@@ -3827,7 +3827,7 @@ git commit -m "feat(server-nest): promotions CRUD"
 
 Parity: store path `POST /api/disciplines/create-discipline`; index returns ALL rows (no pagination); slug generated from `nom` (`Str::slug` equivalent).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/disciplines.e2e-spec.ts`:
 
@@ -3874,12 +3874,12 @@ describe('disciplines', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json disciplines`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/common/slug.ts`:
 
@@ -4033,12 +4033,12 @@ export class DisciplinesModule {}
 
 Register `DisciplinesModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json disciplines`
 Expected: 3 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
