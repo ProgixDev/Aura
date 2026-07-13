@@ -16,7 +16,10 @@ export class PraticienAuthController {
 
   @Post('register')
   @UseInterceptors(
-    FileFieldsInterceptor(DOC_TYPES.map((t) => ({ name: `documents[${t}]`, maxCount: 1 }))),
+    FileFieldsInterceptor(
+      DOC_TYPES.map((t) => ({ name: `documents[${t}]`, maxCount: 1 })),
+      { limits: { fileSize: 5 * 1024 * 1024 } },
+    ),
   )
   register(
     @Body() dto: RegisterPraticienDto,

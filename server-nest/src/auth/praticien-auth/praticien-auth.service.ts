@@ -58,7 +58,7 @@ export class PraticienAuthService {
     // Deliberate fix vs. the Laravel original: this whole block runs in ONE transaction.
     // Laravel's PraticienAuthController::register had no DB transaction, so a mid-way
     // failure (e.g. 3rd file upload throws) left orphaned User/Praticien rows behind.
-    const { user, praticien, documentsUploades } = await this.dataSource.transaction(async (em) => {
+    const { user, praticien, documentsUploaded } = await this.dataSource.transaction(async (em) => {
       const user = await em.getRepository(User).save({
         name: `${dto.firstname} ${dto.lastname}`,
         email: dto.email,
@@ -72,7 +72,14 @@ export class PraticienAuthService {
         tarif: dto.tarif, experience: dto.experience, bio: dto.bio,
         statut_verification: 'en_attente', date_inscription: new Date(),
       });
-      let documentsUploades = 0;
+      // Note: file writes below happen inside this DB transaction, but
+      // `storage.save()` writes to disk, not to the DB — it is NOT rolled
+      // back if a later iteration throws. A mid-loop failure rolls back the
+      // User/Praticien/PraticienDocument rows but leaves files from earlier
+      // iterations orphaned on disk. Accepted tradeoff for now (rare path,
+      // cheap to clean up out-of-band) — not a bug to "fix" by moving writes
+      // out of the transaction; that's a separate follow-up.
+      let documentsUploaded = 0;
       for (const type of DOC_TYPES) {
         const file = files[`documents[${type}]`][0];
         const chemin = await this.storage.save(file, `praticiens/${praticien.id}/documents`);
@@ -81,9 +88,9 @@ export class PraticienAuthService {
           nom_fichier: file.originalname, chemin,
           mime_type: file.mimetype, taille: file.size, statut: 'en_attente',
         });
-        documentsUploades++;
+        documentsUploaded++;
       }
-      return { user, praticien, documentsUploades };
+      return { user, praticien, documentsUploaded };
     });
 
     return success(
@@ -91,7 +98,7 @@ export class PraticienAuthService {
         user: sanitizeUser(user),
         praticien,
         ...this.tokens.tokenPayload(user),
-        documents_soumis: documentsUploades,
+        documents_soumis: documentsUploaded,
         documents_requis: 5,
       },
       "Votre compte a été créé avec succès. En attente de vérification par l'administrateur.",
