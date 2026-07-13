@@ -36,7 +36,7 @@ export class AdminAuthController {
   @Get('profile')
   profile(@CurrentUser() user: User) { return this.service.profile(user); }
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard)
   @Get('check-token')
   checkToken(@CurrentUser() user: User) { return this.service.checkToken(user); }
 

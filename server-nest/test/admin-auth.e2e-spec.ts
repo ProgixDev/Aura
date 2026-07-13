@@ -85,6 +85,14 @@ describe('admin auth', () => {
     expect(out.body.message).toBe('Déconnexion réussie');
   });
 
+  it('check-token: non-admin valid token gets 403 "Token invalide ou non admin"', async () => {
+    const { token: clientToken } = await seedClientUser(app, 'nonadmin@aura.io');
+    const res = await http().get('/api/admin/check-token')
+      .set('Authorization', `Bearer ${clientToken}`).expect(403);
+    expect(res.body.message).toBe('Token invalide ou non admin');
+    expect(res.body.message).not.toBe('Accès non autorisé');
+  });
+
   it('admin management: list, deactivate (not self), activate, destroy', async () => {
     const { user: me, token } = await seedAdmin(app, 'root@aura.io');
     const { user: other } = await seedAdmin(app, 'other@aura.io');

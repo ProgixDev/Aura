@@ -10,6 +10,7 @@ import { HashService } from '../hash.service';
 import { TokenService } from '../token.service';
 import { pickUser, sanitizeUser } from '../user.util';
 import { success } from '../../common/envelope';
+import { parsePagination, paginateQb } from '../../common/pagination';
 import { RegisterAdminDto } from './dto/register-admin.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -84,6 +85,9 @@ export class AdminAuthService {
   }
 
   checkToken(user: User) {
+    if (!user.is_admin) {
+      throw new ForbiddenException({ status: 'error', message: 'Token invalide ou non admin' });
+    }
     return success(
       { user: pickUser(user, ['id', 'name', 'email', 'is_admin']) },
       'Token admin valide',
@@ -100,22 +104,13 @@ export class AdminAuthService {
   }
 
   async list(query: Record<string, any>) {
-    const perPage = Math.max(1, parseInt(query.per_page, 10) || 15);
-    const page = Math.max(1, parseInt(query.page, 10) || 1);
-    const [items, total] = await this.users.findAndCount({
-      where: { is_admin: true },
-      order: { created_at: 'DESC' },
-      skip: (page - 1) * perPage,
-      take: perPage,
-    });
-    return success(items.map(sanitizeUser), undefined, {
-      pagination: {
-        current_page: page,
-        last_page: Math.max(1, Math.ceil(total / perPage)),
-        per_page: perPage,
-        total,
-      },
-    });
+    const { page, perPage } = parsePagination(query, 15);
+    const qb = this.users
+      .createQueryBuilder('u')
+      .where('u.is_admin = :isAdmin', { isAdmin: true })
+      .orderBy('u.created_at', 'DESC');
+    const { data, pagination } = await paginateQb(qb, page, perPage);
+    return success(data.map(sanitizeUser), undefined, { pagination });
   }
 
   async deactivate(current: User, id: number) {
