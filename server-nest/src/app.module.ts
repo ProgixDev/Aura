@@ -15,6 +15,7 @@ import { DisciplinesModule } from './disciplines/disciplines.module';
 import { ClientsModule } from './clients/clients.module';
 import { PraticiensModule } from './praticiens/praticiens.module';
 import { ArticlesModule } from './articles/articles.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ArticlesModule } from './articles/articles.module';
     ClientsModule,
     PraticiensModule,
     ArticlesModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
