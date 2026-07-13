@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Req } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, ParseIntPipe, Query, Req } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import type { Request } from 'express';
@@ -19,5 +19,12 @@ export class PraticiensController {
     return success(data, undefined, {
       pagination: { ...pagination, ...paginationUrls(req, page, lastPage) },
     });
+  }
+
+  @Get(':id')
+  async show(@Param('id', ParseIntPipe) id: number) {
+    const praticien = await this.praticiens.findOne({ where: { id } });
+    if (!praticien) throw new NotFoundException('Praticien introuvable');
+    return success(praticien);
   }
 }

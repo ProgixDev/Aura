@@ -9,6 +9,7 @@ import { Praticien } from '../src/database/entities/praticien.entity';
 
 describe('clients + praticiens listing', () => {
   let app: INestApplication;
+  let praticienId: number;
   beforeAll(async () => {
     app = await createTestApp({ imports: [ClientsModule, PraticiensModule] });
     const ds = app.get(DataSource);
@@ -16,11 +17,12 @@ describe('clients + praticiens listing', () => {
       { firstname: 'C1', lastname: 'L', email: 'c1@x.io', city: 'Paris' },
       { firstname: 'C2', lastname: 'L', email: 'c2@x.io', city: 'Lyon' },
     ]);
-    await ds.getRepository(Praticien).save({
+    const p = await ds.getRepository(Praticien).save({
       firstname: 'P', lastname: 'L', email: 'p@x.io', telephone: '06', ville: 'Nice',
       niveau: 'n', specialite: 's', mode: 'm', status: 'actif',
       tarif: 10, experience: 1, bio: 'b'.repeat(60),
     });
+    praticienId = p.id;
   });
   afterAll(async () => { await app.close(); });
   const http = () => request(app.getHttpServer());
@@ -34,5 +36,15 @@ describe('clients + praticiens listing', () => {
   it('GET /api/praticiens paginates', async () => {
     const res = await http().get('/api/praticiens').expect(200);
     expect(res.body.pagination.total).toBe(1);
+  });
+
+  it('GET /api/praticiens/:id returns the praticien', async () => {
+    const res = await http().get(`/api/praticiens/${praticienId}`).expect(200);
+    expect(res.body.status).toBe('success');
+    expect(res.body.data).toMatchObject({ id: praticienId, firstname: 'P', ville: 'Nice' });
+  });
+
+  it('GET /api/praticiens/:id returns 404 for a missing praticien', async () => {
+    await http().get('/api/praticiens/999999').expect(404);
   });
 });
