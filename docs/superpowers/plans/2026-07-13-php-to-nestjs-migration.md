@@ -2153,7 +2153,7 @@ git commit -m "feat(server-nest): admin auth endpoints with Laravel response par
 - Modify: `server-nest/src/app.module.ts`
 - Test: `server-nest/test/praticien-auth.e2e-spec.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/praticien-auth.e2e-spec.ts`:
 
@@ -2258,12 +2258,12 @@ describe('praticien auth', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json praticien-auth`
 Expected: FAIL — module missing.
 
-- [ ] **Step 3: Implement storage + upload validation**
+- [x] **Step 3: Implement storage + upload validation**
 
 `server-nest/src/common/storage.service.ts`:
 
@@ -2319,7 +2319,7 @@ export function assertUpload(
 }
 ```
 
-- [ ] **Step 4: Implement the module**
+- [x] **Step 4: Implement the module**
 
 `server-nest/src/auth/praticien-auth/dto/register-praticien.dto.ts`:
 
@@ -2584,12 +2584,12 @@ export class PraticienAuthModule {}
 
 Register `PraticienAuthModule` in `app.module.ts`. In tests, set `process.env.UPLOAD_DIR` to a temp dir in `create-test-app.ts` (add `process.env.UPLOAD_DIR = require('os').tmpdir() + '/aura-test-uploads';` next to the JWT env lines).
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json praticien-auth`
 Expected: 4 passed.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
