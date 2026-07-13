@@ -4057,7 +4057,7 @@ git commit -m "feat(server-nest): disciplines CRUD with slug generation"
 
 These are single-endpoint listing controllers — thin enough to skip a service class.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/listing.e2e-spec.ts`:
 
@@ -4102,12 +4102,12 @@ describe('clients + praticiens listing', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json listing`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/clients/clients.controller.ts`:
 
@@ -4197,12 +4197,12 @@ export class PraticiensModule {}
 
 Register both modules in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json listing`
 Expected: 2 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
