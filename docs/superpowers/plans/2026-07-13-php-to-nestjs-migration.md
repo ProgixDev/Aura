@@ -428,7 +428,7 @@ git commit -m "feat(server-nest): response envelope, pagination, validation, exc
 
 Conventions used by every entity: property names are snake_case so JSON output matches Laravel; decimals use `decimalTransformer` (numbers in JSON); JSON-ish columns use `type: 'text'` + `jsonTransformer` (portable MySQL/SQLite, see Task 2); relation properties are camelCase (D12).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/utils/create-test-app.ts`:
 
@@ -537,12 +537,12 @@ describe('database entities', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json database`
 Expected: FAIL — cannot find entity modules (they don't exist yet). (AuthModule import will also fail until Task 4 — for now create a stub `src/auth/auth.module.ts` exporting an empty `@Module({}) export class AuthModule {}`; Task 4 fills it.)
 
-- [ ] **Step 3: Implement the entities**
+- [x] **Step 3: Implement the entities**
 
 `server-nest/src/database/entities/user.entity.ts`:
 
@@ -988,7 +988,7 @@ export class Remboursement {
 }
 ```
 
-- [ ] **Step 4: Implement TypeORM config + app module wiring**
+- [x] **Step 4: Implement TypeORM config + app module wiring**
 
 `server-nest/src/database/typeorm.config.ts`:
 
@@ -1041,7 +1041,7 @@ Add scripts to `server-nest/package.json`:
 "migration:revert": "npm run typeorm -- migration:revert"
 ```
 
-- [ ] **Step 5: Write the initial migration (MySQL DDL, all tables)**
+- [x] **Step 5: Write the initial migration (MySQL DDL, all tables)**
 
 `server-nest/src/database/migrations/1700000000000-InitialSchema.ts`:
 
@@ -1371,17 +1371,17 @@ ALTER TABLE email_templates ADD COLUMN deleted_at TIMESTAMP NULL;
 ALTER TABLE promotions MODIFY COLUMN status VARCHAR(255) NULL;
 ```
 
-- [ ] **Step 6: Run the test to verify it passes**
+- [x] **Step 6: Run the test to verify it passes**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json database`
 Expected: PASS (schema synthesized from entities on sqlite; JSON round-trip + soft delete work).
 
-- [ ] **Step 7: Verify migration runs against MySQL (if a local MySQL is available)**
+- [x] **Step 7: Verify migration runs against MySQL (if a local MySQL is available)**
 
 Run: `cd server-nest && npm run migration:run`
 Expected: `InitialSchema1700000000000` executed. (Skip if no local MySQL; CI/tests don't need it.)
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add server-nest/src server-nest/test server-nest/package.json
