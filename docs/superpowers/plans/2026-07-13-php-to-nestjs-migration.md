@@ -5525,7 +5525,7 @@ git commit -m "feat(server-nest): echanges client+admin workflows with corrected
 
 Parity notes: no write endpoints except DELETE (PHP routes `DELETE /paiements/{id}` to a `destroy` that doesn't exist in the controller — implemented here as soft delete with a standard envelope, flagged as a fix). Client-scoped routes (`/clients`, `/:id`, `/export/comptable`) get `JwtAuthGuard + ClientGuard` (D2). Admin routes stay public (D17). Literal routes declared before `:id`. Stats aggregates are computed with independent queries — the PHP code reused one mutating builder (a latent bug the extraction flagged); the Nest version computes each aggregate on a fresh query with the same filters, which is what the PHP intended.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/paiements.e2e-spec.ts`:
 
@@ -5627,12 +5627,12 @@ describe('paiements', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json paiements`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/paiements/paiements.service.ts`:
 
@@ -5992,12 +5992,12 @@ export class PaiementsModule {}
 
 Register `PaiementsModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json paiements`
 Expected: 5 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
