@@ -87,7 +87,7 @@ export class EventsService {
   }
 
   async update(id: number, dto: UpdateEventDto) {
-    const event = await this.findOr404(id);
+    await this.findOr404(id);
     if (dto.animateurs?.length) await this.assertAnimateursExist(dto.animateurs);
     const { animateurs, ...fields } = dto;
     if (Object.keys(fields).length) await this.events.update(id, fields);
