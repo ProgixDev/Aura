@@ -16,6 +16,7 @@ import { ClientsModule } from './clients/clients.module';
 import { PraticiensModule } from './praticiens/praticiens.module';
 import { ArticlesModule } from './articles/articles.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { EmailTemplatesModule } from './email-templates/email-templates.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     PraticiensModule,
     ArticlesModule,
     NotificationsModule,
+    EmailTemplatesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
