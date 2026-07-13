@@ -3286,7 +3286,7 @@ git commit -m "feat(server-nest): cercles CRUD"
 
 Parity: store path is `POST /api/events/create-event` (non-standard, kept). Response embeds `animateurs` each with a Laravel-style `pivot` object. `status` not settable via API (defaults `brouillon`) — PHP behaved the same.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/events.e2e-spec.ts`:
 
@@ -3352,12 +3352,12 @@ describe('events', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json events`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/events/dto/create-event.dto.ts`:
 
@@ -3564,12 +3564,12 @@ export class EventsModule {}
 
 Register `EventsModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json events`
 Expected: 4 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
