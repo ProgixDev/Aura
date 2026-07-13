@@ -6579,7 +6579,7 @@ git commit -m "feat(server-nest): remboursements client requests and admin workf
 - Create: `server-nest/README.md`
 - Modify: root `package.json` (optional convenience scripts)
 
-- [ ] **Step 1: Final app.module.ts**
+- [x] **Step 1: Final app.module.ts**
 
 ```ts
 import { Module } from '@nestjs/common';
@@ -6628,7 +6628,7 @@ import { RemboursementsModule } from './remboursements/remboursements.module';
 export class AppModule {}
 ```
 
-- [ ] **Step 2: Run the FULL test suite**
+- [x] **Step 2: Run the FULL test suite**
 
 ```bash
 cd server-nest && npm run build && npx jest && npx jest --config test/jest-e2e.json
@@ -6636,7 +6636,7 @@ cd server-nest && npm run build && npx jest && npx jest --config test/jest-e2e.j
 
 Expected: build clean, all unit + e2e suites pass.
 
-- [ ] **Step 3: Boot against MySQL and smoke-test (requires local MySQL)**
+- [x] **Step 3: Boot against MySQL and smoke-test (requires local MySQL)** — attempted; no local MySQL available (`ECONNREFUSED 127.0.0.1:3306`), skipped per plan's best-effort allowance.
 
 ```bash
 cd server-nest
@@ -6650,7 +6650,7 @@ curl -s -X POST http://localhost:8000/api/admin/register -H "Content-Type: appli
 
 Expected: disciplines returns the success envelope; register returns 201 with a token. Kill the dev server after.
 
-- [ ] **Step 4: Write `server-nest/README.md`**
+- [x] **Step 4: Write `server-nest/README.md`**
 
 ```markdown
 # Aura API (NestJS)
@@ -6678,7 +6678,7 @@ Catalog/content/admin-echanges/paiements-admin/remboursements-admin routes are P
 as they were in Laravel (D17). Locking them down is a product decision — do it next.
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest
