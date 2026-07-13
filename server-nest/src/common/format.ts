@@ -28,3 +28,18 @@ export function formatDateTimeFr(d: Date | string | null): string {
   const p = (x: number) => String(x).padStart(2, '0');
   return `${p(date.getDate())}/${p(date.getMonth() + 1)}/${date.getFullYear()} ${p(date.getHours())}:${p(date.getMinutes())}`;
 }
+
+/**
+ * Timezone-safe equivalent of Laravel's `after:today` validation rule.
+ *
+ * Compares calendar dates as plain `YYYY-MM-DD` strings rather than round
+ * tripping through `new Date(...).toISOString()`, which would reparse a
+ * naive datetime string (no `Z`/offset suffix, e.g. `2026-07-14T00:30:00`)
+ * in the host's local timezone and could shift the extracted calendar day.
+ * Slicing the input string directly avoids that mismatch entirely.
+ */
+export function isStrictlyAfterToday(dateStr: string): boolean {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const dateOnly = dateStr.slice(0, 10);
+  return dateOnly > todayStr;
+}

@@ -1,6 +1,6 @@
 import { success, fail } from './envelope';
 import { formatValidationErrors } from './validation';
-import { numberFormat, formatDateFr } from './format';
+import { numberFormat, formatDateFr, isStrictlyAfterToday } from './format';
 import { ValidationError } from 'class-validator';
 
 describe('common helpers', () => {
@@ -52,5 +52,37 @@ describe('common helpers', () => {
 
   it('formatDateFr renders d/m/Y', () => {
     expect(formatDateFr(new Date(2026, 6, 3))).toBe('03/07/2026');
+  });
+
+  describe('isStrictlyAfterToday', () => {
+    const toDateStr = (d: Date) => d.toISOString().slice(0, 10);
+    const addDays = (n: number) => {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() + n);
+      return toDateStr(d);
+    };
+
+    it('returns false for today', () => {
+      expect(isStrictlyAfterToday(addDays(0))).toBe(false);
+    });
+
+    it('returns false for yesterday', () => {
+      expect(isStrictlyAfterToday(addDays(-1))).toBe(false);
+    });
+
+    it('returns true for tomorrow', () => {
+      expect(isStrictlyAfterToday(addDays(1))).toBe(true);
+    });
+
+    it('extracts the calendar date via slicing for a naive datetime string (no Z/offset)', () => {
+      // Should not be reparsed through `new Date(...)`, which would apply
+      // the host's local timezone to a naive datetime and could shift the
+      // calendar day. Slicing keeps the comparison timezone-independent.
+      const tomorrow = addDays(1);
+      expect(isStrictlyAfterToday(`${tomorrow}T00:30:00`)).toBe(true);
+
+      const today = addDays(0);
+      expect(isStrictlyAfterToday(`${today}T23:59:59`)).toBe(false);
+    });
   });
 });

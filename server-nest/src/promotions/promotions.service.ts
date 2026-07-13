@@ -4,6 +4,7 @@ import { Not, Repository } from 'typeorm';
 import { Request } from 'express';
 import { Promotion } from '../database/entities/promotion.entity';
 import { success } from '../common/envelope';
+import { isStrictlyAfterToday } from '../common/format';
 import { parsePagination, paginateQb, paginationUrls } from '../common/pagination';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
@@ -25,12 +26,7 @@ export class PromotionsService {
   }
 
   private assertFuture(dateExpiration: string) {
-    // Laravel 'after:today' — compare UTC-normalized calendar dates so the
-    // check is timezone-independent (avoids mixing a local-clamped Date
-    // against a UTC-parsed one).
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const expirationStr = new Date(dateExpiration).toISOString().slice(0, 10);
-    if (expirationStr <= todayStr) {
+    if (!isStrictlyAfterToday(dateExpiration)) {
       this.validationError({ date_expiration: ["La date d'expiration doit être postérieure à aujourd'hui."] });
     }
   }
