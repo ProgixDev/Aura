@@ -3585,7 +3585,7 @@ git commit -m "feat(server-nest): events CRUD with animateurs pivot"
 - Modify: `server-nest/src/app.module.ts`
 - Test: `server-nest/test/promotions.e2e-spec.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/promotions.e2e-spec.ts`:
 
@@ -3635,12 +3635,12 @@ describe('promotions', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json promotions`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/promotions/dto/create-promotion.dto.ts`:
 
@@ -3801,12 +3801,12 @@ export class PromotionsModule {}
 
 Register `PromotionsModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json promotions`
 Expected: 2 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
