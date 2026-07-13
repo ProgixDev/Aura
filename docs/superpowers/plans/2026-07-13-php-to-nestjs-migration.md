@@ -4495,7 +4495,7 @@ git commit -m "feat(server-nest): articles CRUD with slug generation and publish
 - Modify: `server-nest/src/app.module.ts`
 - Test: `server-nest/test/notifications.e2e-spec.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server-nest/test/notifications.e2e-spec.ts`:
 
@@ -4543,12 +4543,12 @@ describe('notifications', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json notifications`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server-nest/src/notifications/dto/create-notification.dto.ts`:
 
@@ -4686,12 +4686,12 @@ export class NotificationsModule {}
 
 Register `NotificationsModule` in `app.module.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd server-nest && npx jest --config test/jest-e2e.json notifications`
 Expected: 2 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server-nest/src server-nest/test
