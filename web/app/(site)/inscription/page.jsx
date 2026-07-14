@@ -1,10 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@/components/ui/Icon';
 import { Lotus } from '@/components/ui/Lotus';
-import { ModalButton } from '@/components/ui/ModalButton';
+import { api, ApiError } from '@/lib/api';
+import { useAuthStore } from '@/lib/auth-store';
+import { useUI } from '@/lib/store';
 
 const ROLES = [
   { key: 'client', icon: 'heart', title: 'Je cherche un praticien', desc: 'Trouvez, échangez et réservez des séances en toute confiance.' },
@@ -18,7 +21,45 @@ const PERKS = [
 ];
 
 export default function InscriptionPage() {
+  const router = useRouter();
+  const setSession = useAuthStore((s) => s.setSession);
+  const toast = useUI((s) => s.toast);
   const [role, setRole] = useState('client');
+  const [firstname, setFirstname] = useState('');
+  const [lastname, setLastname] = useState('');
+  const [email, setEmail] = useState('');
+  const [city, setCity] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordConfirmation, setPasswordConfirmation] = useState('');
+  const [accepted, setAccepted] = useState(false);
+  const [error, setError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setFieldErrors({});
+    setLoading(true);
+    try {
+      const res = await api.post('/client/register', {
+        firstname, lastname, email, city,
+        password, password_confirmation: passwordConfirmation,
+      });
+      setSession(res.data.token, res.data.client);
+      toast('Compte créé', 'success');
+      router.push('/compte');
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 422) {
+        setFieldErrors(err.body?.errors ?? {});
+        setError('Merci de corriger les champs indiqués.');
+      } else {
+        setError(err instanceof ApiError ? err.message : 'Une erreur est survenue');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section className="section">
@@ -86,30 +127,60 @@ export default function InscriptionPage() {
                 })}
               </div>
 
-              <div className="field">
-                <label>Nom complet</label>
-                <input className="input" type="text" placeholder="Prénom Nom" autoComplete="name" />
-              </div>
-              <div className="field">
-                <label>Adresse email</label>
-                <input className="input" type="email" placeholder="vous@exemple.fr" autoComplete="email" />
-              </div>
-              <div className="field">
-                <label>Mot de passe</label>
-                <input className="input" type="password" placeholder="8 caractères minimum" autoComplete="new-password" />
-              </div>
+              {role === 'praticien' ? (
+                <>
+                  <p className="small" style={{ marginBottom: 18 }}>
+                    L’inscription praticien se fait sur un parcours dédié (vérification de documents, tarifs, disciplines).
+                  </p>
+                  <Link href="/devenir-praticien" className="btn btn-primary btn-block btn-lg">
+                    Devenir praticien
+                  </Link>
+                </>
+              ) : (
+                <form onSubmit={submit}>
+                  {error && (
+                    <p className="small" style={{ color: 'var(--danger, #b5524f)', marginBottom: 14 }}>{error}</p>
+                  )}
+                  <div className="field">
+                    <label>Prénom</label>
+                    <input className="input" type="text" placeholder="Prénom" autoComplete="given-name" required value={firstname} onChange={(e) => setFirstname(e.target.value)} />
+                    {fieldErrors.firstname && <p className="tiny" style={{ color: 'var(--danger, #b5524f)' }}>{fieldErrors.firstname[0]}</p>}
+                  </div>
+                  <div className="field">
+                    <label>Nom</label>
+                    <input className="input" type="text" placeholder="Nom" autoComplete="family-name" required value={lastname} onChange={(e) => setLastname(e.target.value)} />
+                    {fieldErrors.lastname && <p className="tiny" style={{ color: 'var(--danger, #b5524f)' }}>{fieldErrors.lastname[0]}</p>}
+                  </div>
+                  <div className="field">
+                    <label>Adresse email</label>
+                    <input className="input" type="email" placeholder="vous@exemple.fr" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                    {fieldErrors.email && <p className="tiny" style={{ color: 'var(--danger, #b5524f)' }}>{fieldErrors.email[0]}</p>}
+                  </div>
+                  <div className="field">
+                    <label>Ville</label>
+                    <input className="input" type="text" placeholder="Paris" autoComplete="address-level2" required value={city} onChange={(e) => setCity(e.target.value)} />
+                    {fieldErrors.city && <p className="tiny" style={{ color: 'var(--danger, #b5524f)' }}>{fieldErrors.city[0]}</p>}
+                  </div>
+                  <div className="field">
+                    <label>Mot de passe</label>
+                    <input className="input" type="password" placeholder="8 caractères minimum" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                  </div>
+                  <div className="field">
+                    <label>Confirmer le mot de passe</label>
+                    <input className="input" type="password" placeholder="8 caractères minimum" autoComplete="new-password" required value={passwordConfirmation} onChange={(e) => setPasswordConfirmation(e.target.value)} />
+                    {fieldErrors.password_confirmation && <p className="tiny" style={{ color: 'var(--danger, #b5524f)' }}>{fieldErrors.password_confirmation[0]}</p>}
+                  </div>
 
-              <label className="row gap-2 tiny muted" style={{ margin: '4px 0 18px', cursor: 'pointer' }}>
-                <input type="checkbox" className="checkbox" /> J’accepte les conditions générales et la politique de confidentialité.
-              </label>
+                  <label className="row gap-2 tiny muted" style={{ margin: '4px 0 18px', cursor: 'pointer' }}>
+                    <input type="checkbox" className="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} required />
+                    J’accepte les conditions générales et la politique de confidentialité.
+                  </label>
 
-              <ModalButton
-                modal="signup"
-                payload={{ role }}
-                className="btn btn-primary btn-block btn-lg"
-              >
-                {role === 'praticien' ? 'Créer mon espace praticien' : 'Créer mon compte'}
-              </ModalButton>
+                  <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading || !accepted}>
+                    {loading ? 'Création…' : 'Créer mon compte'}
+                  </button>
+                </form>
+              )}
 
               <p className="small center" style={{ marginTop: 24 }}>
                 Déjà inscrit(e) ?{' '}

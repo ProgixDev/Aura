@@ -1,7 +1,9 @@
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Icon } from '@/components/ui/Icon';
+import { api } from '@/lib/api';
+import { useAuthStore } from '@/lib/auth-store';
 
 const ITEMS = [
   { href: '/compte', label: 'Aperçu', icon: 'home', exact: true },
@@ -16,7 +18,16 @@ const ITEMS = [
 
 export default function AccountNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const signOut = useAuthStore((s) => s.signOut);
   const active = (it) => (it.exact ? pathname === it.href : pathname.startsWith(it.href));
+
+  const handleSignOut = async () => {
+    try { await api.post('/client/logout'); } catch { /* best-effort; clear the local session regardless */ }
+    signOut();
+    router.replace('/connexion');
+  };
+
   return (
     <nav className="card card-pad" style={{ position: 'sticky', top: 92 }}>
       <div className="stack gap-1">
@@ -26,6 +37,15 @@ export default function AccountNav() {
           </Link>
         ))}
       </div>
+      <div className="divider" style={{ margin: '10px 0' }} />
+      <button
+        type="button"
+        onClick={handleSignOut}
+        className="row gap-3"
+        style={{ padding: '10px 12px', borderRadius: 11, fontSize: 14, fontWeight: 500, background: 'transparent', color: 'var(--ink-soft)', width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer' }}
+      >
+        <Icon name="logout" size={17} color="var(--muted)" />Se déconnecter
+      </button>
     </nav>
   );
 }
