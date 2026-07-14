@@ -72,4 +72,17 @@ export class PromotionsService {
     await this.promotions.delete(id);
     return success(undefined, 'Promotion supprimée avec succès');
   }
+
+  /**
+   * Shared by POST /api/promotions/validate (Task 7) and RendezVousService.create() — looks
+   * up a promo code and checks it hasn't expired. Throws rather than returning an
+   * invalid/expired promo, so callers never have to re-check the result.
+   */
+  async validate(code: string): Promise<Promotion> {
+    const promo = await this.promotions.findOneBy({ code });
+    if (!promo || !isStrictlyAfterToday(promo.date_expiration)) {
+      throw new NotFoundException({ status: 'error', message: 'Code promo invalide ou expiré' });
+    }
+    return promo;
+  }
 }

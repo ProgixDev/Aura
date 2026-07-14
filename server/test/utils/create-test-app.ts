@@ -20,6 +20,7 @@ import { EmailTemplate } from '../../src/database/entities/email-template.entity
 import { Echange } from '../../src/database/entities/echange.entity';
 import { Paiement } from '../../src/database/entities/paiement.entity';
 import { Remboursement } from '../../src/database/entities/remboursement.entity';
+import { RendezVous } from '../../src/database/entities/rendez-vous.entity';
 import * as bcrypt from 'bcryptjs';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret';
@@ -34,13 +35,14 @@ process.env.UPLOAD_DIR = process.env.UPLOAD_DIR ?? require('os').tmpdir() + '/au
 const ALL_ENTITIES = [
   User, Client, Praticien, PraticienDocument, Cercle, Event, EventPraticien,
   Promotion, Discipline, Article, Notification, EmailTemplate, Echange, Paiement,
-  Remboursement,
+  Remboursement, RendezVous,
 ];
 
 export async function createTestApp(
   metadata: Pick<ModuleMetadata, 'imports'> = {},
+  overrides: Array<{ provide: any; useValue: any }> = [],
 ): Promise<INestApplication> {
-  const moduleRef = await Test.createTestingModule({
+  let builder = Test.createTestingModule({
     imports: [
       TypeOrmModule.forRoot({
         type: 'better-sqlite3',
@@ -52,8 +54,12 @@ export async function createTestApp(
       AuthModule,
       ...(metadata.imports ?? []),
     ],
-  }).compile();
-  const app = moduleRef.createNestApplication();
+  });
+  for (const o of overrides) {
+    builder = builder.overrideProvider(o.provide).useValue(o.useValue);
+  }
+  const moduleRef = await builder.compile();
+  const app = moduleRef.createNestApplication(undefined, { rawBody: true });
   applyGlobalConfig(app);
   await app.init();
   return app;

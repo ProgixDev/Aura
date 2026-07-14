@@ -21,6 +21,7 @@ import { EmailTemplatesModule } from './email-templates/email-templates.module';
 import { EchangesModule } from './echanges/echanges.module';
 import { PaiementsModule } from './paiements/paiements.module';
 import { RemboursementsModule } from './remboursements/remboursements.module';
+import { RendezVousModule } from './rendez-vous/rendez-vous.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { RemboursementsModule } from './remboursements/remboursements.module';
     EchangesModule,
     PaiementsModule,
     RemboursementsModule,
+    RendezVousModule,
   ],
   controllers: [AppController],
   providers: [AppService],
