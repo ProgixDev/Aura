@@ -65,9 +65,9 @@ export class EventsService {
 
   async index(query: Record<string, any>, req: Request) {
     const { page, perPage } = parsePagination(query, 10);
-    const { data, pagination, lastPage } = await paginateQb(
-      this.events.createQueryBuilder('e'), page, perPage,
-    );
+    const qb = this.events.createQueryBuilder('e');
+    if (query.status !== undefined) qb.andWhere('e.status = :status', { status: query.status });
+    const { data, pagination, lastPage } = await paginateQb(qb, page, perPage);
     return success(data, undefined, {
       pagination: { ...pagination, ...paginationUrls(req, page, lastPage) },
     });

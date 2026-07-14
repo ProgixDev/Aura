@@ -56,4 +56,15 @@ describe('events', () => {
     const res = await http().get('/api/events').expect(200);
     expect(res.body.pagination).toHaveProperty('total');
   });
+
+  it('index filters by status', async () => {
+    const created = await http().post('/api/events/create-event').send(payload()).expect(201);
+    // newly created events default to status 'brouillon' (Event entity default)
+
+    const published = await http().get('/api/events?status=publié').expect(200);
+    expect(published.body.data.find((e: any) => e.id === created.body.data.id)).toBeUndefined();
+
+    const drafts = await http().get('/api/events?status=brouillon').expect(200);
+    expect(drafts.body.data.some((e: any) => e.id === created.body.data.id)).toBe(true);
+  });
 });
