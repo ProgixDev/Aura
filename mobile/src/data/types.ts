@@ -181,6 +181,65 @@ export interface Review {
   text: string;
 }
 
+/** Real `avis` row (server/src/database/entities/avis.entity.ts) — field names verbatim, no camelCase mapping layer. */
+export interface Avis {
+  id: number;
+  full_name_author: string;
+  praticien_id: number;
+  note: number;
+  avis: string;
+  date_ajout: string;
+  statut: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/** Real `signalements` row (server/src/database/entities/signalement.entity.ts). */
+export interface Signalement {
+  id: number;
+  date_signalement: string;
+  type: string;
+  sujet: string;
+  motif: string;
+  signale_par_id: number;
+  praticien_id: number;
+  priorite: string;
+  statut: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface NotificationPreferences {
+  rappels_seance: boolean;
+  nouveaux_messages: boolean;
+  reponses_avis: boolean;
+  newsletter: boolean;
+}
+
+/** One row of `GET /api/client/favorites` — the favorite pivot joined with the full praticien row. */
+export interface FavoritePraticien {
+  id: number;
+  client_id: number;
+  praticien_id: number;
+  created_at: string;
+  praticien: {
+    id: number;
+    firstname: string;
+    lastname: string;
+    email: string;
+    telephone: string;
+    ville: string;
+    niveau: string;
+    specialite: string;
+    mode: string;
+    status: string;
+    tarif: number;
+    experience: number;
+    bio: string;
+    statut_verification: string;
+  };
+}
+
 export interface BookingDraft {
   practitionerId: string;
   day?: { label: string; date: string };

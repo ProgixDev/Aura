@@ -6,14 +6,16 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@components/Button';
 import { Icon } from '@components/Icon';
 import { Input } from '@components/Input';
+import { Lotus } from '@components/Lotus';
 import { ScreenHeader } from '@components/ScreenHeader';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
+import { signalementRepo } from '@data/repos';
 
 const reasons = [
   {
@@ -32,10 +34,48 @@ const reasons = [
 ];
 
 export default function Report() {
+  const { praticienId } = useLocalSearchParams<{ praticienId?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [picked, setPicked] = useState('overclaim');
   const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!praticienId) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.pearl }}>
+        <ScreenHeader title="Signaler" backIcon="close" />
+        <View style={styles.emptyWrap}>
+          <Lotus size={40} color={colors.violet2} />
+          <Text style={styles.emptyTitle}>Choisissez un praticien</Text>
+          <Text style={styles.emptyBody}>
+            Ouvrez le profil d'un praticien pour le signaler à l'équipe de modération.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  const submit = async () => {
+    if (submitting) return;
+    const reason = reasons.find((r) => r.key === picked)!;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await signalementRepo.create({
+        praticien_id: Number(praticienId),
+        type: reason.key,
+        sujet: reason.title,
+        motif: note.trim() || reason.detail || reason.title,
+      });
+      router.back();
+    } catch (err: any) {
+      setError(err?.message ?? 'Une erreur est survenue, réessayez.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.pearl }}>
@@ -78,7 +118,9 @@ export default function Report() {
           placeholder="Vos mots restent confidentiels…"
         />
 
-        <Button label="Envoyer le signalement" onPress={() => router.back()} />
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        <Button label={submitting ? 'Envoi…' : 'Envoyer le signalement'} onPress={submit} disabled={submitting} />
         <Text style={styles.help}>
           En cas d'urgence, contactez le 17 ou le 3919.
         </Text>
@@ -120,5 +162,10 @@ const styles = StyleSheet.create({
   optTitle: { ...typography.bodyMedium, fontSize: 14 },
   optDetail: { ...typography.tiny, fontSize: 12, marginTop: 2 },
 
+  error: { ...typography.small, fontSize: 13, color: colors.danger, textAlign: 'center', marginTop: 4, marginBottom: 8 },
   help: { ...typography.tiny, textAlign: 'center', marginTop: 14 },
+
+  emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 10 },
+  emptyTitle: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 20, color: colors.ink },
+  emptyBody: { ...typography.small, fontSize: 14, textAlign: 'center', lineHeight: 20 },
 });

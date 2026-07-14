@@ -20,10 +20,13 @@ import type {
   Remboursement,
   Conversation,
   ChatMessage,
-  Review,
   Circle,
   Article,
   RendezVous,
+  Avis,
+  Signalement,
+  NotificationPreferences,
+  FavoritePraticien,
 } from '../types';
 
 const delay = <T>(value: T, ms = 60): Promise<T> =>
@@ -144,9 +147,47 @@ export const practitionerRepo = {
     practitionerRepo.list().then((list) => list.filter((p) => p.specialties.includes(disciplineName))),
   recommended: (): Promise<Practitioner[]> =>
     practitionerRepo.list().then((list) => list.slice(0, 4)),
-  // No reviews backend yet — Plan 07 builds the `avis` module. Return an
-  // honest empty list rather than calling an endpoint that doesn't exist.
-  reviewsFor: (_practitionerId: string): Promise<Review[]> => Promise.resolve([]),
+  // Real reviews now — delegates to avisRepo (defined below) rather than
+  // duplicating the fetch here.
+  reviewsFor: (practitionerId: string): Promise<Avis[]> => avisRepo.forPraticien(practitionerId),
+};
+
+// ---------- Avis (reviews) ----------
+export const avisRepo = {
+  forPraticien: (praticienId: string): Promise<Avis[]> =>
+    api.get<{ data: Avis[] }>(`/avis?praticien_id=${praticienId}`).then((res) => res.data),
+  create: (dto: { praticien_id: number; note: number; avis: string }): Promise<Avis> =>
+    api.post<{ data: Avis }>('/client/avis', dto).then((res) => res.data),
+};
+
+// ---------- Signalements (reports) ----------
+export const signalementRepo = {
+  create: (dto: {
+    praticien_id: number; type: string; sujet: string; motif: string; priorite?: string;
+  }): Promise<Signalement> =>
+    api.post<{ data: Signalement }>('/signalements', dto).then((res) => res.data),
+};
+
+// ---------- Favorites ----------
+export const favoriteRepo = {
+  // Maps through the same mapPraticien used by practitionerRepo, so a
+  // favorited praticien renders with <PractitionerCard> exactly like any
+  // other praticien list — no separate card design needed.
+  list: (): Promise<Practitioner[]> =>
+    api.get<{ data: FavoritePraticien[] }>('/client/favorites')
+      .then((res) => res.data.map((f) => mapPraticien(f.praticien))),
+  add: (praticienId: string): Promise<void> =>
+    api.post('/client/favorites', { praticien_id: Number(praticienId) }).then(() => undefined),
+  remove: (praticienId: string): Promise<void> =>
+    api.del(`/client/favorites/${praticienId}`).then(() => undefined),
+};
+
+// ---------- Notification preferences ----------
+export const notificationPreferencesRepo = {
+  get: (): Promise<NotificationPreferences> =>
+    api.get<{ data: NotificationPreferences }>('/client/notification-preferences').then((res) => res.data),
+  update: (patch: Partial<NotificationPreferences>): Promise<NotificationPreferences> =>
+    api.put<{ data: NotificationPreferences }>('/client/notification-preferences', patch).then((res) => res.data),
 };
 
 // ---------- Disciplines ----------
