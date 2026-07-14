@@ -1,5 +1,9 @@
+'use client';
+
+import { use } from 'react';
 import Link from 'next/link';
-import { blogPosts, getBlogPost } from '@/lib/data/content';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
@@ -14,31 +18,39 @@ const ORBS = {
   gold: { '--orb-1': '#E8D2A0', '--orb-2': '#C49A4F' },
 };
 
-export function generateStaticParams() {
-  return blogPosts.map((p) => ({ slug: p.slug }));
-}
+export default function BlogArticlePage({ params }) {
+  const { slug } = use(params);
 
-export default async function BlogArticlePage({ params }) {
-  const { slug } = await params;
-  const post = getBlogPost(slug);
+  const { data, isLoading } = useQuery({
+    queryKey: ['article', slug],
+    queryFn: () => api.get(`/articles?slug=${encodeURIComponent(slug)}&per_page=1`),
+  });
+  const post = data?.data?.[0];
 
-  if (!post) {
+  const { data: allRes } = useQuery({
+    queryKey: ['articles', 'public'],
+    queryFn: () => api.get('/articles?status=publié&per_page=50'),
+    enabled: !!post,
+  });
+  const related = (allRes?.data ?? []).filter((p) => p.slug !== slug).slice(0, 3);
+
+  if (!isLoading && !post) {
     return (
       <section className="section">
         <div className="container-narrow center">
           <h1 className="h-1">Article introuvable</h1>
-          <p className="lead muted" style={{ marginBottom: 20 }}>Cet article n’existe pas ou a été déplacé.</p>
+          <p className="lead muted" style={{ marginBottom: 20 }}>Cet article n'existe pas ou a été déplacé.</p>
           <Link href="/blog" className="btn btn-primary">Retour au Journal</Link>
         </div>
       </section>
     );
   }
+  if (!post) return null;
 
-  const orb = ORBS[post.tone] || ORBS.violet;
-  const paragraphs = post.body.split('\n\n');
+  const orb = ORBS[post.tonalite] || ORBS.violet;
+  const paragraphs = post.corps.split('\n\n');
   const pullIndex = paragraphs.length > 2 ? Math.floor(paragraphs.length / 2) : -1;
   const pullText = pullIndex > 0 ? paragraphs[pullIndex] : null;
-  const related = blogPosts.filter((p) => p.slug !== post.slug).slice(0, 3);
   const shareUrl = `https://aura.fr/blog/${post.slug}`;
 
   return (
@@ -49,21 +61,21 @@ export default async function BlogArticlePage({ params }) {
           <div className="crumbs" style={{ marginBottom: 18 }}>
             <Link href="/blog">Journal</Link>
             <span>/</span>
-            <span>{post.category}</span>
+            <span>{post.categorie}</span>
           </div>
           <div className="reveal">
-            <span className="eyebrow">{post.category}</span>
-            <h1 className="h-display" style={{ margin: '14px 0 22px' }}>{post.title}</h1>
+            <span className="eyebrow">{post.categorie}</span>
+            <h1 className="h-display" style={{ margin: '14px 0 22px' }}>{post.titre}</h1>
             <div className="row gap-3" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
-              <Avatar name={post.author} tone={post.tone} size={44} rounded />
+              <Avatar name={post.auteur} size={44} rounded />
               <div>
-                <div className="small" style={{ fontWeight: 600 }}>{post.author}</div>
+                <div className="small" style={{ fontWeight: 600 }}>{post.auteur}</div>
                 <div className="tiny muted row gap-2">
-                  <span>{dateFr(post.date)}</span><span>·</span><span>{post.readTime} de lecture</span>
+                  <span>{dateFr(post.date_publication)}</span><span>·</span><span>{post.temps_lecture} min de lecture</span>
                 </div>
               </div>
               <div className="row gap-2" style={{ marginLeft: 'auto' }}>
-                <ModalButton modal="share" payload={{ label: post.title, url: shareUrl }} className="btn btn-soft btn-sm">
+                <ModalButton modal="share" payload={{ label: post.titre, url: shareUrl }} className="btn btn-soft btn-sm">
                   <Icon name="share" size={15} color="var(--violet-2)" /> Partager
                 </ModalButton>
               </div>
@@ -78,7 +90,7 @@ export default async function BlogArticlePage({ params }) {
           <div className="aurora-dark grain reveal r-1" style={{ '--orb-x': '70%', '--orb-y': '25%', ...orb, borderRadius: 20, minHeight: 280, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 40 }}>
             <Lotus size={24} color="rgba(255,255,255,0.9)" />
             <p className="serif italic" style={{ color: '#fff', fontSize: 24, marginTop: 16, maxWidth: 520 }}>
-              {post.excerpt}
+              {post.extrait}
             </p>
           </div>
         </div>
@@ -104,7 +116,7 @@ export default async function BlogArticlePage({ params }) {
           <div className="row between" style={{ alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
             <span className="small muted">Cet article vous a plu ? Partagez-le.</span>
             <div className="row gap-2">
-              <ModalButton modal="share" payload={{ label: post.title, url: shareUrl }} className="btn btn-soft btn-sm">
+              <ModalButton modal="share" payload={{ label: post.titre, url: shareUrl }} className="btn btn-soft btn-sm">
                 <Icon name="share" size={15} color="var(--violet-2)" /> Partager
               </ModalButton>
               <Link href="/blog" className="btn btn-ghost btn-sm">
@@ -120,45 +132,47 @@ export default async function BlogArticlePage({ params }) {
         <div className="container-narrow">
           <div className="card card-pad reveal">
             <div className="row gap-4" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
-              <Avatar name={post.author} tone={post.tone} size={64} rounded />
+              <Avatar name={post.auteur} size={64} rounded />
               <div className="flex-1">
                 <span className="eyebrow">Écrit par</span>
-                <h3 className="h-3" style={{ margin: '4px 0 4px' }}>{post.author}</h3>
+                <h3 className="h-3" style={{ margin: '4px 0 4px' }}>{post.auteur}</h3>
                 <p className="small muted">
-                  Une voix du Journal d’Aura, dédiée à un bien-être énergétique éthique, sourcé et accessible.
+                  Une voix du Journal d'Aura, dédiée à un bien-être énergétique éthique, sourcé et accessible.
                 </p>
               </div>
-              <ModalButton modal="contact" payload={{ name: post.author }} className="btn btn-soft btn-sm">Contacter</ModalButton>
+              <ModalButton modal="contact" payload={{ name: post.auteur }} className="btn btn-soft btn-sm">Contacter</ModalButton>
             </div>
           </div>
         </div>
       </section>
 
       {/* RELATED */}
-      <section className="section-sm">
-        <div className="container">
-          <div className="section-head">
-            <h2 className="h-2">À lire aussi</h2>
-            <Link href="/blog" className="more">Tout le Journal</Link>
-          </div>
-          <div className="grid grid-3">
-            {related.map((p, i) => (
-              <Link key={p.slug} href={`/blog/${p.slug}`} className={`card card-hover reveal r-${i + 1}`} style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <div className="aurora-dark grain" style={{ '--orb-x': '65%', '--orb-y': '25%', ...(ORBS[p.tone] || ORBS.violet), height: 130, display: 'flex', alignItems: 'flex-end', padding: 18 }}>
-                  <Badge variant="neutral" dot>{p.category}</Badge>
-                </div>
-                <div className="card-pad" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                  <div className="tiny muted row gap-2">
-                    <span>{dateFr(p.date)}</span><span>·</span><span>{p.readTime}</span>
+      {related.length > 0 && (
+        <section className="section-sm">
+          <div className="container">
+            <div className="section-head">
+              <h2 className="h-2">À lire aussi</h2>
+              <Link href="/blog" className="more">Tout le Journal</Link>
+            </div>
+            <div className="grid grid-3">
+              {related.map((p, i) => (
+                <Link key={p.slug} href={`/blog/${p.slug}`} className={`card card-hover reveal r-${i + 1}`} style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                  <div className="aurora-dark grain" style={{ '--orb-x': '65%', '--orb-y': '25%', ...(ORBS[p.tonalite] || ORBS.violet), height: 130, display: 'flex', alignItems: 'flex-end', padding: 18 }}>
+                    <Badge variant="neutral" dot>{p.categorie}</Badge>
                   </div>
-                  <h3 className="h-4" style={{ margin: '8px 0 6px' }}>{p.title}</h3>
-                  <p className="small muted" style={{ flex: 1 }}>{p.excerpt}</p>
-                </div>
-              </Link>
-            ))}
+                  <div className="card-pad" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <div className="tiny muted row gap-2">
+                      <span>{dateFr(p.date_publication)}</span><span>·</span><span>{p.temps_lecture} min</span>
+                    </div>
+                    <h3 className="h-4" style={{ margin: '8px 0 6px' }}>{p.titre}</h3>
+                    <p className="small muted" style={{ flex: 1 }}>{p.extrait}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </>
   );
 }

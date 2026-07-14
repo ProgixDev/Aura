@@ -1,5 +1,8 @@
+'use client';
+
 import Link from 'next/link';
-import { blogPosts } from '@/lib/data/content';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
@@ -15,8 +18,16 @@ const ORBS = {
 };
 
 export default function BlogIndexPage() {
-  const [featured, ...rest] = blogPosts;
-  const orb = ORBS[featured.tone] || ORBS.violet;
+  const { data } = useQuery({
+    queryKey: ['articles', 'public'],
+    queryFn: () => api.get('/articles?status=publié&per_page=50'),
+  });
+  const posts = data?.data ?? [];
+  const [featured, ...rest] = posts;
+
+  if (!featured) return null;
+
+  const orb = ORBS[featured.tonalite] || ORBS.violet;
 
   return (
     <>
@@ -44,18 +55,18 @@ export default function BlogIndexPage() {
                 <Badge variant="featured">À la une</Badge>
                 <div className="row gap-2" style={{ marginTop: 'auto', paddingTop: 24, color: 'rgba(255,255,255,0.7)' }}>
                   <Lotus size={16} color="rgba(255,255,255,0.9)" />
-                  <span className="tiny">{featured.category} · {featured.readTime}</span>
+                  <span className="tiny">{featured.categorie} · {featured.temps_lecture} min</span>
                 </div>
               </div>
               <div className="card-pad" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <span className="eyebrow">{featured.category}</span>
-                <h2 className="h-1" style={{ margin: '10px 0 12px' }}>{featured.title}</h2>
-                <p className="lead muted" style={{ marginBottom: 22 }}>{featured.excerpt}</p>
+                <span className="eyebrow">{featured.categorie}</span>
+                <h2 className="h-1" style={{ margin: '10px 0 12px' }}>{featured.titre}</h2>
+                <p className="lead muted" style={{ marginBottom: 22 }}>{featured.extrait}</p>
                 <div className="row gap-3" style={{ alignItems: 'center' }}>
-                  <Avatar name={featured.author} tone={featured.tone} size={44} rounded />
+                  <Avatar name={featured.auteur} size={44} rounded />
                   <div>
-                    <div className="small" style={{ fontWeight: 600 }}>{featured.author}</div>
-                    <div className="tiny muted">{dateFr(featured.date)}</div>
+                    <div className="small" style={{ fontWeight: 600 }}>{featured.auteur}</div>
+                    <div className="tiny muted">{dateFr(featured.date_publication)}</div>
                   </div>
                   <span className="row gap-1" style={{ marginLeft: 'auto', color: 'var(--violet-2)' }}>
                     <span className="small">Lire</span><Icon name="arrowRight" size={16} color="var(--violet-2)" />
@@ -76,18 +87,18 @@ export default function BlogIndexPage() {
           <div className="grid grid-3">
             {rest.map((post, i) => (
               <Link key={post.slug} href={`/blog/${post.slug}`} className={`card card-hover reveal r-${(i % 5) + 2}`} style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <div className="aurora-dark grain" style={{ '--orb-x': '65%', '--orb-y': '25%', ...(ORBS[post.tone] || ORBS.violet), height: 140, display: 'flex', alignItems: 'flex-end', padding: 18 }}>
-                  <Badge variant="neutral" dot>{post.category}</Badge>
+                <div className="aurora-dark grain" style={{ '--orb-x': '65%', '--orb-y': '25%', ...(ORBS[post.tonalite] || ORBS.violet), height: 140, display: 'flex', alignItems: 'flex-end', padding: 18 }}>
+                  <Badge variant="neutral" dot>{post.categorie}</Badge>
                 </div>
                 <div className="card-pad" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                   <div className="tiny muted row gap-2">
-                    <span>{dateFr(post.date)}</span><span>·</span><span>{post.readTime}</span>
+                    <span>{dateFr(post.date_publication)}</span><span>·</span><span>{post.temps_lecture} min</span>
                   </div>
-                  <h3 className="h-3" style={{ margin: '8px 0 8px' }}>{post.title}</h3>
-                  <p className="small muted" style={{ flex: 1 }}>{post.excerpt}</p>
+                  <h3 className="h-3" style={{ margin: '8px 0 8px' }}>{post.titre}</h3>
+                  <p className="small muted" style={{ flex: 1 }}>{post.extrait}</p>
                   <div className="row gap-2" style={{ alignItems: 'center', marginTop: 16 }}>
-                    <Avatar name={post.author} tone={post.tone} size={28} rounded />
-                    <span className="tiny muted">{post.author}</span>
+                    <Avatar name={post.auteur} size={28} rounded />
+                    <span className="tiny muted">{post.auteur}</span>
                   </div>
                 </div>
               </Link>
@@ -107,7 +118,7 @@ export default function BlogIndexPage() {
             <p className="lead" style={{ color: 'rgba(255,255,255,0.82)', maxWidth: 480, margin: '0 auto 26px' }}>
               Nos meilleurs articles, des conseils et des sélections de praticiens. Une fois par mois, sans bruit.
             </p>
-            <ModalButton modal="newsletter" className="btn btn-aurora btn-lg">S’inscrire à la newsletter</ModalButton>
+            <ModalButton modal="newsletter" className="btn btn-aurora btn-lg">S'inscrire à la newsletter</ModalButton>
           </div>
         </div>
       </section>
