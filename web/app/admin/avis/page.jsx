@@ -1,62 +1,77 @@
 'use client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageHead } from '@/components/ui/PageHead';
 import { DataTable } from '@/components/ui/DataTable';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Rating } from '@/components/ui/Rating';
 import { Icon } from '@/components/ui/Icon';
-import { ModalButton } from '@/components/ui/ModalButton';
-import { reviews, getPractitioner } from '@/lib/data/practitioners';
-import { tone } from '@/lib/format';
+import { api } from '@/lib/api';
+import { dateFr } from '@/lib/format';
 
-const STATUS_LABEL = { published: 'Publié', pending: 'En attente', flagged: 'Signalé' };
+const STATUT_LABEL = { en_attente: 'En attente', publié: 'Publié', rejeté: 'Rejeté' };
+const STATUT_TONE = { en_attente: 'warning', publié: 'success', rejeté: 'neutral' };
 
 export default function AdminReviewsPage() {
-  const rows = reviews.map((r) => {
-    const p = getPractitioner(r.practitionerId);
-    return { ...r, practitionerName: p ? p.name : '—', practitionerPhoto: p ? p.photo : null, practitionerTone: p ? p.tone : 'violet' };
+  const queryClient = useQueryClient();
+  const { data: res } = useQuery({
+    queryKey: ['admin-avis'],
+    queryFn: () => api.get('/admin/avis?per_page=100'),
   });
+  const rows = res?.data ?? [];
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin-avis'] });
 
-  const flagged = rows.filter((r) => r.status === 'flagged').length;
-  const pending = rows.filter((r) => r.status === 'pending').length;
-  const published = rows.filter((r) => r.status === 'published').length;
+  const publish = async (id) => { await api.post(`/admin/avis/${id}/publish`); await invalidate(); };
+  const reject = async (id) => { await api.post(`/admin/avis/${id}/reject`); await invalidate(); };
+
+  const published = rows.filter((r) => r.statut === 'publié').length;
+  const pending = rows.filter((r) => r.statut === 'en_attente').length;
+  const rejected = rows.filter((r) => r.statut === 'rejeté').length;
 
   const columns = [
     {
       key: 'author', label: 'Auteur', width: 160,
       render: (r) => (
         <div className="row gap-2">
-          <Avatar name={r.author} size={28} tone="violet" />
-          <span className="table-cell-main">{r.author}</span>
+          <Avatar name={r.full_name_author} size={28} tone="violet" />
+          <span className="table-cell-main">{r.full_name_author}</span>
         </div>
       ),
     },
     {
-      key: 'practitionerName', label: 'Praticien',
-      render: (r) => (
+      key: 'praticien', label: 'Praticien',
+      render: (r) => {
+        const name = r.praticien ? `${r.praticien.firstname} ${r.praticien.lastname}` : '—';
+        return (
+          <div className="row gap-2">
+            <Avatar name={name} size={28} tone="violet" />
+            <span>{name}</span>
+          </div>
+        );
+      },
+    },
+    { key: 'note', label: 'Note', width: 110, sortable: true, render: (r) => <Rating value={r.note} size={13} showCount={false} /> },
+    {
+      key: 'avis', label: 'Extrait',
+      render: (r) => <span className="small" style={{ display: 'block', maxWidth: 360 }}>« {r.avis.length > 90 ? r.avis.slice(0, 90) + '…' : r.avis} »</span>,
+    },
+    { key: 'date_ajout', label: 'Reçu', width: 110, render: (r) => <span className="tiny">{dateFr(r.date_ajout)}</span> },
+    {
+      key: 'statut', label: 'Statut', width: 120,
+      render: (r) => <Badge variant={STATUT_TONE[r.statut] || 'neutral'} dot>{STATUT_LABEL[r.statut] || r.statut}</Badge>,
+    },
+    {
+      key: 'actions', label: '', width: 140,
+      render: (r) => r.statut === 'en_attente' ? (
         <div className="row gap-2">
-          <Avatar src={r.practitionerPhoto} name={r.practitionerName} size={28} tone={r.practitionerTone} />
-          <span>{r.practitionerName}</span>
+          <button type="button" className="btn btn-soft btn-sm btn-icon" title="Publier" onClick={() => publish(r.id)}>
+            <Icon name="checkCircle" size={15} />
+          </button>
+          <button type="button" className="btn btn-danger-soft btn-sm btn-icon" title="Rejeter" onClick={() => reject(r.id)}>
+            <Icon name="x" size={15} />
+          </button>
         </div>
-      ),
-    },
-    { key: 'rating', label: 'Note', width: 110, sortable: true, render: (r) => <Rating value={r.rating} size={13} /> },
-    {
-      key: 'text', label: 'Extrait',
-      render: (r) => <span className="small" style={{ display: 'block', maxWidth: 360 }}>« {r.text.length > 90 ? r.text.slice(0, 90) + '…' : r.text} »</span>,
-    },
-    { key: 'when', label: 'Reçu', width: 110, render: (r) => <span className="tiny">{r.when}</span> },
-    {
-      key: 'status', label: 'Statut', width: 120,
-      render: (r) => <Badge variant={r.status === 'flagged' ? 'danger' : r.status === 'pending' ? 'warning' : 'success'} dot>{STATUS_LABEL[r.status] || r.status}</Badge>,
-    },
-    {
-      key: 'actions', label: '', width: 60,
-      render: (r) => (
-        <ModalButton modal="moderateReview" payload={{ name: r.author, target: r.practitionerName }} className="btn btn-soft btn-sm btn-icon" title="Modérer">
-          <Icon name="more" size={16} />
-        </ModalButton>
-      ),
+      ) : <span className="tiny muted">— traité</span>,
     },
   ];
 
@@ -64,33 +79,25 @@ export default function AdminReviewsPage() {
     <>
       <PageHead
         title="Modération des avis"
-        subtitle={`${reviews.length} avis · ${flagged} signalé${flagged > 1 ? 's' : ''} à traiter`}
+        subtitle={`${rows.length} avis · ${pending} en attente de modération`}
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Modération', href: '/admin/signalements' }, { label: 'Avis' }]}
-        actions={<ModalButton modal="exportData" className="btn btn-soft btn-sm"><Icon name="download" size={15} /> Exporter</ModalButton>}
       />
 
       <div className="grid grid-3" style={{ marginBottom: 22 }}>
         <div className="card card-pad"><div className="eyebrow">Publiés</div><div className="h-2" style={{ marginTop: 6 }}>{published}</div><div className="small">visibles sur les profils</div></div>
-        <div className="card card-pad"><div className="eyebrow">En attente</div><div className="h-2" style={{ marginTop: 6 }}>{pending}</div><div className="small">à valider</div></div>
-        <div className="card card-pad tint-violet"><div className="eyebrow">Signalés</div><div className="h-2" style={{ marginTop: 6 }}>{flagged}</div><div className="small">priorité de modération</div></div>
+        <div className="card card-pad tint-violet"><div className="eyebrow">En attente</div><div className="h-2" style={{ marginTop: 6 }}>{pending}</div><div className="small">à valider</div></div>
+        <div className="card card-pad"><div className="eyebrow">Rejetés</div><div className="h-2" style={{ marginTop: 6 }}>{rejected}</div><div className="small">sans suite</div></div>
       </div>
-
-      {flagged > 0 && (
-        <div className="note tint-violet" style={{ marginBottom: 20 }}>
-          <div className="row gap-2"><Icon name="flag" size={16} color="var(--danger)" /><strong>Avis signalés en attente.</strong></div>
-          <p className="small" style={{ marginTop: 6 }}>Les avis signalés sont mis en avant ci-dessous. Vérifiez le contexte avant de <span className="serif italic accent">publier, masquer ou supprimer</span>.</p>
-        </div>
-      )}
 
       <DataTable
         columns={columns}
         rows={rows}
-        searchKeys={['author', 'practitionerName', 'text']}
+        searchKeys={['full_name_author', 'avis']}
         filters={[
-          { key: 'status', label: 'Tous les statuts', options: [
-            { value: 'published', label: 'Publié' },
-            { value: 'pending', label: 'En attente' },
-            { value: 'flagged', label: 'Signalé' },
+          { key: 'statut', label: 'Tous les statuts', options: [
+            { value: 'publié', label: 'Publié' },
+            { value: 'en_attente', label: 'En attente' },
+            { value: 'rejeté', label: 'Rejeté' },
           ] },
         ]}
         searchPlaceholder="Rechercher un avis, un auteur…"

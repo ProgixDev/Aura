@@ -2,15 +2,9 @@ import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
 import { ToastButton } from '@/components/ui/ToastButton';
 import { Toggle } from './Toggle';
+import { NotificationsSection } from './NotificationsSection';
 
 export const metadata = { title: 'Paramètres — AURA' };
-
-const NOTIFS = [
-  { label: 'Rappels de séance', desc: 'Un rappel 24h et 1h avant chaque rendez-vous.', on: true },
-  { label: 'Nouveaux messages', desc: 'Soyez averti dès qu\'un praticien vous répond.', on: true },
-  { label: 'Réponses à mes avis', desc: 'Quand un praticien réagit à votre retour.', on: false },
-  { label: 'Newsletter AURA', desc: 'Inspirations, événements et nouveautés, une fois par mois.', on: true },
-];
 
 function Row({ label, desc, on }) {
   return (
@@ -48,14 +42,7 @@ export default function ParametresPage() {
       {/* Notifications */}
       <section className="card card-pad">
         <h2 className="h-3 mb-2">Notifications</h2>
-        <div className="stack" style={{ divideColor: 'var(--line)' }}>
-          {NOTIFS.map((n, i) => (
-            <div key={n.label}>
-              {i > 0 && <div className="divider" />}
-              <Row {...n} />
-            </div>
-          ))}
-        </div>
+        <NotificationsSection />
       </section>
 
       {/* Confidentialité */}
