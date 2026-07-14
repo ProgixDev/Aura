@@ -1,62 +1,50 @@
 'use client';
+import { useQuery } from '@tanstack/react-query';
 import { PageHead } from '@/components/ui/PageHead';
 import { DataTable } from '@/components/ui/DataTable';
 import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
-import { Icon } from '@/components/ui/Icon';
-import { ModalButton } from '@/components/ui/ModalButton';
-import { clients } from '@/lib/data/admin';
-import { euro, dateFr, tone } from '@/lib/format';
+import { api } from '@/lib/api';
+import { dateFr } from '@/lib/format';
 
 export default function AdminClientsPage() {
-  const active = clients.filter((c) => c.status === 'active').length;
-  const totalSpent = clients.reduce((s, c) => s + (c.spent || 0), 0);
-  const totalBookings = clients.reduce((s, c) => s + (c.bookings || 0), 0);
+  const { data, isError } = useQuery({
+    queryKey: ['admin', 'clients'],
+    queryFn: () => api.get('/clients?per_page=100'),
+  });
+  const clients = data?.data ?? [];
 
   const columns = [
-    {
-      key: 'name', label: 'Client', sortable: true,
-      render: (c) => (
-        <div className="row gap-3">
-          <Avatar name={c.name} tone={c.tone} size={36} />
-          <div><div style={{ fontWeight: 500 }}>{c.name}</div><div className="tiny">{c.city}</div></div>
-        </div>
-      ),
-    },
+    { key: 'firstname', label: 'Client', sortable: true, render: (c) => (
+      <div className="row gap-3">
+        <Avatar name={`${c.firstname} ${c.lastname}`} size={36} />
+        <div><div style={{ fontWeight: 500 }}>{c.firstname} {c.lastname}</div><div className="tiny">{c.city}</div></div>
+      </div>
+    ) },
     { key: 'email', label: 'Email', render: (c) => <span className="small">{c.email}</span> },
     { key: 'city', label: 'Ville', sortable: true },
-    { key: 'joined', label: 'Inscrit le', sortable: true, render: (c) => <span className="small">{dateFr(c.joined)}</span> },
-    { key: 'bookings', label: 'Réservations', sortable: true, render: (c) => <span>{c.bookings}</span> },
-    { key: 'spent', label: 'Dépensé', sortable: true, render: (c) => <strong>{euro(c.spent)}</strong> },
-    { key: 'status', label: 'Statut', render: (c) => <Badge variant={tone(c.status)} dot>{c.status}</Badge> },
+    { key: 'created_at', label: 'Inscrit le', sortable: true, render: (c) => <span className="small">{dateFr(c.created_at)}</span> },
   ];
 
   return (
     <>
       <PageHead
         title="Clients"
-        subtitle={`${clients.length} clients · ${active} actifs`}
+        subtitle={`${clients.length} client${clients.length > 1 ? 's' : ''}`}
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Clients' }]}
-        actions={<ModalButton modal="exportData" className="btn btn-primary btn-sm"><Icon name="download" size={15} /> Exporter</ModalButton>}
       />
 
-      <div className="grid grid-3" style={{ marginBottom: 22 }}>
-        <div className="card card-pad"><div className="eyebrow">Comptes</div><div className="h-2" style={{ marginTop: 6 }}>{clients.length}</div><div className="small">{active} actifs</div></div>
-        <div className="card card-pad"><div className="eyebrow">Réservations</div><div className="h-2" style={{ marginTop: 6 }}>{totalBookings}</div><div className="small">toutes périodes confondues</div></div>
-        <div className="card card-pad"><div className="eyebrow">Valeur cumulée</div><div className="h-2" style={{ marginTop: 6 }}>{euro(totalSpent)}</div><div className="small">dépensé par les clients</div></div>
-      </div>
+      {isError && <div className="empty"><div className="glyph">❍</div>Impossible de charger les clients.</div>}
 
-      <DataTable
-        columns={columns}
-        rows={clients}
-        searchKeys={['name', 'email', 'city']}
-        filters={[
-          { key: 'status', label: 'Tous les statuts', options: [{ value: 'active', label: 'Actif' }, { value: 'suspended', label: 'Suspendu' }, { value: 'pending', label: 'En attente' }] },
-        ]}
-        rowHref={(c) => `/admin/client/${c.id}`}
-        searchPlaceholder="Rechercher un client, un email…"
-        pageSize={8}
-      />
+      {!isError && (
+        <DataTable
+          columns={columns}
+          rows={clients}
+          searchKeys={['firstname', 'lastname', 'email', 'city']}
+          rowHref={(c) => `/admin/client/${c.id}`}
+          searchPlaceholder="Rechercher un client, un email…"
+          pageSize={8}
+        />
+      )}
     </>
   );
 }

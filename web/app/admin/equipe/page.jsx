@@ -1,39 +1,74 @@
 'use client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageHead } from '@/components/ui/PageHead';
 import { DataTable } from '@/components/ui/DataTable';
 import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
-import { team } from '@/lib/data/admin';
-import { tone } from '@/lib/format';
-
-const ROLE_TONE = { 'Administrateur': 'verified', 'Modérateur': 'info', 'Support': 'success', 'Comptabilité': 'warning' };
+import { useUI } from '@/lib/store';
+import { useAdminAuth } from '@/lib/admin-auth-store';
+import { api } from '@/lib/api';
+import { dateFr } from '@/lib/format';
 
 export default function TeamPage() {
-  const active = team.filter((u) => u.status === 'active').length;
+  const queryClient = useQueryClient();
+  const toast = useUI((s) => s.toast);
+  const me = useAdminAuth((s) => s.admin);
+  const { data, isError } = useQuery({
+    queryKey: ['admin', 'team'],
+    queryFn: () => api.get('/admin/list?per_page=100'),
+  });
+  const team = data?.data ?? [];
+  const everLoggedIn = team.filter((u) => u.last_login_at).length;
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'team'] });
+
+  const addAdminMutation = useMutation({
+    mutationFn: (values) => api.post('/admin/register', values),
+    onSuccess: () => { invalidate(); toast('Administrateur ajouté', 'success'); },
+  });
+  const deactivateMutation = useMutation({
+    mutationFn: (id) => api.post(`/admin/${id}/deactivate`),
+    onSuccess: () => { invalidate(); toast('Administrateur désactivé', 'success'); },
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id) => api.del(`/admin/${id}`),
+    onSuccess: () => { invalidate(); toast('Administrateur supprimé', 'success'); },
+  });
 
   const columns = [
+    { key: 'name', label: 'Membre', sortable: true, render: (u) => (
+      <div className="row gap-3">
+        <Avatar name={u.name} size={36} />
+        <div><div style={{ fontWeight: 500 }}>{u.name}</div><div className="tiny">{u.email}</div></div>
+      </div>
+    ) },
+    { key: 'last_login_at', label: 'Dernière connexion', sortable: true, render: (u) => <span className="small">{u.last_login_at ? dateFr(u.last_login_at) : 'Jamais connecté'}</span> },
+    { key: 'created_at', label: 'Membre depuis', sortable: true, render: (u) => <span className="small">{dateFr(u.created_at)}</span> },
     {
-      key: 'name', label: 'Membre', sortable: true,
-      render: (u) => (
-        <div className="row gap-3">
-          <Avatar name={u.name} tone={u.tone} size={36} />
-          <div><div style={{ fontWeight: 500 }}>{u.name}</div><div className="tiny">{u.email}</div></div>
-        </div>
-      ),
-    },
-    { key: 'role', label: 'Rôle', sortable: true, render: (u) => <Badge variant={ROLE_TONE[u.role] || 'neutral'}>{u.role}</Badge> },
-    { key: 'status', label: 'Statut', render: (u) => <Badge variant={tone(u.status)} dot>{u.status}</Badge> },
-    { key: 'lastActive', label: 'Dernière activité', render: (u) => <span className="small">{u.lastActive}</span> },
-    {
-      key: 'actions', label: '', width: 120,
-      render: (u) => (
-        <div className="row gap-2" onClick={(e) => e.stopPropagation()}>
-          <ModalButton modal="editRole" payload={{ name: u.name }} className="btn btn-soft btn-sm btn-icon" as="button"><Icon name="edit" size={15} /></ModalButton>
-          <ModalButton modal="suspendUser" payload={{ name: u.name }} className="btn btn-danger-soft btn-sm btn-icon" as="button"><Icon name="shield" size={15} /></ModalButton>
-        </div>
-      ),
+      key: 'actions', label: '', width: 130,
+      render: (u) => {
+        if (me?.id === u.id) return <span className="tiny muted">Vous</span>;
+        return (
+          <div className="row gap-2" onClick={(e) => e.stopPropagation()}>
+            <ModalButton modal="confirm" payload={{
+              title: 'Désactiver cet administrateur', danger: true,
+              message: `${u.name} perdra l'accès à l'administration.`,
+              confirmLabel: 'Désactiver', successToast: null,
+              onConfirm: () => deactivateMutation.mutateAsync(u.id),
+            }} className="btn btn-danger-soft btn-sm btn-icon" as="button" title="Désactiver">
+              <Icon name="shield" size={15} />
+            </ModalButton>
+            <ModalButton modal="confirm" payload={{
+              title: 'Supprimer cet administrateur', danger: true,
+              message: `« ${u.name} » sera définitivement supprimé.`,
+              confirmLabel: 'Supprimer', successToast: null,
+              onConfirm: () => deleteMutation.mutateAsync(u.id),
+            }} className="btn btn-danger-soft btn-sm btn-icon" as="button" title="Supprimer">
+              <Icon name="trash" size={15} />
+            </ModalButton>
+          </div>
+        );
+      },
     },
   ];
 
@@ -41,31 +76,42 @@ export default function TeamPage() {
     <>
       <PageHead
         title="Équipe"
-        subtitle={`${team.length} membres · ${active} actifs`}
+        subtitle={`${team.length} administrateur${team.length > 1 ? 's' : ''}`}
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Équipe' }]}
-        actions={<>
-          <ModalButton modal="invite" className="btn btn-primary btn-sm"><Icon name="plus" size={15} /> Inviter</ModalButton>
-        </>}
+        actions={
+          <ModalButton modal="form" payload={{
+            title: 'Ajouter un administrateur',
+            subtitle: "Crée directement un compte avec ce mot de passe — il n'y a pas de flux d'invitation par email.",
+            submitLabel: 'Créer le compte', successToast: null,
+            fields: [
+              { name: 'name', label: 'Nom', type: 'text', required: true },
+              { name: 'email', label: 'Email', type: 'email', required: true },
+              { name: 'password', label: 'Mot de passe (8 caractères min.)', type: 'password', required: true },
+              { name: 'password_confirmation', label: 'Confirmer le mot de passe', type: 'password', required: true },
+            ],
+            onSubmit: (values) => addAdminMutation.mutateAsync(values),
+          }} className="btn btn-primary btn-sm">
+            <Icon name="plus" size={15} /> Ajouter un administrateur
+          </ModalButton>
+        }
       />
 
-      <div className="grid grid-4" style={{ marginBottom: 22 }}>
-        <div className="card card-pad"><div className="eyebrow">Membres</div><div className="h-2" style={{ marginTop: 6 }}>{team.length}</div><div className="small">{active} actifs</div></div>
-        <div className="card card-pad"><div className="eyebrow">Invitations</div><div className="h-2" style={{ marginTop: 6 }}>{team.filter((u) => u.status === 'invited').length}</div><div className="small">en attente</div></div>
-        <div className="card card-pad"><div className="eyebrow">Modérateurs</div><div className="h-2" style={{ marginTop: 6 }}>{team.filter((u) => u.role === 'Modérateur').length}</div><div className="small">contenus & avis</div></div>
-        <div className="card card-pad"><div className="eyebrow">Rôles</div><div className="h-2" style={{ marginTop: 6 }}>4</div><div className="small"><a className="more" href="/admin/roles">gérer →</a></div></div>
+      <div className="grid grid-2" style={{ marginBottom: 22 }}>
+        <div className="card card-pad"><div className="eyebrow">Membres</div><div className="h-2" style={{ marginTop: 6 }}>{team.length}</div><div className="small">administrateurs actifs</div></div>
+        <div className="card card-pad"><div className="eyebrow">Déjà connectés</div><div className="h-2" style={{ marginTop: 6 }}>{everLoggedIn}</div><div className="small">au moins une fois</div></div>
       </div>
 
-      <DataTable
-        columns={columns}
-        rows={team}
-        searchKeys={['name', 'email', 'role']}
-        filters={[
-          { key: 'role', label: 'Tous les rôles', options: [{ value: 'Administrateur', label: 'Administrateur' }, { value: 'Modérateur', label: 'Modérateur' }, { value: 'Support', label: 'Support' }, { value: 'Comptabilité', label: 'Comptabilité' }] },
-          { key: 'status', label: 'Tous les statuts', options: [{ value: 'active', label: 'Actif' }, { value: 'invited', label: 'Invité' }] },
-        ]}
-        searchPlaceholder="Rechercher un membre…"
-        pageSize={10}
-      />
+      {isError && <div className="empty"><div className="glyph">❍</div>Impossible de charger l'équipe.</div>}
+
+      {!isError && (
+        <DataTable
+          columns={columns}
+          rows={team}
+          searchKeys={['name', 'email']}
+          searchPlaceholder="Rechercher un membre…"
+          pageSize={10}
+        />
+      )}
     </>
   );
 }
