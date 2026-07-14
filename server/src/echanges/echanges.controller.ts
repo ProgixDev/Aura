@@ -10,7 +10,7 @@ import { AdminUpdateEchangeDto } from './dto/admin-update-echange.dto';
 import { ReportEchangeDto } from './dto/report-echange.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ClientGuard } from '../auth/guards/client.guard';
-import { OptionalJwtGuard } from '../auth/guards/optional-jwt.guard';
+import { AdminGuard } from '../auth/guards/admin.guard';
 import { CurrentClient, CurrentUser } from '../auth/decorators';
 import { Client } from '../database/entities/client.entity';
 import { User } from '../database/entities/user.entity';
@@ -70,18 +70,21 @@ export class EchangesController {
     return this.service.destroy(client, id);
   }
 
-  // ---- admin (public in the real Laravel app; OptionalJwtGuard captures acting user if present) ----
+  // ---- admin ----
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Get('statistics')
   adminStatistics() { return this.service.adminStatistics(); }
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Get()
   adminIndex(@Query() query: Record<string, any>) { return this.service.adminIndex(query); }
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Get(':id')
   adminShow(@Param('id', ParseIntPipe) id: number) { return this.service.adminShow(id); }
 
-  @UseGuards(OptionalJwtGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Put(':id')
   adminUpdate(
     @Param('id', ParseIntPipe) id: number,
@@ -91,7 +94,7 @@ export class EchangesController {
     return this.service.adminUpdate(id, dto, user);
   }
 
-  @UseGuards(OptionalJwtGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Patch(':id')
   adminPatch(
     @Param('id', ParseIntPipe) id: number,
@@ -101,11 +104,12 @@ export class EchangesController {
     return this.service.adminUpdate(id, dto, user);
   }
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(200)
   @Post(':id/hide')
   adminHide(@Param('id', ParseIntPipe) id: number) { return this.service.adminHide(id); }
 
-  @UseGuards(OptionalJwtGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(200)
   @Post(':id/report')
   adminReport(
@@ -116,6 +120,7 @@ export class EchangesController {
     return this.service.adminReport(id, dto, user);
   }
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Delete(':id')
   adminDestroy(@Param('id', ParseIntPipe) id: number) { return this.service.adminDestroy(id); }
 }

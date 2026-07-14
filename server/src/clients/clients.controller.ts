@@ -1,11 +1,14 @@
-import { Controller, Get, Query, Req } from '@nestjs/common';
+import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import type { Request } from 'express';
 import { Client } from '../database/entities/client.entity';
 import { success } from '../common/envelope';
 import { parsePagination, paginateQb, paginationUrls } from '../common/pagination';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '../auth/guards/admin.guard';
 
+@UseGuards(JwtAuthGuard, AdminGuard)
 @Controller('clients')
 export class ClientsController {
   constructor(@InjectRepository(Client) private readonly clients: Repository<Client>) {}

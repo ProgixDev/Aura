@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { createTestApp } from './utils/create-test-app';
+import { createTestApp, seedAdmin } from './utils/create-test-app';
 import { ClientsModule } from '../src/clients/clients.module';
 import { PraticiensModule } from '../src/praticiens/praticiens.module';
 import { Client } from '../src/database/entities/client.entity';
@@ -10,8 +10,10 @@ import { Praticien } from '../src/database/entities/praticien.entity';
 describe('clients + praticiens listing', () => {
   let app: INestApplication;
   let praticienId: number;
+  let adminToken: string;
   beforeAll(async () => {
     app = await createTestApp({ imports: [ClientsModule, PraticiensModule] });
+    adminToken = (await seedAdmin(app, 'listing-admin@aura.io')).token;
     const ds = app.get(DataSource);
     await ds.getRepository(Client).save([
       { firstname: 'C1', lastname: 'L', email: 'c1@x.io', city: 'Paris' },
@@ -28,7 +30,10 @@ describe('clients + praticiens listing', () => {
   const http = () => request(app.getHttpServer());
 
   it('GET /api/clients paginates with default per_page 10', async () => {
-    const res = await http().get('/api/clients?per_page=1&page=2').expect(200);
+    const res = await http()
+      .get('/api/clients?per_page=1&page=2')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
     expect(res.body.pagination).toMatchObject({ current_page: 2, per_page: 1, total: 2 });
     expect(res.body.data).toHaveLength(1);
   });
