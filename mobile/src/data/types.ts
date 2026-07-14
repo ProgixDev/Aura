@@ -45,6 +45,23 @@ export interface Circle {
   animateur: string | null;
 }
 
+export interface Article {
+  id: string;
+  slug: string;
+  titre: string;
+  categorie: string;
+  tonalite: string;
+  extrait: string;
+  corps: string;
+  status: string;
+  auteur: string;
+  temps_lecture: number;
+  image_couverture: string | null;
+  meta_description: string | null;
+  mot_clef: string | null;
+  date_publication: string | null;
+}
+
 export interface Event {
   id: string;
   title: string;

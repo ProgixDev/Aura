@@ -17,6 +17,7 @@ import type {
   ChatMessage,
   Review,
   Circle,
+  Article,
 } from '../types';
 
 const delay = <T>(value: T, ms = 60): Promise<T> =>
@@ -108,6 +109,25 @@ export function mapCircle(row: any): Circle {
   };
 }
 
+export function mapArticle(row: any): Article {
+  return {
+    id: String(row.id),
+    slug: row.slug,
+    titre: row.titre,
+    categorie: row.categorie,
+    tonalite: row.tonalite,
+    extrait: row.extrait,
+    corps: row.corps,
+    status: row.status,
+    auteur: row.auteur,
+    temps_lecture: row.temps_lecture,
+    image_couverture: row.image_couverture,
+    meta_description: row.meta_description,
+    mot_clef: row.mot_clef,
+    date_publication: row.date_publication,
+  };
+}
+
 // ---------- Practitioners ----------
 export const practitionerRepo = {
   list: (): Promise<Practitioner[]> =>
@@ -146,6 +166,16 @@ export const cercleRepo = {
     api.get<{ data: any[] }>('/cercles?per_page=50').then((res) => res.data.map(mapCircle)),
   byId: (id: string): Promise<Circle | undefined> =>
     api.get<{ data: any }>(`/cercles/${id}`).then((res) => mapCircle(res.data)).catch(() => undefined),
+};
+
+// ---------- Articles ----------
+export const articleRepo = {
+  list: (): Promise<Article[]> =>
+    api.get<{ data: any[] }>('/articles?status=publié&per_page=50').then((res) => res.data.map(mapArticle)),
+  bySlug: (slug: string): Promise<Article | undefined> =>
+    api
+      .get<{ data: any[] }>(`/articles?slug=${encodeURIComponent(slug)}&per_page=1`)
+      .then((res) => (res.data[0] ? mapArticle(res.data[0]) : undefined)),
 };
 
 // ---------- Exchanges ----------
