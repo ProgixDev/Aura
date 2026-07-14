@@ -1,18 +1,15 @@
 /**
  * Repository layer — every screen reads through these functions.
- * Frontend-only build: all reads are served from the in-memory mock data
- * in `src/data/mock/*`. If a backend is ever added, replace the body of each
- * function — screens never need to change.
+ * disciplineRepo and practitionerRepo now call the real backend via the api
+ * client; screens never need to change. exchangeRepo and messageRepo still
+ * read from in-memory mocks (out of scope for this plan). eventRepo is
+ * wired in a later task of this same plan.
  */
-import { practitionersMock, reviewsMock } from '../mock/practitioners';
-import { disciplinesMock } from '../mock/disciplines';
 import { eventsMock } from '../mock/events';
 import { exchangesMock } from '../mock/exchanges';
 import { conversationsMock, sampleChat } from '../mock/messages';
-import {
-  practitionerImages,
-  disciplineImageSource,
-} from '../images';
+import { disciplineImageSource } from '../images';
+import { api } from '../api/client';
 import type {
   Practitioner,
   Discipline,
@@ -20,49 +17,79 @@ import type {
   Exchange,
   Conversation,
   ChatMessage,
+  Review,
 } from '../types';
 
 const delay = <T>(value: T, ms = 60): Promise<T> =>
   new Promise((r) => setTimeout(() => r(value), ms));
 
-// Attach registry images onto the plain mock objects.
-const withImages = (p: Practitioner): Practitioner => {
-  const imgs = practitionerImages[p.id];
-  if (!imgs) return p;
-  return { ...p, photo: imgs.avatar, hero: imgs.hero, gallery: imgs.gallery };
-};
+// ---------- Adapters: raw backend rows -> existing UI shapes ----------
+// Real fields map directly; fields with no backend source (photo, rating,
+// online status, per-item accent colour…) get an honest neutral default
+// instead of invented data. See the plan's Architecture notes.
+const DEFAULT_GRADIENT = ['#C4B0E8', '#A8C8E8'] as const;
+const DEFAULT_TONE: Discipline['tone'] = 'violet';
 
-const decoratedPractitioners = practitionersMock.map(withImages);
+export function mapPraticien(row: any): Practitioner {
+  return {
+    id: String(row.id),
+    name: `${row.firstname} ${row.lastname}`.trim(),
+    specialties: row.specialite ? [row.specialite] : [],
+    city: row.ville,
+    mode: row.mode,
+    price: Number(row.tarif),
+    rating: 0,
+    reviews: 0,
+    level: row.niveau,
+    verified: row.statut_verification === 'valide',
+    online: false,
+    novice: false,
+    bio: row.bio,
+    gradient: DEFAULT_GRADIENT,
+    // `sessions` has no backend source; the one consumer (praticien/[id].tsx)
+    // already reads it as `p.experience?.sessions ?? 600`, so omitting it
+    // here (rather than inventing a count) is safe.
+    experience: { years: row.experience } as Practitioner['experience'],
+    photo: undefined,
+    hero: undefined,
+    gallery: [],
+  };
+}
 
-const withDisciplineImage = (d: Discipline): Discipline => ({
-  ...d,
-  heroImage: disciplineImageSource(d.slug),
-});
-
-const decoratedDisciplines = disciplinesMock.map(withDisciplineImage);
+export function mapDiscipline(row: any): Discipline {
+  return {
+    slug: row.slug,
+    name: row.nom,
+    tone: DEFAULT_TONE,
+    glyph: row.glyphe,
+    count: 0,
+    intro: row.accroche,
+    pullQuote: undefined,
+    heroImage: disciplineImageSource(row.slug),
+  };
+}
 
 // ---------- Practitioners ----------
 export const practitionerRepo = {
-  list: (): Promise<Practitioner[]> => delay(decoratedPractitioners),
+  list: (): Promise<Practitioner[]> =>
+    api.get<{ data: any[] }>('/praticiens').then((res) => res.data.map(mapPraticien)),
   byId: (id: string): Promise<Practitioner | undefined> =>
-    delay(decoratedPractitioners.find((p) => p.id === id)),
+    api.get<{ data: any }>(`/praticiens/${id}`).then((res) => mapPraticien(res.data)).catch(() => undefined),
   byDiscipline: (disciplineName: string): Promise<Practitioner[]> =>
-    delay(
-      decoratedPractitioners.filter((p) =>
-        p.specialties.includes(disciplineName)
-      )
-    ),
+    practitionerRepo.list().then((list) => list.filter((p) => p.specialties.includes(disciplineName))),
   recommended: (): Promise<Practitioner[]> =>
-    delay(decoratedPractitioners.slice(0, 4)),
-  reviewsFor: (practitionerId: string) =>
-    delay(reviewsMock.filter((r) => r.practitionerId === practitionerId)),
+    practitionerRepo.list().then((list) => list.slice(0, 4)),
+  // No reviews backend yet — Plan 07 builds the `avis` module. Return an
+  // honest empty list rather than calling an endpoint that doesn't exist.
+  reviewsFor: (_practitionerId: string): Promise<Review[]> => Promise.resolve([]),
 };
 
 // ---------- Disciplines ----------
 export const disciplineRepo = {
-  list: (): Promise<Discipline[]> => delay(decoratedDisciplines),
+  list: (): Promise<Discipline[]> =>
+    api.get<{ data: any[] }>('/disciplines').then((res) => res.data.map(mapDiscipline)),
   bySlug: (slug: string): Promise<Discipline | undefined> =>
-    delay(decoratedDisciplines.find((d) => d.slug === slug)),
+    disciplineRepo.list().then((list) => list.find((d) => d.slug === slug)),
 };
 
 // ---------- Events ----------
