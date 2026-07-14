@@ -87,6 +87,7 @@ export default function RootLayout() {
             <Stack.Screen name="exchange/[id]" />
             <Stack.Screen name="exchange/create" options={{ presentation: 'modal' }} />
             <Stack.Screen name="payment-history" />
+            <Stack.Screen name="refund-request" options={{ presentation: 'modal', title: 'Remboursement' }} />
             <Stack.Screen name="cercles/index" />
             <Stack.Screen name="cercles/[id]" />
             <Stack.Screen name="blog/index" />
