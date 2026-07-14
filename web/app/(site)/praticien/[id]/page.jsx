@@ -10,8 +10,8 @@ import { Rating } from '@/components/ui/Rating';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { ModalButton } from '@/components/ui/ModalButton';
-import { ToastButton } from '@/components/ui/ToastButton';
 import { ProfileBody } from './ProfileBody';
+import FavoriteButton from './FavoriteButton';
 
 export default function PractitionerProfilePage({ params }) {
   const { id } = use(params);
@@ -20,6 +20,19 @@ export default function PractitionerProfilePage({ params }) {
     queryKey: ['praticien', id],
     queryFn: () => api.get(`/praticiens/${id}`),
   });
+  // Real avis count/average — fetched here too (not just inside ProfileBody)
+  // so the hero stat strip shows the same real numbers as the reviews tab.
+  // Same ['avis', id] key as ProfileBody's own query, so React Query serves
+  // both from one shared cache entry rather than firing two requests.
+  const { data: avisRes } = useQuery({
+    queryKey: ['avis', id],
+    queryFn: () => api.get(`/avis?praticien_id=${id}`),
+  });
+  const avisList = avisRes?.data ?? [];
+  const reviewCount = avisList.length;
+  const avgNote = reviewCount
+    ? Math.round((avisList.reduce((sum, a) => sum + a.note, 0) / reviewCount) * 10) / 10
+    : 0;
 
   if (!isLoading && !data?.data) {
     return (
@@ -35,9 +48,6 @@ export default function PractitionerProfilePage({ params }) {
   if (!data?.data) return null;
 
   const p = mapPraticien(data.data);
-  // No reviews backend yet (Plan 07 builds the `avis` module) — real empty
-  // state, not a fake call to a nonexistent endpoint.
-  const reviews = [];
   const specChips = [...p.specialties, ...(p.extraSpecialty ? [p.extraSpecialty] : [])];
 
   return (
@@ -67,16 +77,7 @@ export default function PractitionerProfilePage({ params }) {
               <Icon name="arrowLeft" size={18} />
             </Link>
             <div className="row gap-2">
-              <ToastButton
-                toggle
-                message="Retiré des favoris"
-                activeMessage="Ajouté aux favoris"
-                className="btn btn-icon"
-                style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(6px)' }}
-                activeChildren={<Icon name="heart" size={18} color="var(--violet-2)" />}
-              >
-                <Icon name="heart" size={18} />
-              </ToastButton>
+              <FavoriteButton praticienId={p.id} style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(6px)' }} />
               <ModalButton
                 modal="report"
                 payload={{ name: p.name }}
@@ -124,7 +125,7 @@ export default function PractitionerProfilePage({ params }) {
           {/* STAT STRIP */}
           <div className="divider" />
           <div className="row gap-6 wrap" style={{ marginTop: 16, alignItems: 'center' }}>
-            <Rating value={p.rating} count={p.reviews} showCount size={16} />
+            <Rating value={avgNote} count={reviewCount} showCount size={16} />
             <span className="price" style={{ fontSize: 22 }}>
               {p.price}€<small>/séance</small>
             </span>
@@ -137,7 +138,7 @@ export default function PractitionerProfilePage({ params }) {
         <div className="container">
           <div className="grid" style={{ gridTemplateColumns: 'minmax(0,1fr) 320px', gap: 40, alignItems: 'start' }}>
             <div>
-              <ProfileBody p={p} reviews={reviews} />
+              <ProfileBody p={p} id={id} />
             </div>
 
             {/* BOOKING RAIL */}

@@ -30,7 +30,7 @@ export const MODAL_REGISTRY = {
     fields={[{ name: 'reason', label: 'Motif', type: 'select', options: ['Contenu inapproprié', 'Comportement déplacé', 'Fausse information', 'Tentative de paiement hors plateforme', 'Autre'], required: true }, { name: 'details', label: 'Détails', type: 'textarea', placeholder: 'Décrivez la situation…' }]}
     submitLabel="Envoyer le signalement" successToast="Signalement transmis à la modération" {...p} />,
   review: (p) => <FormModal title="Laisser un avis" subtitle={p?.name ? `Votre expérience avec ${p.name}` : undefined}
-    fields={[{ name: 'rating', label: 'Note', type: 'rating' }, { name: 'mode', label: 'Modalité', type: 'select', options: ['Séance présentiel', 'Visio'] }, { name: 'text', label: 'Votre avis', type: 'textarea', placeholder: 'Partagez votre ressenti…', required: true }]}
+    fields={[{ name: 'rating', label: 'Note', type: 'rating' }, { name: 'text', label: 'Votre avis', type: 'textarea', placeholder: 'Partagez votre ressenti…', required: true }]}
     submitLabel="Publier l'avis" successToast="Merci, votre avis sera publié après vérification" {...p} />,
   gift: (p) => <FormModal title="Offrir une carte cadeau" subtitle="Un soin à offrir, sans date d'expiration."
     fields={[{ name: 'amount', label: 'Montant', type: 'select', options: ['50 €', '75 €', '100 €', '150 €'], required: true }, { name: 'to', label: 'Destinataire', type: 'text', placeholder: 'Prénom' }, { name: 'email', label: 'Email du destinataire', type: 'email' }, { name: 'note', label: 'Petit mot', type: 'textarea' }]}

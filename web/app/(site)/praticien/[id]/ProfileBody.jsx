@@ -1,10 +1,13 @@
 'use client';
 
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Tabs } from '@/components/ui/Tabs';
 import { Avatar } from '@/components/ui/Avatar';
 import { Rating } from '@/components/ui/Rating';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
+import { api } from '@/lib/api';
+import { dateFr } from '@/lib/format';
 
 const GALLERY_TONES = ['violet', 'sky', 'sage'];
 
@@ -27,10 +30,23 @@ function ExchangePanel({ p }) {
   );
 }
 
-export function ProfileBody({ p, reviews }) {
+export function ProfileBody({ p, id }) {
+  const queryClient = useQueryClient();
+  // Same ['avis', id] query key page.jsx uses for the hero stat strip — one
+  // shared cache entry, not a second network request.
+  const { data: avisRes } = useQuery({
+    queryKey: ['avis', id],
+    queryFn: () => api.get(`/avis?praticien_id=${id}`),
+  });
+  const reviews = avisRes?.data ?? [];
+  const reviewCount = reviews.length;
+  const avgNote = reviewCount
+    ? Math.round((reviews.reduce((sum, r) => sum + r.note, 0) / reviewCount) * 10) / 10
+    : 0;
+
   const tabs = [
     { key: 'about', label: 'À propos' },
-    { key: 'reviews', label: `Avis (${p.reviews})` },
+    { key: 'reviews', label: `Avis (${reviewCount})` },
     { key: 'exchange', label: 'Échanges' },
   ];
 
@@ -102,10 +118,25 @@ export function ProfileBody({ p, reviews }) {
             <div className="stack gap-4" style={{ marginTop: 26 }}>
               <div className="between">
                 <div className="row gap-3" style={{ alignItems: 'baseline' }}>
-                  <span className="serif" style={{ fontSize: 30, color: 'var(--violet-2)' }}>{p.rating}</span>
-                  <Rating value={p.rating} count={p.reviews} showCount />
+                  <span className="serif" style={{ fontSize: 30, color: 'var(--violet-2)' }}>{avgNote}</span>
+                  <Rating value={avgNote} count={reviewCount} showCount />
                 </div>
-                <ModalButton modal="review" payload={{ name: p.name }} className="btn btn-soft btn-sm" as="button">
+                <ModalButton
+                  modal="review"
+                  payload={{
+                    name: p.name,
+                    onSubmit: async (values) => {
+                      await api.post('/client/avis', {
+                        praticien_id: p.id,
+                        note: Number(values.rating) || 5,
+                        avis: values.text,
+                      });
+                      await queryClient.invalidateQueries({ queryKey: ['avis', id] });
+                    },
+                  }}
+                  className="btn btn-soft btn-sm"
+                  as="button"
+                >
                   <Icon name="edit" size={14} /> Laisser un avis
                 </ModalButton>
               </div>
@@ -116,17 +147,16 @@ export function ProfileBody({ p, reviews }) {
                 reviews.map((r) => (
                   <div key={r.id} className="card card-pad">
                     <div className="row gap-3" style={{ alignItems: 'flex-start' }}>
-                      <Avatar name={r.author} size={44} />
+                      <Avatar name={r.full_name_author} size={44} />
                       <div className="flex-1">
                         <div className="between">
-                          <div className="h-4">{r.author}</div>
-                          <span className="tiny muted">{r.when}</span>
+                          <div className="h-4">{r.full_name_author}</div>
+                          <span className="tiny muted">{dateFr(r.date_ajout)}</span>
                         </div>
                         <div className="row gap-2" style={{ margin: '4px 0 10px' }}>
-                          <Rating value={r.rating} size={13} showCount={false} />
-                          <span className="tiny muted">· {r.mode}</span>
+                          <Rating value={r.note} size={13} showCount={false} />
                         </div>
-                        <p className="body">{r.text}</p>
+                        <p className="body">{r.avis}</p>
                       </div>
                     </div>
                   </div>
