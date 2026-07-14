@@ -33,6 +33,18 @@ describe('articles', () => {
     expect(res.body.pagination).toHaveProperty('next_page_url');
   });
 
+  it('index filters by slug', async () => {
+    const first = await http().post('/api/articles/create-article')
+      .send({ ...base, titre: 'Cible Slug' }).expect(201);
+    const targetSlug = first.body.data.slug;
+    await http().post('/api/articles/create-article')
+      .send({ ...base, titre: 'Un Autre Article Plus Recent' }).expect(201);
+
+    const res = await http().get(`/api/articles?slug=${targetSlug}&per_page=1`).expect(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].slug).toBe(targetSlug);
+  });
+
   it('update regenerates slug on titre change; publish/archive transitions', async () => {
     const created = await http().post('/api/articles/create-article')
       .send({ ...base, titre: 'Titre Original' }).expect(201);

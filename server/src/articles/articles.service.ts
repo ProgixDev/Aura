@@ -33,6 +33,7 @@ export class ArticlesService {
     const qb = this.articles.createQueryBuilder('a');
     if (query.status !== undefined) qb.andWhere('a.status = :status', { status: query.status });
     if (query.categorie !== undefined) qb.andWhere('a.categorie = :cat', { cat: query.categorie });
+    if (query.slug !== undefined) qb.andWhere('a.slug = :slug', { slug: query.slug });
     qb.orderBy('a.created_at', 'DESC');
     const { data, pagination, lastPage } = await paginateQb(qb, page, perPage);
     return success(data, undefined, {
