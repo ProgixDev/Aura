@@ -1,28 +1,57 @@
+'use client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageHead } from '@/components/ui/PageHead';
-import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
-import { disciplines } from '@/lib/data/disciplines';
+import { useUI } from '@/lib/store';
+import { api } from '@/lib/api';
+
+const TONES = ['violet', 'sky', 'sage', 'gold'];
+
+const FIELDS = [
+  { name: 'nom', label: 'Nom', type: 'text', required: true },
+  { name: 'tonalite', label: 'Tonalité', type: 'select', options: TONES, required: true },
+  { name: 'glyphe', label: 'Glyphe', type: 'text', placeholder: '☾', required: true },
+  { name: 'accroche', label: 'Accroche', type: 'text', required: true },
+];
 
 export default function AdminDisciplinesPage() {
-  const total = disciplines.reduce((s, d) => s + d.count, 0);
+  const queryClient = useQueryClient();
+  const toast = useUI((s) => s.toast);
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['admin', 'disciplines'],
+    queryFn: () => api.get('/disciplines'),
+  });
+  const disciplines = data?.data ?? [];
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'disciplines'] });
+
+  const createMutation = useMutation({
+    mutationFn: (values) => api.post('/disciplines/create-discipline', values),
+    onSuccess: () => { invalidate(); toast('Discipline créée', 'success'); },
+  });
+  const updateMutation = useMutation({
+    mutationFn: ({ id, values }) => api.put(`/disciplines/${id}`, values),
+    onSuccess: () => { invalidate(); toast('Discipline mise à jour', 'success'); },
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id) => api.del(`/disciplines/${id}`),
+    onSuccess: () => { invalidate(); toast('Discipline supprimée', 'success'); },
+  });
 
   return (
     <>
       <PageHead
         title="Disciplines"
-        subtitle={`${disciplines.length} disciplines · ${total} praticiens référencés`}
+        subtitle={`${disciplines.length} discipline${disciplines.length > 1 ? 's' : ''}`}
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Disciplines' }]}
         actions={
           <ModalButton
-            modal="editField"
-            payload={{ title: 'Nouvelle discipline', fields: [
-              { name: 'name', label: 'Nom', type: 'text', required: true },
-              { name: 'slug', label: 'Slug', type: 'text', required: true },
-              { name: 'tone', label: 'Tonalité', type: 'select', options: ['violet', 'sky', 'sage', 'gold'] },
-              { name: 'glyph', label: 'Glyphe', type: 'text' },
-              { name: 'tagline', label: 'Accroche', type: 'text' },
-            ] }}
+            modal="form"
+            payload={{
+              title: 'Nouvelle discipline', fields: FIELDS,
+              submitLabel: 'Créer', successToast: null,
+              onSubmit: (values) => createMutation.mutateAsync(values),
+            }}
             className="btn btn-primary btn-sm"
           >
             <Icon name="plus" size={15} /> Ajouter une discipline
@@ -30,45 +59,49 @@ export default function AdminDisciplinesPage() {
         }
       />
 
-      <div className="grid grid-3" style={{ marginBottom: 22 }}>
-        <div className="card card-pad"><div className="eyebrow">Disciplines</div><div className="h-2" style={{ marginTop: 6 }}>{disciplines.length}</div><div className="small">catégories actives</div></div>
-        <div className="card card-pad"><div className="eyebrow">Praticiens</div><div className="h-2" style={{ marginTop: 6 }}>{total}</div><div className="small">tous domaines confondus</div></div>
-        <div className="card card-pad">
-          <div className="eyebrow">La plus suivie</div>
-          <div className="h-3" style={{ marginTop: 8 }}>{[...disciplines].sort((a, b) => b.count - a.count)[0].name}</div>
-          <div className="small">{[...disciplines].sort((a, b) => b.count - a.count)[0].count} praticiens</div>
-        </div>
-      </div>
+      {isLoading && <div className="empty"><div className="glyph">❍</div>Chargement…</div>}
+      {isError && <div className="empty"><div className="glyph">❍</div>Impossible de charger les disciplines.</div>}
 
-      <div className="grid grid-3">
-        {disciplines.map((d) => (
-          <div key={d.slug} className="card card-pad card-hover">
-            <div className="between" style={{ alignItems: 'flex-start' }}>
-              <div className={`tile-icon glyph-${d.tone}`} style={{ fontSize: 22 }}>{d.glyph}</div>
-              <Badge variant="neutral">{d.count} praticiens</Badge>
+      {!isLoading && !isError && (
+        <div className="grid grid-3">
+          {disciplines.map((d) => (
+            <div key={d.id} className="card card-pad card-hover">
+              <div className={`tile-icon glyph-${d.tonalite}`} style={{ fontSize: 22 }}>{d.glyphe}</div>
+              <h3 className="h-3" style={{ marginTop: 14 }}>{d.nom}</h3>
+              <p className="small" style={{ marginTop: 6, minHeight: 38 }}>{d.accroche}</p>
+              <div className="row gap-2" style={{ marginTop: 14 }}>
+                <ModalButton
+                  modal="form"
+                  payload={{
+                    title: `Modifier « ${d.nom} »`,
+                    fields: FIELDS.map((f) => ({ ...f, value: d[f.name] })),
+                    submitLabel: 'Enregistrer', successToast: null,
+                    onSubmit: (values) => updateMutation.mutateAsync({ id: d.id, values }),
+                  }}
+                  className="btn btn-soft btn-sm flex-1"
+                >
+                  <Icon name="edit" size={14} /> Modifier
+                </ModalButton>
+                <ModalButton
+                  modal="confirm"
+                  payload={{
+                    title: 'Supprimer la discipline',
+                    message: `« ${d.nom} » sera définitivement supprimée.`,
+                    confirmLabel: 'Supprimer', danger: true, successToast: null,
+                    onConfirm: () => deleteMutation.mutateAsync(d.id),
+                  }}
+                  className="btn btn-danger-soft btn-sm btn-icon" title="Supprimer"
+                >
+                  <Icon name="trash" size={14} />
+                </ModalButton>
+              </div>
             </div>
-            <h3 className="h-3" style={{ marginTop: 14 }}>{d.name}</h3>
-            <p className="small" style={{ marginTop: 6, minHeight: 38 }}>{d.tagline}</p>
-            <div className="row gap-2" style={{ marginTop: 14 }}>
-              <ModalButton
-                modal="editField"
-                payload={{ title: `Modifier « ${d.name} »`, fields: [
-                  { name: 'name', label: 'Nom', type: 'text' },
-                  { name: 'tone', label: 'Tonalité', type: 'select', options: ['violet', 'sky', 'sage', 'gold'] },
-                  { name: 'tagline', label: 'Accroche', type: 'text' },
-                  { name: 'intro', label: 'Introduction', type: 'textarea' },
-                ] }}
-                className="btn btn-soft btn-sm flex-1"
-              >
-                <Icon name="edit" size={14} /> Modifier
-              </ModalButton>
-              <ModalButton modal="deleteItem" payload={{ title: d.name }} className="btn btn-danger-soft btn-sm btn-icon" title="Supprimer">
-                <Icon name="trash" size={14} />
-              </ModalButton>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+          {disciplines.length === 0 && (
+            <div className="empty"><div className="glyph">❍</div>Aucune discipline pour l'instant.</div>
+          )}
+        </div>
+      )}
     </>
   );
 }
