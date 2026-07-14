@@ -1,9 +1,11 @@
+'use client';
+
+import { use } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { events, getEvent } from '@/lib/data/events';
-import { getPractitioner } from '@/lib/data/practitioners';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { mapEvent } from '@/lib/data/event-adapter';
 import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
 
@@ -14,25 +16,36 @@ const ORB = {
   gold: ['#E4C896', '#C49A4A'],
 };
 
-export function generateStaticParams() {
-  return events.map((e) => ({ id: e.id }));
-}
+export default function EvenementPage({ params }) {
+  const { id } = use(params);
 
-export async function generateMetadata({ params }) {
-  const { id } = await params;
-  const e = getEvent(id);
-  if (!e) return { title: 'Événement — Aura' };
-  return { title: `${e.title} — Aura`, description: e.description.split('\n')[0] };
-}
+  const { data, isLoading } = useQuery({
+    queryKey: ['event', id],
+    queryFn: () => api.get(`/events/${id}`),
+  });
 
-export default async function EvenementPage({ params }) {
-  const { id } = await params;
-  const e = getEvent(id);
-  if (!e) notFound();
+  if (!isLoading && !data?.data) {
+    return (
+      <section className="section">
+        <div className="container-narrow center">
+          <h1 className="h-1">Événement introuvable</h1>
+          <p className="lead muted" style={{ marginBottom: 20 }}>Cet événement n’existe pas ou a été déplacé.</p>
+          <Link href="/evenements" className="btn btn-primary">Retour à l’agenda</Link>
+        </div>
+      </section>
+    );
+  }
+  if (!data?.data) return null;
 
+  const e = mapEvent(data.data);
+  const hosts = (data.data.animateurs || []).map((a) => ({
+    id: a.id,
+    name: `${a.firstname} ${a.lastname}`.trim(),
+    verified: a.statut_verification === 'valide',
+    specialties: a.specialite ? [a.specialite] : [],
+  }));
   const [orb1, orb2] = ORB[e.tone] || ORB.violet;
-  const hosts = (e.hostIds || []).map((hid) => getPractitioner(hid)).filter(Boolean);
-  const paras = e.description.split('\n').filter((p) => p.trim());
+  const paras = (e.description || '').split('\n').filter((p) => p.trim());
   const shareUrl = `https://aura.fr/evenement/${e.id}`;
 
   return (
@@ -51,8 +64,8 @@ export default async function EvenementPage({ params }) {
           <span className="badge featured" style={{ marginBottom: 18 }}>{e.kind}</span>
           <h1 className="h-display" style={{ color: '#fff', margin: '0 0 20px', maxWidth: 720 }}>{e.title}</h1>
           <div className="row gap-6 wrap" style={{ color: 'rgba(255,255,255,0.82)' }}>
-            <span className="row gap-2"><Icon name="calendar" size={16} color="rgba(255,255,255,0.7)" />{e.meta?.dates || e.when}</span>
-            <span className="row gap-2"><Icon name="pin" size={16} color="rgba(255,255,255,0.7)" />{e.meta?.place || e.where}</span>
+            <span className="row gap-2"><Icon name="calendar" size={16} color="rgba(255,255,255,0.7)" />{e.meta.dates}</span>
+            <span className="row gap-2"><Icon name="pin" size={16} color="rgba(255,255,255,0.7)" />{e.meta.place}</span>
             <span className="row gap-2"><Icon name="ticket" size={16} color="rgba(255,255,255,0.7)" />{e.price}</span>
           </div>
         </div>
@@ -72,25 +85,6 @@ export default async function EvenementPage({ params }) {
                 ))}
               </div>
 
-              {/* Programme */}
-              {e.program?.length > 0 && (
-                <div>
-                  <span className="eyebrow">Au programme</span>
-                  <h2 className="h-3" style={{ margin: '8px 0 20px' }}>Le déroulé</h2>
-                  <div className="stack" style={{ gap: 0 }}>
-                    {e.program.map((step, i) => (
-                      <div key={i} className="row gap-4" style={{ alignItems: 'flex-start', padding: '16px 0', borderTop: i ? '1px solid var(--line)' : 'none' }}>
-                        <span className="serif italic accent" style={{ fontSize: 18, minWidth: 78, flexShrink: 0 }}>{step.time}</span>
-                        <div className="flex-1">
-                          <div style={{ fontWeight: 500 }}>{step.title}</div>
-                          {step.detail && <div className="small muted" style={{ marginTop: 2 }}>{step.detail}</div>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Hosts */}
               {hosts.length > 0 && (
                 <div>
@@ -99,7 +93,7 @@ export default async function EvenementPage({ params }) {
                   <div className="grid grid-2">
                     {hosts.map((h) => (
                       <Link key={h.id} href={`/praticien/${h.id}`} className="card card-pad card-hover row gap-3" style={{ alignItems: 'center' }}>
-                        <Avatar src={h.photo} name={h.name} tone={h.tone} size={52} online={h.online} />
+                        <Avatar name={h.name} size={52} />
                         <div className="flex-1">
                           <div className="row gap-1" style={{ fontWeight: 500 }}>
                             {h.name}
@@ -120,7 +114,7 @@ export default async function EvenementPage({ params }) {
                   <div className="row gap-3" style={{ alignItems: 'center' }}>
                     <span className="tile-icon tint-sky"><Icon name="pin" size={18} color="var(--sky-2, #5B7FB8)" /></span>
                     <div>
-                      <div style={{ fontWeight: 500 }}>{e.meta?.place || e.where}</div>
+                      <div style={{ fontWeight: 500 }}>{e.meta.place}</div>
                       <div className="small muted">Lieu communiqué après réservation</div>
                     </div>
                   </div>
@@ -136,13 +130,11 @@ export default async function EvenementPage({ params }) {
               <div className="card card-pad">
                 <div className="row between" style={{ alignItems: 'baseline', marginBottom: 16 }}>
                   <span className="price" style={{ fontSize: 26 }}>{e.price}</span>
-                  {e.seatsLeft <= 5 && <Badge variant="warning">{e.seatsLeft} places restantes</Badge>}
                 </div>
                 <dl className="dl" style={{ marginBottom: 18 }}>
-                  <dt>Dates</dt><dd>{e.meta?.dates || e.when}</dd>
-                  <dt>Lieu</dt><dd>{e.meta?.place || e.where}</dd>
+                  <dt>Dates</dt><dd>{e.meta.dates}</dd>
+                  <dt>Lieu</dt><dd>{e.meta.place}</dd>
                   <dt>Capacité</dt><dd>{e.seats} participants</dd>
-                  <dt>Disponibilité</dt><dd>{e.seatsLeft} place{e.seatsLeft > 1 ? 's' : ''} libre{e.seatsLeft > 1 ? 's' : ''}</dd>
                 </dl>
                 <ModalButton
                   modal="form"

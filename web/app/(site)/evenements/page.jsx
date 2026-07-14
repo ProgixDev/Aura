@@ -1,17 +1,22 @@
+'use client';
+
 import Link from 'next/link';
-import { events } from '@/lib/data/events';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { mapEvent } from '@/lib/data/event-adapter';
 import { EventCard } from '@/components/cards/EventCard';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
 
-export const metadata = {
-  title: 'Retraites & événements — Aura',
-  description: 'Retraites, ateliers, cercles et bains sonores. Tout l’agenda du soin énergétique près de chez vous.',
-};
-
 const KINDS = ['Tous', 'Retraites', 'Ateliers', 'Cercles', 'Formations', 'Sorties'];
 
 export default function EvenementsPage() {
+  const { data } = useQuery({
+    queryKey: ['events', 'public'],
+    queryFn: () => api.get('/events?status=publié&per_page=50'),
+  });
+  const events = (data?.data ?? []).map(mapEvent);
+
   return (
     <>
       {/* HERO */}
