@@ -12,6 +12,7 @@ import { sanitizeUser } from '../user.util';
 import { success } from '../../common/envelope';
 import { RegisterClientDto } from './dto/register-client.dto';
 import { LoginDto } from '../admin-auth/dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 
 @Injectable()
 export class ClientAuthService {
@@ -79,6 +80,28 @@ export class ClientAuthService {
     return success(
       { user: sanitizeUser(fresh), client, ...this.tokens.tokenPayload(fresh) },
       'Connexion réussie',
+    );
+  }
+
+  logout() { return success(undefined, 'Déconnexion réussie'); }
+  refresh(user: User) { return success(this.tokens.tokenPayload(user)); }
+
+  profile(user: User, client: Client) {
+    return success({ user: sanitizeUser(user), client });
+  }
+
+  checkToken(user: User, client: Client) {
+    return success({ user: sanitizeUser(user), client }, 'Token client valide');
+  }
+
+  // Deliberately does not check whether the email exists, and does not send
+  // anything yet (no email infrastructure decision has been made) — always
+  // returns the same generic message so this endpoint cannot be used to
+  // enumerate registered accounts.
+  forgotPassword(_dto: ForgotPasswordDto) {
+    return success(
+      undefined,
+      'Si un compte existe avec cette adresse email, vous recevrez un lien de réinitialisation.',
     );
   }
 }

@@ -72,4 +72,51 @@ describe('client auth', () => {
     expect(ok.body.data.client.firstname).toBe('Camille');
     expect(ok.body.data.user.last_login_at).toBeTruthy();
   });
+
+  it('protected routes: profile, check-token, refresh, logout', async () => {
+    const { client, token } = await seedClientUser(app, 'proto@aura.io');
+    await http().get('/api/client/profile').expect(401);
+
+    const prof = await http().get('/api/client/profile')
+      .set('Authorization', `Bearer ${token}`).expect(200);
+    expect(prof.body.data.user.email).toBe('proto@aura.io');
+    expect(prof.body.data.client).toMatchObject({ id: client.id, email: 'proto@aura.io' });
+
+    const chk = await http().get('/api/client/check-token')
+      .set('Authorization', `Bearer ${token}`).expect(200);
+    expect(chk.body.message).toBe('Token client valide');
+
+    const ref = await http().post('/api/client/refresh')
+      .set('Authorization', `Bearer ${token}`).expect(200);
+    expect(ref.body.data.token).toBeTruthy();
+
+    const out = await http().post('/api/client/logout')
+      .set('Authorization', `Bearer ${token}`).expect(200);
+    expect(out.body.message).toBe('Déconnexion réussie');
+  });
+
+  it('profile/check-token reject a non-client user with 403', async () => {
+    const ds = app.get(DataSource);
+    const lone = await ds.getRepository(User).save({
+      name: 'Lone User', email: 'lone@aura.io',
+      password: await bcrypt.hash('password123', 10), is_admin: false,
+    });
+    const token = signToken(app, lone);
+    await http().get('/api/client/profile').set('Authorization', `Bearer ${token}`).expect(403);
+    await http().get('/api/client/check-token').set('Authorization', `Bearer ${token}`).expect(403);
+  });
+
+  it('forgot-password always returns the same generic message (no user enumeration)', async () => {
+    const known = await http().post('/api/client/forgot-password')
+      .send({ email: 'camille@aura.io' }).expect(200);
+    const unknown = await http().post('/api/client/forgot-password')
+      .send({ email: 'nobody@aura.io' }).expect(200);
+    expect(known.body.message).toBe(unknown.body.message);
+    expect(known.body.message).toBe(
+      'Si un compte existe avec cette adresse email, vous recevrez un lien de réinitialisation.',
+    );
+
+    const bad = await http().post('/api/client/forgot-password').send({ email: 'not-an-email' }).expect(422);
+    expect(bad.body.errors.email).toBeDefined();
+  });
 });
