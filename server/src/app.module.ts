@@ -24,6 +24,8 @@ import { RemboursementsModule } from './remboursements/remboursements.module';
 import { RendezVousModule } from './rendez-vous/rendez-vous.module';
 import { AvisModule } from './avis/avis.module';
 import { SignalementsModule } from './signalements/signalements.module';
+import { FavoritesModule } from './favorites/favorites.module';
+import { NotificationPreferencesModule } from './notification-preferences/notification-preferences.module';
 
 @Module({
   imports: [
@@ -48,6 +50,8 @@ import { SignalementsModule } from './signalements/signalements.module';
     RemboursementsModule,
     AvisModule,
     SignalementsModule,
+    FavoritesModule,
+    NotificationPreferencesModule,
     RendezVousModule,
   ],
   controllers: [AppController],

@@ -23,6 +23,8 @@ import { Remboursement } from '../../src/database/entities/remboursement.entity'
 import { RendezVous } from '../../src/database/entities/rendez-vous.entity';
 import { Avis } from '../../src/database/entities/avis.entity';
 import { Signalement } from '../../src/database/entities/signalement.entity';
+import { Favorite } from '../../src/database/entities/favorite.entity';
+import { NotificationPreference } from '../../src/database/entities/notification-preference.entity';
 import * as bcrypt from 'bcryptjs';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret';
@@ -37,7 +39,7 @@ process.env.UPLOAD_DIR = process.env.UPLOAD_DIR ?? require('os').tmpdir() + '/au
 const ALL_ENTITIES = [
   User, Client, Praticien, PraticienDocument, Cercle, Event, EventPraticien,
   Promotion, Discipline, Article, Notification, EmailTemplate, Echange, Paiement,
-  Remboursement, RendezVous, Avis, Signalement,
+  Remboursement, RendezVous, Avis, Signalement, Favorite, NotificationPreference,
 ];
 
 export async function createTestApp(
