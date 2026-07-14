@@ -18,6 +18,12 @@ const DOC_LABELS: Record<string, string> = {
   assurance: 'Assurance', domicile: 'Justificatif de domicile', charte: 'Charte signée',
 };
 
+// The only content types a verification document is ever legitimately submitted as.
+// See file() below — doc.mime_type is attacker-controlled at upload time.
+const SAFE_DOCUMENT_MIME_TYPES = new Set([
+  'application/pdf', 'image/jpeg', 'image/png', 'image/webp',
+]);
+
 @Injectable()
 export class PraticienVerificationService {
   constructor(
@@ -204,8 +210,18 @@ export class PraticienVerificationService {
   async file(docId: number, res: Response): Promise<StreamableFile> {
     const doc = await this.documents.findOneBy({ id: docId });
     if (!doc) this.notFound('Document non trouvé');
+    // doc.mime_type is client-supplied at upload time (the unauthenticated praticien
+    // registration flow has no fileFilter) — never trust it verbatim for the response
+    // Content-Type, or a malicious upload claiming e.g. text/html would execute as a
+    // script in this admin origin the moment a reviewer opens it. Only ever serve back
+    // a type this route is actually meant to display; anything else degrades to a safe,
+    // inert binary type. X-Content-Type-Options blocks browsers from sniffing past that.
+    const contentType = SAFE_DOCUMENT_MIME_TYPES.has(doc.mime_type ?? '')
+      ? doc.mime_type
+      : 'application/octet-stream';
     res.set({
-      'Content-Type': doc.mime_type || 'application/octet-stream',
+      'Content-Type': contentType,
+      'X-Content-Type-Options': 'nosniff',
       'Content-Disposition': `inline; filename="${doc.nom_fichier}"`,
     });
     return new StreamableFile(createReadStream(this.storage.resolve(doc.chemin)));

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAdminAuth } from '@/lib/admin-auth-store';
 import AdminSidebar from '@/components/layout/AdminSidebar';
@@ -17,12 +17,19 @@ const LOGIN_PATH = '/admin/connexion';
 export default function AdminAuthGate({ children }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [hydrated, setHydrated] = useState(false);
   const token = useAdminAuth((s) => s.token);
+  // Read the store's own hasHydrated rather than a component-local flag: the store
+  // only flips this true inside persist's onRehydrateStorage callback, *after* `token`
+  // has actually been restored from localStorage — so the two are guaranteed
+  // consistent. A local flag set synchronously in the same effect that kicks off the
+  // (async) rehydrate() would flip true before the real token lands, causing a
+  // spurious bounce to /admin/connexion for an already-signed-in admin on every hard
+  // load. Matches the equivalent, already-correct pattern in the client-facing store
+  // (web/app/(site)/compte/layout.jsx).
+  const hydrated = useAdminAuth((s) => s.hasHydrated);
 
   useEffect(() => {
     useAdminAuth.persist.rehydrate();
-    setHydrated(true);
   }, []);
 
   useEffect(() => {

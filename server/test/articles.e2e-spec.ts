@@ -46,6 +46,18 @@ describe('articles', () => {
     expect(res.body.pagination).toHaveProperty('next_page_url');
   });
 
+  it('index filters by slug (public, no auth required)', async () => {
+    const first = await asAdmin(http().post('/api/articles/create-article'))
+      .send({ ...base, titre: 'Cible Slug' }).expect(201);
+    const targetSlug = first.body.data.slug;
+    await asAdmin(http().post('/api/articles/create-article'))
+      .send({ ...base, titre: 'Un Autre Article Plus Recent' }).expect(201);
+
+    const res = await http().get(`/api/articles?slug=${targetSlug}&per_page=1`).expect(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].slug).toBe(targetSlug);
+  });
+
   it('update regenerates slug on titre change; publish/archive transitions', async () => {
     const created = await asAdmin(http().post('/api/articles/create-article'))
       .send({ ...base, titre: 'Titre Original' }).expect(201);
