@@ -1,9 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { createReadStream } from 'fs';
+import type { Response } from 'express';
 import { Praticien } from '../../database/entities/praticien.entity';
 import { PraticienDocument } from '../../database/entities/praticien-document.entity';
 import { User } from '../../database/entities/user.entity';
+import { StorageService } from '../../common/storage.service';
 import { success } from '../../common/envelope';
 import { parsePagination, paginateQb } from '../../common/pagination';
 import { VerifyDocumentsDto } from './dto/verify-documents.dto';
@@ -20,6 +23,7 @@ export class PraticienVerificationService {
   constructor(
     @InjectRepository(Praticien) private readonly praticiens: Repository<Praticien>,
     @InjectRepository(PraticienDocument) private readonly documents: Repository<PraticienDocument>,
+    private readonly storage: StorageService,
   ) {}
 
   private notFound(message: string): never {
@@ -195,5 +199,15 @@ export class PraticienVerificationService {
       par_specialite: parSpecialite.map((r) => ({ ...r, count: Number(r.count) })),
       derniers_inscrits: derniersInscrits,
     });
+  }
+
+  async file(docId: number, res: Response): Promise<StreamableFile> {
+    const doc = await this.documents.findOneBy({ id: docId });
+    if (!doc) this.notFound('Document non trouvé');
+    res.set({
+      'Content-Type': doc.mime_type || 'application/octet-stream',
+      'Content-Disposition': `inline; filename="${doc.nom_fichier}"`,
+    });
+    return new StreamableFile(createReadStream(this.storage.resolve(doc.chemin)));
   }
 }

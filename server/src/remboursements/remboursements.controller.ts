@@ -9,6 +9,7 @@ import { ApproveRemboursementDto } from './dto/approve-remboursement.dto';
 import { RefuseRemboursementDto } from './dto/refuse-remboursement.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ClientGuard } from '../auth/guards/client.guard';
+import { AdminGuard } from '../auth/guards/admin.guard';
 import { CurrentClient } from '../auth/decorators';
 import { Client } from '../database/entities/client.entity';
 
@@ -48,40 +49,47 @@ export class RemboursementsController {
     return this.service.cancel(client, id);
   }
 
-  // ---- admin (public in the real PHP app) ----
+  // ---- admin ----
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Get('admin/statistics')
   adminStatistics(@Query() query: Record<string, any>) {
     return this.service.adminStatistics(query);
   }
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Get('admin/export')
   adminExport(@Query() query: Record<string, any>) {
     return this.service.adminExport(query);
   }
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Get('admin')
   adminIndex(@Query() query: Record<string, any>) {
     return this.service.adminIndex(query);
   }
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Get('admin/:id')
   adminShow(@Param('id', ParseIntPipe) id: number) {
     return this.service.adminShow(id);
   }
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(200)
   @Post('admin/:id/approve')
   adminApprove(@Param('id', ParseIntPipe) id: number, @Body() dto: ApproveRemboursementDto) {
     return this.service.adminApprove(id, dto);
   }
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(200)
   @Post('admin/:id/refuse')
   adminRefuse(@Param('id', ParseIntPipe) id: number, @Body() dto: RefuseRemboursementDto) {
     return this.service.adminRefuse(id, dto);
   }
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(200)
   @Post('admin/:id/complete') // fixes real PHP route typo 'admi/{id}/complete'
   adminComplete(@Param('id', ParseIntPipe) id: number) {

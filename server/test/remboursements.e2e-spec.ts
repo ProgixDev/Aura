@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { createTestApp, seedClientUser } from './utils/create-test-app';
+import { createTestApp, seedAdmin, seedClientUser } from './utils/create-test-app';
 import { RemboursementsModule } from '../src/remboursements/remboursements.module';
 import { Paiement } from '../src/database/entities/paiement.entity';
 
@@ -10,11 +10,13 @@ describe('remboursements', () => {
   let clientToken: string;
   let clientId: number;
   let paidId: number;
+  let adminToken: string;
   beforeAll(async () => {
     app = await createTestApp({ imports: [RemboursementsModule] });
     const seeded = await seedClientUser(app, 'refund@aura.io');
     clientToken = seeded.token;
     clientId = seeded.client.id;
+    adminToken = (await seedAdmin(app, 'remb-admin@aura.io')).token;
     const ds = app.get(DataSource);
     paidId = (await ds.getRepository(Paiement).save({
       reference: 'TX-33333', client_id: clientId, montant_brut: 200, commission: 20,
@@ -30,6 +32,18 @@ describe('remboursements', () => {
   afterAll(async () => { await app.close(); });
   const http = () => request(app.getHttpServer());
   const asClient = (r: request.Test) => r.set('Authorization', `Bearer ${clientToken}`);
+  const asAdmin = (r: request.Test) => r.set('Authorization', `Bearer ${adminToken}`);
+
+  it('admin routes require admin auth; client routes keep their own guard', async () => {
+    await http().get('/api/remboursements/admin').expect(401);
+    await http().get('/api/remboursements/admin/statistics').expect(401);
+    await http().get('/api/remboursements/admin/export').expect(401);
+    await http().get('/api/remboursements/admin/1').expect(401);
+    await http().post('/api/remboursements/admin/1/approve').expect(401);
+    await http().post('/api/remboursements/admin/1/refuse').send({ commentaire_admin: 'x'.repeat(10) }).expect(401);
+    await http().post('/api/remboursements/admin/1/complete').expect(401);
+    await asClient(http().get('/api/remboursements/admin')).expect(403);
+  });
 
   it('store: eligible paid paiement only, no duplicate, montant = montant_brut, RMB ref', async () => {
     const ds = app.get(DataSource);
@@ -70,33 +84,33 @@ describe('remboursements', () => {
       .field('paiement_id', String(paidId)).field('motif', 'Deuxième demande').expect(201);
     const id = again.body.data.id;
 
-    await http().post(`/api/remboursements/admin/${id}/complete`).expect(404);
+    await asAdmin(http().post(`/api/remboursements/admin/${id}/complete`)).expect(404);
 
-    const appr = await http().post(`/api/remboursements/admin/${id}/approve`)
+    const appr = await asAdmin(http().post(`/api/remboursements/admin/${id}/approve`))
       .send({ commentaire_admin: 'OK' }).expect(200);
     expect(appr.body.data.statut).toBe('approuve');
     const ds = app.get(DataSource);
     const paiement = await ds.getRepository(Paiement).findOneByOrFail({ id: paidId });
     expect(paiement.statut).toBe('rembourse');
 
-    const done = await http().post(`/api/remboursements/admin/${id}/complete`).expect(200);
+    const done = await asAdmin(http().post(`/api/remboursements/admin/${id}/complete`)).expect(200);
     expect(done.body.data.statut).toBe('completed');
   });
 
   it('admin refuse requires commentaire min 10; adminIndex embeds statistiques; export + statistics reachable', async () => {
-    const badRefuse = await http().post('/api/remboursements/admin/99999/refuse')
+    const badRefuse = await asAdmin(http().post('/api/remboursements/admin/99999/refuse'))
       .send({ commentaire_admin: 'commentaire suffisant' }).expect(404);
     expect(badRefuse.body.status).toBe('error');
 
-    const idx = await http().get('/api/remboursements/admin').expect(200);
+    const idx = await asAdmin(http().get('/api/remboursements/admin')).expect(200);
     expect(idx.body.statistiques).toHaveProperty('taux_remboursement');
     expect(idx.body.statistiques.taux_evolution).toBe('+0.3');
 
-    const stats = await http().get('/api/remboursements/admin/statistics').expect(200);
+    const stats = await asAdmin(http().get('/api/remboursements/admin/statistics')).expect(200);
     expect(stats.body.data).toHaveProperty('par_motif');
     expect(stats.body.data).toHaveProperty('par_mois');
 
-    const exp = await http().get('/api/remboursements/admin/export').expect(200);
+    const exp = await asAdmin(http().get('/api/remboursements/admin/export')).expect(200);
     expect(exp.body.data.remboursements[0].statut).toBe('Complété');
     expect(exp.body.data.remboursements[0].reference).toMatch(/^RMB-/);
   });
@@ -120,12 +134,12 @@ describe('remboursements', () => {
     };
 
     const yesterdayId = await makeRequest('TX-DATE-PAST');
-    const past = await http().post(`/api/remboursements/admin/${yesterdayId}/approve`)
+    const past = await asAdmin(http().post(`/api/remboursements/admin/${yesterdayId}/approve`))
       .send({ date_remboursement: yesterday }).expect(422);
     expect(past.body.errors.date_remboursement).toBeDefined();
 
     const todayId = await makeRequest('TX-DATE-TODAY');
-    const present = await http().post(`/api/remboursements/admin/${todayId}/approve`)
+    const present = await asAdmin(http().post(`/api/remboursements/admin/${todayId}/approve`))
       .send({ date_remboursement: today }).expect(200);
     expect(present.body.data.statut).toBe('approuve');
   });

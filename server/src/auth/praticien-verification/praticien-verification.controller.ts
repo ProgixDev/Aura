@@ -1,6 +1,7 @@
 import {
-  Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post, Query, UseGuards,
+  Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post, Query, Res, UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { PraticienVerificationService } from './praticien-verification.service';
 import { VerifyDocumentsDto } from './dto/verify-documents.dto';
 import { RejectPraticienDto } from './dto/reject-praticien.dto';
@@ -25,6 +26,16 @@ export class PraticienVerificationController {
 
   @Get()
   index(@Query() query: Record<string, any>) { return this.service.index(query); }
+
+  // `documents/:docId/file` is a 3-segment path (`documents`, id, `file`); it can
+  // never collide with the single-segment `:id` route or the 2-segment `:id/verify`
+  // etc. routes below regardless of declaration order, since NestJS/Express match
+  // routes by segment shape, not just by first-match. Placed next to `show` because
+  // both are single-document reads.
+  @Get('documents/:docId/file')
+  file(@Param('docId', ParseIntPipe) docId: number, @Res({ passthrough: true }) res: Response) {
+    return this.service.file(docId, res);
+  }
 
   @Get(':id')
   show(@Param('id', ParseIntPipe) id: number) { return this.service.show(id); }

@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { createTestApp, seedClientUser } from './utils/create-test-app';
+import { createTestApp, seedAdmin, seedClientUser } from './utils/create-test-app';
 import { PaiementsModule } from '../src/paiements/paiements.module';
 import { Paiement } from '../src/database/entities/paiement.entity';
 
@@ -9,11 +9,13 @@ describe('paiements', () => {
   let app: INestApplication;
   let clientToken: string;
   let clientId: number;
+  let adminToken: string;
   beforeAll(async () => {
     app = await createTestApp({ imports: [PaiementsModule] });
     const seeded = await seedClientUser(app, 'payer@aura.io');
     clientToken = seeded.token;
     clientId = seeded.client.id;
+    adminToken = (await seedAdmin(app, 'paiements-admin@aura.io')).token;
     const ds = app.get(DataSource);
     await ds.getRepository(Paiement).save([
       { reference: 'TX-11111', client_id: clientId, montant_brut: 100, commission: 10,
@@ -26,39 +28,46 @@ describe('paiements', () => {
   });
   afterAll(async () => { await app.close(); });
   const http = () => request(app.getHttpServer());
+  const asAdmin = (r: request.Test) => r.set('Authorization', `Bearer ${adminToken}`);
+  const asClient = (r: request.Test) => r.set('Authorization', `Bearer ${clientToken}`);
+
+  it('admin routes require admin auth; client routes keep their own guard', async () => {
+    await http().get('/api/paiements').expect(401);
+    await http().get('/api/paiements/statistics').expect(401);
+    await http().get('/api/paiements/export').expect(401);
+    await http().get('/api/paiements/export/csv').expect(401);
+    await http().delete('/api/paiements/1').expect(401);
+    await asClient(http().get('/api/paiements')).expect(403);
+  });
 
   it('client index scoped + statistiques block', async () => {
     await http().get('/api/paiements/clients').expect(401);
-    const res = await http().get('/api/paiements/clients')
-      .set('Authorization', `Bearer ${clientToken}`).expect(200);
+    const res = await asClient(http().get('/api/paiements/clients')).expect(200);
     expect(res.body.data).toHaveLength(2);
     expect(res.body.statistiques).toMatchObject({
       total_paiements: 2, total_montant: 150, total_commission: 15, total_net: 135,
     });
     expect(res.body.statistiques.par_moyen).toHaveLength(2);
 
-    const filtered = await http().get('/api/paiements/clients?statut=paid')
-      .set('Authorization', `Bearer ${clientToken}`).expect(200);
+    const filtered = await asClient(http().get('/api/paiements/clients?statut=paid')).expect(200);
     expect(filtered.body.data).toHaveLength(1);
   });
 
   it('client show 404 for foreign paiement', async () => {
     const other = await seedClientUser(app, 'other-payer@aura.io');
-    const list = await http().get('/api/paiements/clients')
-      .set('Authorization', `Bearer ${clientToken}`).expect(200);
+    const list = await asClient(http().get('/api/paiements/clients')).expect(200);
     const id = list.body.data[0].id;
-    await http().get(`/api/paiements/${id}`)
-      .set('Authorization', `Bearer ${clientToken}`).expect(200);
+    await asClient(http().get(`/api/paiements/${id}`)).expect(200);
     const nf = await http().get(`/api/paiements/${id}`)
       .set('Authorization', `Bearer ${other.token}`).expect(404);
     expect(nf.body.message).toBe('Paiement non trouvé');
   });
 
   it('adminIndex lists all; adminStatistics aggregates; par_mois formatted YYYY-MM', async () => {
-    const idx = await http().get('/api/paiements').expect(200);
+    const idx = await asAdmin(http().get('/api/paiements')).expect(200);
     expect(idx.body.pagination.total).toBe(2);
 
-    const stats = await http().get('/api/paiements/statistics').expect(200);
+    const stats = await asAdmin(http().get('/api/paiements/statistics')).expect(200);
     expect(stats.body.data.general).toMatchObject({
       total_transactions: 2, montant_total: 150,
     });
@@ -67,11 +76,11 @@ describe('paiements', () => {
   });
 
   it('exports: JSON export only paid; CSV has French header and semicolons', async () => {
-    const exp = await http().get('/api/paiements/export').expect(200);
+    const exp = await asAdmin(http().get('/api/paiements/export')).expect(200);
     expect(exp.body.data.total_transactions).toBe(1);
     expect(exp.body.data.transactions[0].brut).toBe('100.00 €');
 
-    const csv = await http().get('/api/paiements/export/csv').expect(200);
+    const csv = await asAdmin(http().get('/api/paiements/export/csv')).expect(200);
     expect(csv.body.data.filename).toMatch(/^export_paiements_\d{8}_\d{6}\.csv$/);
     const lines = csv.body.data.csv.split('\n');
     expect(lines[0]).toBe(
@@ -79,17 +88,16 @@ describe('paiements', () => {
     );
     expect(lines[1]).toContain('TX-11111;');
 
-    const compta = await http().get('/api/paiements/export/comptable')
-      .set('Authorization', `Bearer ${clientToken}`).expect(200);
+    const compta = await asClient(http().get('/api/paiements/export/comptable')).expect(200);
     expect(compta.body.data.total_transactions).toBe(1);
     expect(compta.body.data.transactions[0].statut).toBe('paid');
   });
 
   it('DELETE /:id soft deletes', async () => {
-    const idx = await http().get('/api/paiements').expect(200);
+    const idx = await asAdmin(http().get('/api/paiements')).expect(200);
     const id = idx.body.data.find((p: any) => p.statut === 'en_attente').id;
-    await http().delete(`/api/paiements/${id}`).expect(200);
-    const after = await http().get('/api/paiements').expect(200);
+    await asAdmin(http().delete(`/api/paiements/${id}`)).expect(200);
+    const after = await asAdmin(http().get('/api/paiements')).expect(200);
     expect(after.body.pagination.total).toBe(1);
   });
 });

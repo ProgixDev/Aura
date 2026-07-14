@@ -21,4 +21,9 @@ export class StorageService {
     await fs.writeFile(join(dir, name), file.buffer);
     return `${subdir}/${name}`;
   }
+
+  /** Turns a stored `chemin` (as returned by `save()`) into an absolute filesystem path. */
+  resolve(chemin: string): string {
+    return join(this.base, chemin);
+  }
 }

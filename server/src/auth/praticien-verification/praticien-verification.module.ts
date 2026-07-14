@@ -4,10 +4,11 @@ import { Praticien } from '../../database/entities/praticien.entity';
 import { PraticienDocument } from '../../database/entities/praticien-document.entity';
 import { PraticienVerificationController } from './praticien-verification.controller';
 import { PraticienVerificationService } from './praticien-verification.service';
+import { StorageService } from '../../common/storage.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Praticien, PraticienDocument])],
   controllers: [PraticienVerificationController],
-  providers: [PraticienVerificationService],
+  providers: [PraticienVerificationService, StorageService],
 })
 export class PraticienVerificationModule {}

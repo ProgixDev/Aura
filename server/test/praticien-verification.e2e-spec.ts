@@ -1,6 +1,8 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import { promises as fs } from 'fs';
+import { dirname, join } from 'path';
 import { createTestApp, seedAdmin } from './utils/create-test-app';
 import { PraticienVerificationModule } from '../src/auth/praticien-verification/praticien-verification.module';
 import { Praticien } from '../src/database/entities/praticien.entity';
@@ -97,5 +99,27 @@ describe('praticien verification (admin)', () => {
     const rel = await auth(http().post(`/api/v1/admin/praticiens/verification/${p6.id}/relance`)).expect(200);
     expect(rel.body.data.documents_manquants).toBe(2);
     expect(rel.body.data.documents_en_attente).toBe(3);
+  });
+
+  it('GET documents/:docId/file streams the stored file, guarded, 404 when missing', async () => {
+    const ds = app.get(DataSource);
+    const { docs } = await seedPraticien(ds, 'p7@aura.io', 1);
+    const doc = docs[0];
+    // The document row exists (as it would after a real upload via praticien-auth's
+    // StorageService.save()) — write matching bytes at the same resolved path so the
+    // streaming route has a real file to read, without going through the upload flow.
+    const absPath = join(process.env.UPLOAD_DIR as string, doc.chemin);
+    await fs.mkdir(dirname(absPath), { recursive: true });
+    await fs.writeFile(absPath, '%PDF-1.4 fake content');
+
+    await http().get(`/api/v1/admin/praticiens/verification/documents/${doc.id}/file`).expect(401);
+
+    const res = await auth(
+      http().get(`/api/v1/admin/praticiens/verification/documents/${doc.id}/file`),
+    ).expect(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+    expect(res.headers['content-disposition']).toContain('piece_identite.pdf');
+
+    await auth(http().get('/api/v1/admin/praticiens/verification/documents/999999/file')).expect(404);
   });
 });
