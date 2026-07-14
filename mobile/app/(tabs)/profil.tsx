@@ -63,7 +63,7 @@ export default function Profil() {
           <MenuRow
             icon={<Icon name="heart" size={18} color={colors.ink} />}
             label="Mes praticiens favoris"
-            value="12"
+            onPress={() => router.push('/favorites' as any)}
           />
           <MenuRow
             icon={<Icon name="cal" size={18} color={colors.ink} />}
@@ -83,7 +83,11 @@ export default function Profil() {
             label="L'âme du projet"
             onPress={() => router.push('/founder' as any)}
           />
-          <MenuRow icon={<Icon name="bell" size={18} color={colors.ink} />} label="Notifications" />
+          <MenuRow
+            icon={<Icon name="bell" size={18} color={colors.ink} />}
+            label="Notifications"
+            onPress={() => router.push('/notification-settings' as any)}
+          />
           <MenuRow
             icon={<Icon name="card" size={18} color={colors.ink} />}
             label="Moyens de paiement"

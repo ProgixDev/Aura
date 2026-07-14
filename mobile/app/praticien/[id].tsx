@@ -10,7 +10,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Avatar } from '@components/Avatar';
 import { AuroraBackground } from '@components/AuroraBackground';
 import { Badge } from '@components/Badge';
@@ -21,15 +21,29 @@ import { Rating } from '@components/Rating';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { shadows } from '@theme/shadows';
-import { practitionerRepo } from '@data/repos';
+import { practitionerRepo, favoriteRepo } from '@data/repos';
 
 type Tab = 'about' | 'reviews' | 'exchanges';
+
+// No shared date-formatting utility exists yet on mobile that this plan can
+// safely depend on (mobile/src/utils/format.ts is a Plan 04 addition, and
+// this plan doesn't declare a dependency on Plan 04 landing first) — and RN's
+// Hermes engine doesn't reliably support Intl.DateTimeFormat locales, so this
+// is a small manual formatter rather than `.toLocaleDateString('fr-FR', ...)`.
+function formatReviewDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+  return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
 
 export default function PractitionerProfile() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('about');
+  const [favPending, setFavPending] = useState(false);
 
   const { data: p } = useQuery({
     queryKey: ['practitioner', id],
@@ -39,8 +53,30 @@ export default function PractitionerProfile() {
     queryKey: ['reviews', id],
     queryFn: () => practitionerRepo.reviewsFor(String(id)),
   });
+  const { data: favorites = [] } = useQuery({
+    queryKey: ['favorites'],
+    queryFn: favoriteRepo.list,
+  });
 
   if (!p) return <View style={{ flex: 1, backgroundColor: colors.pearl }} />;
+
+  const isFavorite = favorites.some((f) => f.id === p.id);
+  const reviewCount = reviews.length;
+  const avgNote = reviewCount
+    ? Math.round((reviews.reduce((sum, r) => sum + r.note, 0) / reviewCount) * 10) / 10
+    : 0;
+
+  const toggleFavorite = async () => {
+    if (favPending) return;
+    setFavPending(true);
+    try {
+      if (isFavorite) await favoriteRepo.remove(p.id);
+      else await favoriteRepo.add(p.id);
+      await queryClient.invalidateQueries({ queryKey: ['favorites'] });
+    } finally {
+      setFavPending(false);
+    }
+  };
 
   // Hero portraits put the face in the upper third. Anchoring the photo to the
   // top of the hero (rather than `cover`, which centres and crops the face out)
@@ -82,12 +118,12 @@ export default function PractitionerProfile() {
               <Icon name="back" size={20} color={colors.ink} />
             </Pressable>
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Pressable style={styles.iconCircle}>
-                <Icon name="heart" size={18} color={colors.ink} />
+              <Pressable style={styles.iconCircle} onPress={toggleFavorite} disabled={favPending}>
+                <Icon name="heart" size={18} color={isFavorite ? colors.violet2 : colors.ink} />
               </Pressable>
               <Pressable
                 style={styles.iconCircle}
-                onPress={() => router.push('/report' as any)}
+                onPress={() => router.push(`/report?praticienId=${id}` as any)}
               >
                 <Icon name="flag" size={16} color={colors.ink} />
               </Pressable>
@@ -130,7 +166,7 @@ export default function PractitionerProfile() {
           </View>
 
           <View style={styles.fcStrip}>
-            <Rating value={p.rating} count={p.reviews} />
+            <Rating value={avgNote} count={reviewCount} />
             <Text style={styles.fcPrice}>
               {p.price}€
               <Text style={styles.fcPriceUnit}>/séance · 75 min</Text>
@@ -142,7 +178,7 @@ export default function PractitionerProfile() {
         <View style={styles.tabs}>
           <TabButton label="À propos" active={tab === 'about'} onPress={() => setTab('about')} />
           <TabButton
-            label={`Avis (${p.reviews})`}
+            label={`Avis (${reviewCount})`}
             active={tab === 'reviews'}
             onPress={() => setTab('reviews')}
           />
@@ -225,23 +261,29 @@ export default function PractitionerProfile() {
           </View>
         ) : tab === 'reviews' ? (
           <View style={{ padding: 24 }}>
-            {reviews.map((r) => (
-              <View key={r.id} style={styles.review}>
-                <View style={styles.reviewHead}>
-                  <Avatar gradient={[colors.sky, colors.violet]} size="sm" />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.reviewName}>{r.authorInitial}</Text>
-                    <Text style={styles.reviewMeta}>
-                      {r.whenLabel} · {r.modeLabel}
-                    </Text>
+            <Button
+              label="Laisser un avis"
+              variant="soft"
+              onPress={() => router.push(`/review?praticienId=${id}` as any)}
+              style={{ marginBottom: 16 }}
+            />
+            {reviews.length === 0 ? (
+              <Text style={typography.small}>Aucun avis publié pour l'instant.</Text>
+            ) : (
+              reviews.map((r) => (
+                <View key={r.id} style={styles.review}>
+                  <View style={styles.reviewHead}>
+                    <Avatar gradient={[colors.sky, colors.violet]} size="sm" />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.reviewName}>{r.full_name_author}</Text>
+                      <Text style={styles.reviewMeta}>{formatReviewDate(r.date_ajout)}</Text>
+                    </View>
+                    <Rating value={r.note} showCount={false} size={12} />
                   </View>
-                  <Rating value={r.rating} showCount={false} size={12} />
+                  <Text style={styles.reviewText}>"{r.avis}"</Text>
                 </View>
-                <Text style={styles.reviewText}>"{r.text}"</Text>
-              </View>
-            ))}
-            <View style={{ height: 12 }} />
-            <Button label={`Voir les ${p.reviews} avis`} variant="soft" />
+              ))
+            )}
           </View>
         ) : (
           <View style={{ padding: 24 }}>

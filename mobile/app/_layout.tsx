@@ -98,6 +98,8 @@ export default function RootLayout() {
               <Stack.Screen name="blog/[slug]" />
               <Stack.Screen name="review" options={{ presentation: 'modal' }} />
               <Stack.Screen name="report" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="favorites" />
+              <Stack.Screen name="notification-settings" />
               <Stack.Screen name="founder" />
               <Stack.Screen name="dashboard" />
               <Stack.Screen name="subscription" />
