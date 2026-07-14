@@ -1,4 +1,4 @@
-import { mapDiscipline, mapPraticien } from './index';
+import { mapDiscipline, mapPraticien, mapEvent } from './index';
 
 describe('mapPraticien', () => {
   const row = {
@@ -49,5 +49,26 @@ describe('mapDiscipline', () => {
 
   it('never fabricates a praticien count', () => {
     expect(mapDiscipline(row).count).toBe(0);
+  });
+});
+
+describe('mapEvent', () => {
+  const row = {
+    id: 4, titre: 'Retraite équinoxe', type: 'retraite', dates: ['2026-08-01', '2026-08-02'],
+    lieu: 'Lyon', prix: '120.00', nombre_places: 20, description: 'desc', status: 'publié',
+  };
+
+  it('maps real fields directly and stringifies the numeric id', () => {
+    const e = mapEvent(row);
+    expect(e.id).toBe('4');
+    expect(e.title).toBe('Retraite équinoxe');
+    expect(e.where).toBe('Lyon');
+    expect(e.priceFrom).toBe(120);
+  });
+
+  it('maps real animateurs into hosts, defaults to an empty list otherwise', () => {
+    const withHosts = mapEvent({ ...row, animateurs: [{ firstname: 'A', lastname: 'B', specialite: 'yoga' }] });
+    expect(withHosts.hosts).toEqual([{ name: 'A B', spec: 'yoga', gradient: ['#C4B0E8', '#A8C8E8'] }]);
+    expect(mapEvent(row).hosts).toEqual([]);
   });
 });

@@ -1,11 +1,9 @@
 /**
  * Repository layer — every screen reads through these functions.
- * disciplineRepo and practitionerRepo now call the real backend via the api
- * client; screens never need to change. exchangeRepo and messageRepo still
- * read from in-memory mocks (out of scope for this plan). eventRepo is
- * wired in a later task of this same plan.
+ * disciplineRepo, practitionerRepo, and eventRepo now call the real backend
+ * via the api client; screens never need to change. exchangeRepo and
+ * messageRepo still read from in-memory mocks (out of scope for this plan).
  */
-import { eventsMock } from '../mock/events';
 import { exchangesMock } from '../mock/exchanges';
 import { conversationsMock, sampleChat } from '../mock/messages';
 import { disciplineImageSource } from '../images';
@@ -69,6 +67,36 @@ export function mapDiscipline(row: any): Discipline {
   };
 }
 
+function formatEventDates(dates: string[]): string {
+  if (!Array.isArray(dates) || dates.length === 0) return '';
+  const fmt = (iso: string) =>
+    new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(new Date(iso));
+  if (dates.length === 1) return fmt(dates[0]);
+  return `${fmt(dates[0])} – ${fmt(dates[dates.length - 1])}`;
+}
+
+export function mapEvent(row: any): Event {
+  const when = formatEventDates(row.dates);
+  return {
+    id: String(row.id),
+    title: row.titre,
+    kind: (row.type || '').toUpperCase(),
+    when,
+    where: row.lieu,
+    price: `${Math.round(Number(row.prix))} €`,
+    priceFrom: Number(row.prix),
+    gradient: DEFAULT_GRADIENT,
+    description: row.description,
+    hosts: (row.animateurs ?? []).map((a: any) => ({
+      name: `${a.firstname} ${a.lastname}`.trim(),
+      spec: a.specialite ?? '',
+      gradient: DEFAULT_GRADIENT,
+    })),
+    program: undefined,
+    meta: { dates: when, place: row.lieu, seats: row.nombre_places },
+  };
+}
+
 // ---------- Practitioners ----------
 export const practitionerRepo = {
   list: (): Promise<Practitioner[]> =>
@@ -94,10 +122,11 @@ export const disciplineRepo = {
 
 // ---------- Events ----------
 export const eventRepo = {
-  list: (): Promise<Event[]> => delay(eventsMock),
+  list: (): Promise<Event[]> =>
+    api.get<{ data: any[] }>('/events?status=publié&per_page=50').then((res) => res.data.map(mapEvent)),
   byId: (id: string): Promise<Event | undefined> =>
-    delay(eventsMock.find((e) => e.id === id)),
-  featured: (): Promise<Event[]> => delay(eventsMock.slice(0, 2)),
+    api.get<{ data: any }>(`/events/${id}`).then((res) => mapEvent(res.data)).catch(() => undefined),
+  featured: (): Promise<Event[]> => eventRepo.list().then((list) => list.slice(0, 2)),
 };
 
 // ---------- Exchanges ----------
