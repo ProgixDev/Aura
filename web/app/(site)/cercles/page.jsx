@@ -15,7 +15,7 @@ const WHY = [
 export default function CerclesPage() {
   const { data } = useQuery({
     queryKey: ['cercles'],
-    queryFn: () => api.get('/cercles'),
+    queryFn: () => api.get('/cercles?per_page=50'),
   });
   const cercles = data?.data ?? [];
 

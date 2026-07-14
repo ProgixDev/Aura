@@ -28,7 +28,7 @@ export default function PraticiensPage() {
 
   const { data: praticiensRes } = useQuery({
     queryKey: ['praticiens'],
-    queryFn: () => api.get('/praticiens'),
+    queryFn: () => api.get('/praticiens?per_page=50'),
   });
   const practitioners = useMemo(
     () => (praticiensRes?.data ?? []).map(mapPraticien),

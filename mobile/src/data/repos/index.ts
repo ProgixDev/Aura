@@ -131,7 +131,7 @@ export function mapArticle(row: any): Article {
 // ---------- Practitioners ----------
 export const practitionerRepo = {
   list: (): Promise<Practitioner[]> =>
-    api.get<{ data: any[] }>('/praticiens').then((res) => res.data.map(mapPraticien)),
+    api.get<{ data: any[] }>('/praticiens?per_page=50').then((res) => res.data.map(mapPraticien)),
   byId: (id: string): Promise<Practitioner | undefined> =>
     api.get<{ data: any }>(`/praticiens/${id}`).then((res) => mapPraticien(res.data)).catch(() => undefined),
   byDiscipline: (disciplineName: string): Promise<Practitioner[]> =>
