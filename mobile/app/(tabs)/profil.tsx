@@ -84,7 +84,11 @@ export default function Profil() {
             onPress={() => router.push('/founder' as any)}
           />
           <MenuRow icon={<Icon name="bell" size={18} color={colors.ink} />} label="Notifications" />
-          <MenuRow icon={<Icon name="card" size={18} color={colors.ink} />} label="Moyens de paiement" />
+          <MenuRow
+            icon={<Icon name="card" size={18} color={colors.ink} />}
+            label="Moyens de paiement"
+            onPress={() => router.push('/payment-history' as any)}
+          />
           <MenuRow icon={<Icon name="shield" size={18} color={colors.ink} />} label="Confidentialité & sécurité" />
         </Section>
 

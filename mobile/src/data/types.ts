@@ -77,18 +77,73 @@ export interface Event {
   meta?: { dates: string; place: string; seats: number };
 }
 
+export interface PieceJointe {
+  nom: string;
+  chemin: string;
+  taille: number;
+  type: string;
+}
+
 export interface Exchange {
-  id: string;
-  who: string;
-  role: string;
-  give: string;
-  want: string;
-  tag: 'Soin contre soin' | 'Service contre soin' | 'Bénévolat' | 'Formation contre formation' | 'Soin contre don';
-  avatar: readonly [string, string, ...string[]];
-  message?: string;
-  mode?: 'Visio' | 'Présentiel' | 'Peu importe';
-  delay?: string;
-  publishedAgo?: string;
+  id: number;
+  client_id: number;
+  sujet: string;
+  type: 'proposition' | 'demande' | 'information' | 'autre';
+  statut: string;
+  priorite: string;
+  message: string;
+  format: string | null;
+  ce_que_je_propose: string | null;
+  ce_que_je_recherche: string | null;
+  delai_souhaite: string | null;
+  pieces_jointes: PieceJointe[] | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Body shape for exchangeRepo.create/update — matches CreateEchangeDto/UpdateEchangeDto. */
+export interface EchangeInput {
+  sujet: string;
+  type: 'proposition' | 'demande' | 'information' | 'autre';
+  message: string;
+  ce_que_je_propose?: string;
+  ce_que_je_recherche?: string;
+  format?: string;
+  delai_souhaite?: string;
+}
+
+export interface PaymentRecord {
+  id: number;
+  reference: string;
+  client_id: number;
+  praticien_id: number | null;
+  montant_brut: number;
+  commission: number;
+  montant_net_praticien: number;
+  moyen_paiement: string;
+  statut: string | null;
+  date_paiement: string | null;
+  created_at: string;
+  praticien: { id: number; firstname: string; lastname: string } | null;
+}
+
+export interface Remboursement {
+  id: number;
+  reference: string;
+  client_id: number;
+  paiement_id: number;
+  praticien_id: number | null;
+  montant: number;
+  motif: string;
+  description: string | null;
+  statut: string;
+  commentaire_admin: string | null;
+  date_traitement: string | null;
+  date_remboursement: string | null;
+  documents: unknown[] | null;
+  created_at: string;
+  paiement?: { id: number; reference: string } | null;
+  praticien?: { id: number; firstname: string; lastname: string } | null;
 }
 
 export interface Conversation {

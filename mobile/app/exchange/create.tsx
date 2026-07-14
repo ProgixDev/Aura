@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@components/Button';
 import { Chip } from '@components/Chip';
 import { EscrowNotice } from '@components/EscrowNotice';
@@ -10,74 +11,84 @@ import { ScreenHeader } from '@components/ScreenHeader';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { exchangeRepo } from '@data/repos';
+import { buildEchangeSujet } from '@utils/echange';
 
-const tags = [
-  'Soin contre soin',
-  'Soin contre service',
-  'Soin contre don',
-  'Formation contre formation',
-  'Bénévolat',
-] as const;
-type Tag = typeof tags[number];
-type Mode = 'Présentiel' | 'Visio' | 'Peu importe';
+type Format = 'Présentiel' | 'Visio' | 'Peu importe';
+const formats: readonly Format[] = ['Présentiel', 'Visio', 'Peu importe'] as const;
 
 export default function ExchangeCreate() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const isEditing = Boolean(id);
 
-  const [tag, setTag] = useState<Tag>('Soin contre soin');
-  const [give, setGive] = useState('1 soin énergétique · 75 min');
-  const [want, setWant] = useState('Cours de yoga (1h)');
-  const [mode, setMode] = useState<Mode>('Présentiel');
-  const [intention, setIntention] = useState(
-    "J'aimerais offrir un soin à quelqu'un qui en a besoin, en échange d'un peu d'aide pour me remettre au yoga doucement."
-  );
-  const [delay, setDelay] = useState("D'ici 1 mois");
+  const { data: existing } = useQuery({
+    queryKey: ['exchange', id],
+    queryFn: () => exchangeRepo.byId(Number(id)),
+    enabled: isEditing,
+  });
+
+  const [propose, setPropose] = useState('');
+  const [recherche, setRecherche] = useState('');
+  const [format, setFormat] = useState<Format>('Présentiel');
+  const [message, setMessage] = useState('');
+  const [delai, setDelai] = useState('');
+
+  // Seed the form from the fetched échange exactly once, when it first
+  // arrives — avoids clobbering in-progress edits on every re-render.
+  const seededId = useRef<number | null>(null);
+  useEffect(() => {
+    if (!existing || seededId.current === existing.id) return;
+    seededId.current = existing.id;
+    setPropose(existing.ce_que_je_propose ?? '');
+    setRecherche(existing.ce_que_je_recherche ?? '');
+    setFormat((existing.format as Format) || 'Présentiel');
+    setMessage(existing.message ?? '');
+    setDelai(existing.delai_souhaite ?? '');
+  }, [existing]);
 
   const publish = async () => {
-    await exchangeRepo.create({
-      tag: tag as any,
-      give,
-      want,
-      mode: mode === 'Peu importe' ? 'Peu importe' : mode,
-      delay,
-      message: intention,
-    });
+    const payload = {
+      sujet: buildEchangeSujet(propose, recherche),
+      message,
+      ce_que_je_propose: propose || undefined,
+      ce_que_je_recherche: recherche || undefined,
+      format: format || undefined,
+      delai_souhaite: delai || undefined,
+    };
+    if (isEditing) {
+      await exchangeRepo.update(Number(id), payload);
+    } else {
+      await exchangeRepo.create({ ...payload, type: 'proposition' });
+    }
     router.replace('/exchange' as any);
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.pearl }}>
-      <ScreenHeader title="Publier un échange" backIcon="close" />
+      <ScreenHeader title={isEditing ? "Modifier l'échange" : 'Publier un échange'} backIcon="close" />
       <ScrollView
         contentContainerStyle={{ paddingBottom: 140 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
         <View style={{ paddingHorizontal: 24 }}>
-          <Text style={typography.eyebrow}>TYPE D'ÉCHANGE</Text>
-          <View style={styles.chipRow}>
-            {tags.map((t) => (
-              <Chip key={t} label={t} active={tag === t} onPress={() => setTag(t)} />
-            ))}
-          </View>
-
-          <Input label="Je propose" value={give} onChangeText={setGive} />
+          <Input label="Je propose" value={propose} onChangeText={setPropose} />
           <Input
-            label="Je cherche"
-            value={want}
-            onChangeText={setWant}
+            label="Je recherche"
+            value={recherche}
+            onChangeText={setRecherche}
             placeholder="Ex. cours de yoga, design web…"
           />
 
-          <Text style={styles.fieldLabel}>MODE</Text>
+          <Text style={styles.fieldLabel}>FORMAT</Text>
           <View style={styles.modeRow}>
-            {(['Présentiel', 'Visio', 'Peu importe'] as const).map((m) => (
+            {formats.map((f) => (
               <Chip
-                key={m}
-                label={m}
-                active={mode === m}
-                onPress={() => setMode(m)}
+                key={f}
+                label={f}
+                active={format === f}
+                onPress={() => setFormat(f)}
                 size="lg"
                 style={{ flex: 1, justifyContent: 'center' }}
               />
@@ -85,14 +96,18 @@ export default function ExchangeCreate() {
           </View>
 
           <Input
-            label="Votre intention"
-            value={intention}
-            onChangeText={setIntention}
+            label="Message (10 caractères minimum)"
+            value={message}
+            onChangeText={setMessage}
             multiline
             placeholder="Quelques mots pour que la personne se sente accueillie…"
           />
 
-          <Input label="Délai souhaité" value={delay} onChangeText={setDelay} />
+          <Input
+            label="Délai souhaité (AAAA-MM-JJ, optionnel)"
+            value={delai}
+            onChangeText={setDelai}
+          />
 
           <EscrowNotice
             tone="violet"
@@ -103,14 +118,13 @@ export default function ExchangeCreate() {
       </ScrollView>
 
       <View style={[styles.dock, { paddingBottom: insets.bottom + 14 }]}>
-        <Button label="Publier mon échange" onPress={publish} />
+        <Button label={isEditing ? 'Enregistrer' : 'Publier mon échange'} onPress={publish} />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8, marginBottom: 24 },
   fieldLabel: {
     ...typography.tiny,
     fontSize: 12,

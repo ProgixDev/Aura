@@ -1,10 +1,12 @@
 /**
  * Repository layer — every screen reads through these functions.
- * disciplineRepo, practitionerRepo, and eventRepo now call the real backend
- * via the api client; screens never need to change. exchangeRepo and
- * messageRepo still read from in-memory mocks (out of scope for this plan).
+ * disciplineRepo, practitionerRepo, eventRepo, cercleRepo, and articleRepo
+ * call the real backend via the api client; screens never need to change.
+ * exchangeRepo, paiementRepo, and remboursementRepo also call the real
+ * NestJS backend — the auth token is already attached globally by
+ * `src/store/session.ts`'s `setToken`. messageRepo still reads from
+ * in-memory mocks (out of scope for this plan).
  */
-import { exchangesMock } from '../mock/exchanges';
 import { conversationsMock, sampleChat } from '../mock/messages';
 import { disciplineImageSource } from '../images';
 import { api } from '../api/client';
@@ -13,6 +15,9 @@ import type {
   Discipline,
   Event,
   Exchange,
+  EchangeInput,
+  PaymentRecord,
+  Remboursement,
   Conversation,
   ChatMessage,
   Review,
@@ -178,25 +183,43 @@ export const articleRepo = {
       .then((res) => (res.data[0] ? mapArticle(res.data[0]) : undefined)),
 };
 
-// ---------- Exchanges ----------
+// ---------- Exchanges (échanges) — real backend ----------
 export const exchangeRepo = {
-  list: (): Promise<Exchange[]> => delay(exchangesMock),
-  byId: (id: string): Promise<Exchange | undefined> =>
-    delay(exchangesMock.find((x) => x.id === id)),
-  create: (draft: Partial<Exchange>): Promise<Exchange> => {
-    const created: Exchange = {
-      id: `x${Date.now()}`,
-      who: 'Vous',
-      role: 'Annecy',
-      give: draft.give ?? '',
-      want: draft.want ?? '',
-      tag: (draft.tag ?? 'Soin contre soin') as Exchange['tag'],
-      avatar: ['#C4B0E8', '#A8C8E8'] as const,
-      ...draft,
-    };
-    exchangesMock.unshift(created);
-    return delay(created);
+  list: (): Promise<Exchange[]> =>
+    api.get<{ data: Exchange[] }>('/echanges/client/echanges?per_page=50').then((r) => r.data),
+  byId: (id: number): Promise<Exchange> =>
+    api.get<{ data: Exchange }>(`/echanges/client/echanges/${id}`).then((r) => r.data),
+  create: (payload: EchangeInput): Promise<Exchange> =>
+    api.post<{ data: Exchange }>('/echanges/client/echanges', payload).then((r) => r.data),
+  update: (id: number, payload: Partial<Omit<EchangeInput, 'type'>>): Promise<Exchange> =>
+    api.put<{ data: Exchange }>(`/echanges/client/echanges/${id}`, payload).then((r) => r.data),
+  remove: (id: number): Promise<void> =>
+    api.del(`/echanges/client/echanges/${id}`).then(() => undefined),
+};
+
+// ---------- Paiements (payment history) — real backend ----------
+export const paiementRepo = {
+  list: (): Promise<PaymentRecord[]> =>
+    api.get<{ data: PaymentRecord[] }>('/paiements/clients?per_page=50').then((r) => r.data),
+  byId: (id: number): Promise<PaymentRecord> =>
+    api.get<{ data: PaymentRecord }>(`/paiements/${id}`).then((r) => r.data),
+};
+
+// ---------- Remboursements (refunds) — real backend ----------
+export const remboursementRepo = {
+  list: (): Promise<Remboursement[]> =>
+    api.get<{ data: Remboursement[] }>('/remboursements/client?per_page=50').then((r) => r.data),
+  create: (payload: { paiement_id: number; motif: string; description?: string }): Promise<Remboursement> => {
+    const fd = new FormData();
+    fd.append('paiement_id', String(payload.paiement_id));
+    fd.append('motif', payload.motif);
+    if (payload.description) fd.append('description', payload.description);
+    return api.post<{ data: Remboursement }>('/remboursements/client', fd).then((r) => r.data);
   },
+  byId: (id: number): Promise<Remboursement> =>
+    api.get<{ data: Remboursement }>(`/remboursements/client/${id}`).then((r) => r.data),
+  cancel: (id: number): Promise<Remboursement> =>
+    api.post<{ data: Remboursement }>(`/remboursements/client/${id}/cancel`).then((r) => r.data),
 };
 
 // ---------- Messaging ----------
