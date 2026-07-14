@@ -22,6 +22,8 @@ import { EchangesModule } from './echanges/echanges.module';
 import { PaiementsModule } from './paiements/paiements.module';
 import { RemboursementsModule } from './remboursements/remboursements.module';
 import { RendezVousModule } from './rendez-vous/rendez-vous.module';
+import { AvisModule } from './avis/avis.module';
+import { SignalementsModule } from './signalements/signalements.module';
 
 @Module({
   imports: [
@@ -44,6 +46,8 @@ import { RendezVousModule } from './rendez-vous/rendez-vous.module';
     EchangesModule,
     PaiementsModule,
     RemboursementsModule,
+    AvisModule,
+    SignalementsModule,
     RendezVousModule,
   ],
   controllers: [AppController],
