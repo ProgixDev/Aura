@@ -8,6 +8,8 @@
 
 **Verified 2026-07-13** by three parallel exploration passes (web wiring, mobile wiring, backend module inventory). The checklist is accurate; corrections captured below.
 
+**Update 2026-07-13 (later same day):** Plans 02–07 and 09 are now written (Plan 01 already executed and merged). Plans 05 and 07 were flagged "needs brainstorm" — rather than a separate interactive brainstorming session, the schema/flow design was settled directly (by the session's controller, informed by full codebase research) and handed to each plan as locked decisions; see each plan's "Locked decisions" section for the reasoning. **Plan 08 (messaging, subscriptions, disputes, roles, audit log, analytics, integrations) is deferred indefinitely** — user decision: revisit once the core product (bookings, payments, client auth) is live, rather than speculatively building 7 unvalidated subsystems now.
+
 ---
 
 ## Locked decisions (D-table)
@@ -55,56 +57,55 @@ Status legend: **READY** = can be written & executed now (no open design questio
 Backend `GET /api/praticiens/:id`; web api client + react-query + Vitest; mobile api client + jest-expo; env config both platforms; auth-token plumbing; web route-link bug batch (7 fixes).
 **Exit:** both frontends can reach the backend; one real endpoint proven end-to-end (praticien detail); test harnesses green on all three codebases.
 
-### Plan 02 — Read-only public domains (web + mobile) `READY`
-Wire list + detail for the 5 already-supported read domains: **disciplines, praticiens, events, articles, cercles**. Resolve slug↔id. Mobile parity: **build the missing mobile articles/blog screens and cercle screens** (neither exists today).
+### Plan 02 — Read-only public domains (web + mobile) `WRITTEN` ✅ `2026-07-13-aura-02-public-reads.md`
+Wire list + detail for the 5 already-supported read domains: **disciplines, praticiens, events, articles, cercles**. Slug↔id: disciplines resolved client-side from the (unpaginated) full list; articles gets a small `?slug=` backend filter addition; events/cercles/praticiens use numeric id directly (no slug column). Small justified backend addition: `?status=` filter on events (mirrors articles) so drafts don't leak publicly. Mobile parity: **builds the missing mobile Cercles and Blog/Articles list+detail screens** (neither exists today), forked from `EventCard`/`event/[id]`/`domain/[slug]` templates. Cercles' fake feed/members/status (no backend support) dropped rather than faked.
 **Depends on:** Plan 01. **Exit:** every public browse/detail screen shows live backend data on both platforms.
 
-### Plan 03 — Client auth `READY` (design settled by R1)
-Backend: client signup/login endpoints creating `users`(+`clients`) and issuing JWT; forgot-password stub or real reset. Web: wire `/connexion`, `/inscription`, `/mot-de-passe-oublie`, token persistence, replace `AuthModal` fake submit. Mobile: wire `/onboarding/auth`, persist token in `session` store, implement or remove Apple/Google buttons. Guard the `/compte/*` and mobile authed screens.
+### Plan 03 — Client auth `WRITTEN` ✅ `2026-07-13-aura-03-client-auth.md`
+Backend: new `ClientAuthModule` mirroring `praticien-auth`'s dual-write pattern (one transaction: `users` row + linked `clients` row by email) — register/login/logout/refresh/profile/check-token. Web: new `web/lib/auth-store.js` (Zustand + persist + localStorage, mirrors mobile's `session.ts` token pattern from Plan 01), wires `/connexion`, `/inscription`, `/mot-de-passe-oublie`, replaces `AuthModal`'s fake submit, guards `/compte/*`. Mobile: wires `/onboarding/auth`'s existing react-hook-form+zod submit to the real endpoint + `session.ts`'s already-built `setToken()`. Apple/Google buttons stay decorative (no OAuth in scope) — removed properly in Plan 09.
 **Depends on:** Plan 01. **Exit:** a real client can register, log in, and stay logged in on both platforms.
 
-### Plan 04 — Client-authenticated read/write domains `READY`
-Wire client-scoped features (require Plan 03 token): **paiements history**, **échanges CRUD**, **remboursements (client request/cancel)**. Mobile parity: build **payment-history** screen and **refund-request** flow (both absent).
+### Plan 04 — Client-authenticated read/write domains `WRITTEN` ✅ `2026-07-13-aura-04-client-domains.md`
+Backend already 100% complete for this plan (paiements/échanges/remboursements client routes all exist, all `ClientGuard`-protected) — pure frontend wiring. Web: paiements history, échanges CRUD (first real `onSubmit`/`onConfirm` wiring into the generic `FormModal`/`ConfirmModal` components), new `compte/remboursements` page + refund-request action (there was no client-facing refund UI at all — only the admin side had one). Mobile: new **payment-history** and **refund-request** screens (absent today), built on `booking/payment.tsx`'s `submitting`/try-finally pattern.
 **Depends on:** Plan 03. **Exit:** logged-in clients see their payments, manage échanges, request refunds — live — on both platforms.
 
-### Plan 05 — Bookings + Payments (Stripe) `NEEDS BRAINSTORM`
-Backend: `rendez_vous` module (R3) + Stripe PaymentIntents service + webhook + promo-code redemption/validate endpoint. Web: wire `/reserver/[id]` 4-step flow + payment step. Mobile: wire `/booking/slot|payment|confirmation` + event registration.
-**Brainstorm before writing:** rendez_vous schema (fields, statuses, relation to paiement), Stripe flow (intent creation point, confirmation, webhook idempotency), promo validation contract.
-**Depends on:** Plan 03. **Exit:** a client can book+pay a session and register+pay for an event for real.
+### Plan 05 — Bookings + Payments (Stripe) `WRITTEN` ✅ `2026-07-13-aura-05-bookings-stripe.md`
+Design locked (was flagged needs-brainstorm, settled directly): new `rendez_vous` table (`client_id, praticien_id, date_heure, duree_minutes, mode, statut, tarif, promotion_id, stripe_payment_intent_id`) — lightweight, no calendar/availability engine per R3. Stripe PaymentIntent flow: booking creates the intent, a webhook (`POST /api/webhooks/stripe`, raw-body signature verification, idempotent) is the *only* place `statut→confirme` + the `paiements` row (finally populating the dangling `rendez_vous_id` column) get created — client-reported success is never trusted. New `POST /api/promotions/validate` for server-side discount computation. Web gets Stripe Elements, mobile gets `@stripe/stripe-react-native`'s payment sheet — both looked up via context7 rather than guessed. Requires the user to supply their own Stripe test-mode keys before running.
+**Depends on:** Plan 03. **Exit:** a client can book+pay a session for real.
 
-### Plan 06 — Admin auth + guard hardening + admin wiring `READY` (some sub-items need backend design)
-Web admin login gate for `/admin/*` (currently zero auth); apply `AdminGuard` to all unguarded admin controllers (correction #2); wire every admin CRUD screen (disciplines, events, articles, cercles, praticiens, verification, paiements, remboursements, échanges, notifications, emails, promotions, clients-list); praticien verification review + **document-upload UI** (5 docs); build the missing web `/admin/echange/[id]` detail page.
-**Needs backend design (sub-plan):** client-detail endpoints — notes/ban/reset-password/export (`/admin/clients` today is list-only).
+### Plan 06 — Admin auth + guard hardening + admin wiring `WRITTEN` ✅ `2026-07-13-aura-06-admin-wiring.md`
+Complete guard-status table produced (every controller in `server/src/` audited) — 7 fully-public CRUD controllers (articles/cercles/disciplines/email-templates/events/notifications/promotions/clients) get class-level `AdminGuard`; 3 mixed client/admin controllers (échanges/paiements/remboursements) get method-level `AdminGuard` on just their admin routes. **This breaks every existing e2e test hitting those routes without a token** — plan handles it as TDD (update specs to expect 401→200-with-token before/alongside adding each guard). New separate `web/lib/admin-auth-store.js` (own token slot, doesn't collide with Plan 03's client store) + `/admin/connexion` + real layout guard. Every admin CRUD screen wired to its real backend; fake-with-no-backend sections (cercle members/feed, event attendees, notification send-log, client ban/notes/reset-password) removed or disabled rather than left fabricated. New `/admin/echange/[id]` detail page (previously a dead link).
 **Depends on:** Plans 01–02. **Exit:** admins log in, and every admin screen backed by an existing endpoint is live + protected.
 
-### Plan 07 — Greenfield backend modules, cheap first `NEEDS BRAINSTORM (light)`
-Build code on existing/new schema: **reviews/avis** (table exists), **reports/signalements** (table exists), **favorites** (new table), **notification preferences** (new table). Wire the matching web + mobile surfaces (`/compte/avis`, `/admin/avis`, mobile `review.tsx`; `/admin/signalements`, mobile `report.tsx`; `/compte/favoris`, mobile hearts; settings toggles).
+### Plan 07 — Greenfield backend modules, cheap first `WRITTEN` ✅ `2026-07-13-aura-07-greenfield-cheap.md`
+Design locked (was flagged needs-brainstorm-light, settled directly): **avis** (reviews) and **signalements** (reports) built on their existing-but-unused DB tables — noting the real schema limitation that `avis` has no `client_id` column (ownership approximated by `full_name_author` string match) and `signalements.signale_par_id` points at `users` not `clients` (so `JwtAuthGuard` alone suffices there, no `ClientGuard` needed). **favorites** and **notification_preferences** are two small new tables (new migration). Web + mobile surfaces wired: `/compte/avis` + `/admin/avis`, mobile `review.tsx`/`report.tsx` (finally parameterized by target + real submit), `/admin/signalements`, `/compte/favoris` + heart icons, the 4 real notification toggles on `/compte/parametres`.
 **Depends on:** Plan 03 (client identity for authored content). **Exit:** these four features are real end-to-end.
 
-### Plan 08 — Greenfield backend modules, heavy `NEEDS BRAINSTORM (each its own)`
-Each is a full subsystem needing its own brainstorm + plan: **messaging/chat**, **subscriptions/abonnements**, **disputes/litiges**, **granular roles & permissions**, **audit log**, **analytics aggregation** (beyond existing `statistics` endpoints), **integrations/OAuth** (Stripe Connect / Google Calendar / Mailchimp / Twilio / Zapier).
-**Exit:** delivered feature-by-feature; scope-trim candidates — confirm which are actually in product scope before building.
+### Plan 08 — Greenfield backend modules, heavy `DEFERRED (user decision, 2026-07-13)`
+**Not written.** Bundles 7 speculative subsystems: **messaging/chat**, **subscriptions/abonnements**, **disputes/litiges**, **granular roles & permissions**, **audit log**, **analytics aggregation** (beyond existing `statistics` endpoints), **integrations/OAuth** (Stripe Connect / Google Calendar / Mailchimp / Twilio / Zapier). None have validated product requirements and the core product (bookings/payments/client-auth) wasn't live yet when this was scoped. User chose to defer entirely rather than build any of the 7 speculatively — revisit once Plans 01–07 are live and it's clear which (if any) are actually needed.
 
-### Plan 09 — Polish `READY`
-Remaining mobile dead-ends (Profil rows, filter/sort chips made real, chat `send()` persistence, quiz answers used downstream, parameterize `review.tsx`/`report.tsx` by target), residual cosmetic no-ops. Absorbed opportunistically whenever a plan touches the relevant file; this catches the leftovers.
+### Plan 09 — Polish `WRITTEN` ✅ `2026-07-13-aura-09-polish.md`
+8 remaining mobile dead-ends/no-ops not already swept up by Plans 03/04/06/07 landing first: remove decorative Apple/Google onboarding buttons (no OAuth in scope) and any `profil.tsx` row with genuinely nothing to wire to (removal preferred over a fake-looking live control, applied consistently); real client-side filtering wired up on Recherche/Événements/Échanges (search/chips currently set state that's never applied); chat `send()` gets an honest partial fix (optimistic local-only append, explicitly not claiming delivery — no messaging backend exists, see Plan 08); onboarding quiz answers persisted to the session store instead of being silently discarded on every step navigation (mechanical fix only, no downstream use added).
+**Depends on:** best run after 03/04/06/07 so its dead-row inventory reflects what's actually still dead. **Exit:** completing this + Plans 01–07 is the full roadmap scope minus deferred Plan 08.
 
 ---
 
 ## Execution model
 
-- Run each numbered plan through `superpowers:subagent-driven-development`: fresh subagent per task, two-stage review between tasks.
-- Prefer a git worktree per plan (`superpowers:using-git-worktrees`) so web/mobile/server changes for a phase stay isolated.
+- Run each numbered plan through `superpowers:subagent-driven-development`: fresh subagent per task. Per-task review process is up to the executor — Plan 01 used a full two-stage (spec + code quality) review per task initially, then switched to implementer-does-work-and-self-reviews with one consolidated review at the end of the whole plan, which is the leaner default going forward unless a specific task looks risky enough to warrant a dedicated review.
+- Prefer a git worktree per plan (`superpowers:using-git-worktrees`) so web/mobile/server changes for a phase stay isolated — **use the global location** (`~/.config/superpowers/worktrees/<project>/<branch>`), not a repo-local `.worktrees/` dir, so the main repo directory never picks up worktree-only artifacts.
 - **Parallel per-domain (R4):** within a domain plan, the backend task lands first, then web + mobile wiring tasks can run concurrently (independent files).
-- Before Plan 05, 07, and each Plan 08 item: run `superpowers:brainstorming` to settle schema/flow, then write that plan with `superpowers:writing-plans`.
+- **Never add a "Co-Authored-By" or other AI-attribution trailer to any commit** — every task in every plan says this explicitly, but it's a standing project rule beyond just what's written in each plan.
+- Plans 05 and 07 were flagged needs-brainstorm in the initial roadmap; that design work is done (see each plan's own "Locked decisions") — no separate brainstorming session is needed before executing them.
 
 ## Dependency graph (quick view)
 
 ```
-01 Foundation
-├─ 02 Public reads ─┬─ 06 Admin (also needs 01)
-│                   └─ 09 Polish (opportunistic)
-└─ 03 Client auth ──┬─ 04 Client domains
-                    ├─ 05 Bookings+Stripe (brainstorm)
-                    └─ 07 Greenfield-cheap (brainstorm-light)
-08 Greenfield-heavy — independent, each its own brainstorm+plan
+01 Foundation ✅
+├─ 02 Public reads ✅ ─┬─ 06 Admin ✅ (also needs 01)
+│                      └─ 09 Polish ✅ (best run after 03/04/06/07)
+└─ 03 Client auth ✅ ──┬─ 04 Client domains ✅
+                       ├─ 05 Bookings+Stripe ✅
+                       └─ 07 Greenfield-cheap ✅
+08 Greenfield-heavy — DEFERRED indefinitely (user decision)
 ```
