@@ -1,8 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { practitioners } from '@/lib/data/practitioners';
-import { disciplines } from '@/lib/data/disciplines';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { mapPraticien } from '@/lib/data/praticien-adapter';
 import { PractitionerCard } from '@/components/cards/PractitionerCard';
 import { ModalButton } from '@/components/ui/ModalButton';
 import { Icon } from '@/components/ui/Icon';
@@ -25,13 +26,28 @@ export default function PraticiensPage() {
   const [mode, setMode] = useState('all');
   const [sort, setSort] = useState('pertinence');
 
+  const { data: praticiensRes } = useQuery({
+    queryKey: ['praticiens'],
+    queryFn: () => api.get('/praticiens'),
+  });
+  const practitioners = useMemo(
+    () => (praticiensRes?.data ?? []).map(mapPraticien),
+    [praticiensRes],
+  );
+
+  const { data: disciplinesRes } = useQuery({
+    queryKey: ['disciplines'],
+    queryFn: () => api.get('/disciplines'),
+  });
+  const chips = (disciplinesRes?.data ?? []).slice(0, 8);
+
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = practitioners.filter((p) => {
       if (discipline !== 'all' && !p.specialties.includes(discipline) && p.extraSpecialty !== discipline) return false;
       if (mode !== 'all' && !p.mode.toLowerCase().includes(mode)) return false;
       if (q) {
-        const hay = [p.name, p.city, p.region, ...p.specialties, p.extraSpecialty || ''].join(' ').toLowerCase();
+        const hay = [p.name, p.city, ...p.specialties, p.extraSpecialty || ''].join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -39,9 +55,7 @@ export default function PraticiensPage() {
     if (sort === 'prix') list = [...list].sort((a, b) => a.price - b.price);
     else if (sort === 'note') list = [...list].sort((a, b) => b.rating - a.rating);
     return list;
-  }, [query, discipline, mode, sort]);
-
-  const chips = disciplines.slice(0, 8);
+  }, [practitioners, query, discipline, mode, sort]);
 
   return (
     <>
@@ -105,10 +119,10 @@ export default function PraticiensPage() {
               <button
                 key={d.slug}
                 type="button"
-                className={`chip tone-${d.tone}${discipline === d.name ? ' active' : ''}`}
-                onClick={() => setDiscipline(discipline === d.name ? 'all' : d.name)}
+                className={`chip tone-${d.tonalite}${discipline === d.nom ? ' active' : ''}`}
+                onClick={() => setDiscipline(discipline === d.nom ? 'all' : d.nom)}
               >
-                {d.name}
+                {d.nom}
               </button>
             ))}
           </div>

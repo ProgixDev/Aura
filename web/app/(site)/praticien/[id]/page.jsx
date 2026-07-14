@@ -1,5 +1,10 @@
+'use client';
+
+import { use } from 'react';
 import Link from 'next/link';
-import { practitioners, getPractitioner, reviewsFor } from '@/lib/data/practitioners';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { mapPraticien } from '@/lib/data/praticien-adapter';
 import { Badge } from '@/components/ui/Badge';
 import { Rating } from '@/components/ui/Rating';
 import { Icon } from '@/components/ui/Icon';
@@ -8,15 +13,15 @@ import { ModalButton } from '@/components/ui/ModalButton';
 import { ToastButton } from '@/components/ui/ToastButton';
 import { ProfileBody } from './ProfileBody';
 
-export function generateStaticParams() {
-  return practitioners.map((p) => ({ id: p.id }));
-}
+export default function PractitionerProfilePage({ params }) {
+  const { id } = use(params);
 
-export default async function PractitionerProfilePage({ params }) {
-  const { id } = await params;
-  const p = getPractitioner(id);
+  const { data, isLoading } = useQuery({
+    queryKey: ['praticien', id],
+    queryFn: () => api.get(`/praticiens/${id}`),
+  });
 
-  if (!p) {
+  if (!isLoading && !data?.data) {
     return (
       <section className="section">
         <div className="container center">
@@ -27,19 +32,23 @@ export default async function PractitionerProfilePage({ params }) {
       </section>
     );
   }
+  if (!data?.data) return null;
 
-  const reviews = reviewsFor(id).filter((r) => r.status === 'published');
+  const p = mapPraticien(data.data);
+  // No reviews backend yet (Plan 07 builds the `avis` module) — real empty
+  // state, not a fake call to a nonexistent endpoint.
+  const reviews = [];
   const specChips = [...p.specialties, ...(p.extraSpecialty ? [p.extraSpecialty] : [])];
 
   return (
     <>
       {/* HERO */}
       <section style={{ position: 'relative', height: 420 }}>
-        <img
-          src={p.hero}
-          alt=""
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        />
+        {p.hero ? (
+          <img src={p.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <div className="aurora-dark grain" style={{ '--orb-x': '65%', '--orb-y': '25%', '--orb-1': '#C4B0E8', '--orb-2': '#7B5FCF', width: '100%', height: '100%' }} />
+        )}
         <div
           style={{
             position: 'absolute', inset: 0,
@@ -96,18 +105,14 @@ export default async function PractitionerProfilePage({ params }) {
         <div className="card card-pad" style={{ marginTop: -80, position: 'relative', zIndex: 2 }}>
           <div className="row gap-2 wrap" style={{ marginBottom: 12 }}>
             {p.verified && <Badge variant="verified" dot>Vérifiée</Badge>}
-            {p.online && <Badge variant="online" dot>En ligne</Badge>}
-            {p.novice && <Badge variant="novice">Novice</Badge>}
             <span className="tiny muted" style={{ marginLeft: 'auto' }}>{p.level}</span>
           </div>
 
           <h1 className="h-1" style={{ marginBottom: 6 }}>{p.name}</h1>
           <div className="row gap-2 small muted" style={{ marginBottom: 16 }}>
-            <span className="row gap-1"><Icon name="pin" size={14} color="var(--muted)" />{p.city}, {p.region}</span>
+            <span className="row gap-1"><Icon name="pin" size={14} color="var(--muted)" />{p.city}</span>
             <span style={{ opacity: 0.5 }}>•</span>
             <span>{p.mode}</span>
-            <span style={{ opacity: 0.5 }}>•</span>
-            <span className="row gap-1"><Icon name="clock" size={13} color="var(--muted)" />Répond {p.responseTime}</span>
           </div>
 
           <div className="row gap-2 wrap" style={{ marginBottom: 18 }}>
@@ -121,7 +126,7 @@ export default async function PractitionerProfilePage({ params }) {
           <div className="row gap-6 wrap" style={{ marginTop: 16, alignItems: 'center' }}>
             <Rating value={p.rating} count={p.reviews} showCount size={16} />
             <span className="price" style={{ fontSize: 22 }}>
-              {p.price}€<small>/séance · {p.duration} min</small>
+              {p.price}€<small>/séance</small>
             </span>
           </div>
         </div>
@@ -141,7 +146,7 @@ export default async function PractitionerProfilePage({ params }) {
                 <div className="price" style={{ fontSize: 26 }}>
                   {p.price}€<small>/séance</small>
                 </div>
-                <div className="small muted" style={{ marginBottom: 16 }}>{p.duration} minutes · {p.mode}</div>
+                <div className="small muted" style={{ marginBottom: 16 }}>{p.mode}</div>
 
                 <Button href={`/reserver/${p.id}`} variant="aurora" size="lg" block>
                   Réserver une séance

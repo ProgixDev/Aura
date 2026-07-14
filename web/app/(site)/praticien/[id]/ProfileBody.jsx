@@ -5,7 +5,6 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Rating } from '@/components/ui/Rating';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
-import { initials } from '@/lib/format';
 
 const GALLERY_TONES = ['violet', 'sky', 'sage'];
 
@@ -43,10 +42,12 @@ export function ProfileBody({ p, reviews }) {
             <div className="stack gap-6" style={{ marginTop: 26 }}>
               <p className="lead">{p.bio}</p>
 
-              <div>
-                <span className="eyebrow">Sa démarche</span>
-                <p className="body" style={{ marginTop: 8 }}>{p.approach}</p>
-              </div>
+              {p.approach && (
+                <div>
+                  <span className="eyebrow">Sa démarche</span>
+                  <p className="body" style={{ marginTop: 8 }}>{p.approach}</p>
+                </div>
+              )}
 
               <div className="grid grid-2">
                 <div className="card card-pad center">
@@ -55,12 +56,14 @@ export function ProfileBody({ p, reviews }) {
                   </div>
                   <div className="small muted" style={{ marginTop: 4 }}>ans d'expérience</div>
                 </div>
-                <div className="card card-pad center">
-                  <div className="serif" style={{ fontSize: 34, lineHeight: 1, color: 'var(--violet-2)' }}>
-                    {p.experience.sessions}
+                {p.experience.sessions != null && (
+                  <div className="card card-pad center">
+                    <div className="serif" style={{ fontSize: 34, lineHeight: 1, color: 'var(--violet-2)' }}>
+                      {p.experience.sessions}
+                    </div>
+                    <div className="small muted" style={{ marginTop: 4 }}>séances réalisées</div>
                   </div>
-                  <div className="small muted" style={{ marginTop: 4 }}>séances réalisées</div>
-                </div>
+                )}
               </div>
 
               <div>
@@ -89,7 +92,7 @@ export function ProfileBody({ p, reviews }) {
                 </div>
               </div>
 
-              <ExchangePanel p={p} />
+              {p.exchange && <ExchangePanel p={p} />}
             </div>
           );
         }
@@ -136,7 +139,7 @@ export function ProfileBody({ p, reviews }) {
         // exchange
         return (
           <div className="stack gap-5" style={{ marginTop: 26 }}>
-            <ExchangePanel p={p} />
+            {p.exchange && <ExchangePanel p={p} />}
             <div className="note">
               <strong>Le troc bienveillant.</strong> Sur AURA, certains praticiens acceptent
               d'échanger un soin contre un autre savoir-faire. Contactez {p.name.split(' ')[0]} via
