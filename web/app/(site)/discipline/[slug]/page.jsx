@@ -1,8 +1,11 @@
+'use client';
+
+import { use } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { disciplines, getDiscipline } from '@/lib/data/disciplines';
-import { practitioners } from '@/lib/data/practitioners';
-import { PractitionerCard } from '@/components/cards/PractitionerCard';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { findBySlug } from '@/lib/data/find-by-slug';
+import { Avatar } from '@/components/ui/Avatar';
 import { ModalButton } from '@/components/ui/ModalButton';
 import { Icon } from '@/components/ui/Icon';
 
@@ -13,26 +16,37 @@ const ORB = {
   gold: ['#E4C896', '#C49A4A'],
 };
 
-export function generateStaticParams() {
-  return disciplines.map((d) => ({ slug: d.slug }));
-}
+export default function DisciplinePage({ params }) {
+  const { slug } = use(params);
 
-export async function generateMetadata({ params }) {
-  const { slug } = await params;
-  const d = getDiscipline(slug);
-  if (!d) return { title: 'Discipline — Aura' };
-  return { title: `${d.name} — Aura`, description: d.tagline };
-}
+  const { data: disciplinesRes } = useQuery({
+    queryKey: ['disciplines'],
+    queryFn: () => api.get('/disciplines'),
+  });
+  const disciplines = disciplinesRes?.data ?? [];
+  const d = findBySlug(disciplines, slug);
 
-export default async function DisciplinePage({ params }) {
-  const { slug } = await params;
-  const d = getDiscipline(slug);
-  if (!d) notFound();
+  const { data: praticiensRes } = useQuery({
+    queryKey: ['praticiens'],
+    queryFn: () => api.get('/praticiens'),
+  });
+  const praticiens = praticiensRes?.data ?? [];
 
-  const [orb1, orb2] = ORB[d.tone] || ORB.violet;
-  const matches = practitioners.filter((p) =>
-    p.specialties.some((s) => s.toLowerCase().includes(d.name.toLowerCase()) || d.name.toLowerCase().includes(s.toLowerCase()))
-  );
+  if (disciplinesRes && !d) {
+    return (
+      <section className="section">
+        <div className="container-narrow center">
+          <h1 className="h-2">Discipline introuvable</h1>
+          <p className="lead" style={{ marginTop: 10 }}>Cette discipline n'existe pas ou n'est plus disponible.</p>
+          <Link href="/disciplines" className="btn btn-soft" style={{ marginTop: 18 }}>Retour aux disciplines</Link>
+        </div>
+      </section>
+    );
+  }
+  if (!d) return null;
+
+  const [orb1, orb2] = ORB[d.tonalite] || ORB.violet;
+  const matches = praticiens.filter((p) => p.specialite === d.nom);
 
   return (
     <>
@@ -45,48 +59,13 @@ export default async function DisciplinePage({ params }) {
           <div className="row gap-2 small" style={{ color: 'rgba(255,255,255,0.6)', marginBottom: 22 }}>
             <Link href="/disciplines" style={{ color: 'rgba(255,255,255,0.7)' }}>Disciplines</Link>
             <Icon name="chevronRight" size={13} color="rgba(255,255,255,0.5)" />
-            <span>{d.name}</span>
+            <span>{d.nom}</span>
           </div>
-          <span className={`tile-icon glyph-${d.tone}`} style={{ fontSize: 26, marginBottom: 20, background: 'rgba(255,255,255,0.12)' }}>{d.glyph}</span>
-          <h1 className="h-display" style={{ color: '#fff', margin: '0 0 16px' }}>{d.name}</h1>
-          <p className="lead italic serif" style={{ color: 'rgba(255,255,255,0.85)', maxWidth: 560 }}>{d.tagline}.</p>
+          <span className={`tile-icon glyph-${d.tonalite}`} style={{ fontSize: 26, marginBottom: 20, background: 'rgba(255,255,255,0.12)' }}>{d.glyphe}</span>
+          <h1 className="h-display" style={{ color: '#fff', margin: '0 0 16px' }}>{d.nom}</h1>
+          <p className="lead italic serif" style={{ color: 'rgba(255,255,255,0.85)', maxWidth: 560 }}>{d.accroche}.</p>
           <div className="row gap-3" style={{ marginTop: 32, flexWrap: 'wrap' }}>
             <Link href="/praticiens" className="btn btn-aurora btn-lg">Voir les praticiens</Link>
-            <span className="row gap-2 small" style={{ color: 'rgba(255,255,255,0.7)' }}>
-              <Icon name="users" size={15} color="rgba(255,255,255,0.7)" />{d.count} praticiens vérifiés
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* INTRO + PULL QUOTE */}
-      <section className="section">
-        <div className="container-narrow">
-          <span className="eyebrow">La pratique</span>
-          <p className="lead" style={{ marginTop: 14 }}>{d.intro}</p>
-          <figure className="card-pad tint-violet" style={{ borderRadius: 'var(--r-card)', margin: '40px 0 0' }}>
-            <p className="serif" style={{ fontSize: 'clamp(22px,3vw,30px)', lineHeight: 1.35, fontWeight: 400 }}>
-              « {d.pullQuote} »
-            </p>
-          </figure>
-        </div>
-      </section>
-
-      {/* EXPECTATIONS */}
-      <section className="section-sm" style={{ background: 'var(--mist)' }}>
-        <div className="container">
-          <div className="center" style={{ marginBottom: 40 }}>
-            <span className="eyebrow">À quoi s’attendre</span>
-            <h2 className="h-2" style={{ marginTop: 10 }}>Une séance type</h2>
-          </div>
-          <div className="grid grid-4">
-            {d.expectations.map((x, i) => (
-              <div key={i} className="card card-pad">
-                <span className="serif italic accent" style={{ fontSize: 30 }}>{String(i + 1).padStart(2, '0')}</span>
-                <h3 className="h-4" style={{ margin: '10px 0 6px', fontWeight: 500 }}>{x.h}</h3>
-                <p className="small">{x.d}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -97,17 +76,29 @@ export default async function DisciplinePage({ params }) {
           <div className="section-head">
             <div>
               <span className="eyebrow">Sélection</span>
-              <h2 className="h-2" style={{ marginTop: 8 }}>Praticiens en {d.name}</h2>
+              <h2 className="h-2" style={{ marginTop: 8 }}>Praticiens en {d.nom}</h2>
             </div>
             <Link href="/praticiens" className="more">Tous les praticiens →</Link>
           </div>
           {matches.length > 0 ? (
             <div className="grid" style={{ gap: 16 }}>
-              {matches.map((p) => <PractitionerCard key={p.id} p={p} />)}
+              {matches.map((p) => (
+                <Link key={p.id} href={`/praticien/${p.id}`} className="card card-hover" style={{ display: 'flex', gap: 16, padding: 18, alignItems: 'flex-start' }}>
+                  <Avatar name={`${p.firstname} ${p.lastname}`} size={72} />
+                  <div className="flex-1">
+                    <div className="h-4" style={{ fontWeight: 500 }}>{p.firstname} {p.lastname}</div>
+                    <div className="small" style={{ margin: '4px 0 8px' }}>{p.specialite}</div>
+                    <div className="row gap-2 wrap small">
+                      <span className="row gap-1"><Icon name="pin" size={13} color="var(--muted)" />{p.ville}</span>
+                      <span className="price" style={{ marginLeft: 'auto', fontSize: 18 }}>{Math.round(Number(p.tarif))}€<small>/séance</small></span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
           ) : (
             <div className="empty card card-pad center">
-              <span className={`tile-icon glyph-${d.tone}`} style={{ fontSize: 22, margin: '0 auto 12px' }}>{d.glyph}</span>
+              <span className={`tile-icon glyph-${d.tonalite}`} style={{ fontSize: 22, margin: '0 auto 12px' }}>{d.glyphe}</span>
               <p className="body">Aucun praticien affiché pour le moment dans cette discipline.</p>
               <div style={{ marginTop: 16 }}>
                 <Link href="/praticiens" className="btn btn-primary">Explorer toutes les disciplines</Link>
@@ -121,12 +112,12 @@ export default async function DisciplinePage({ params }) {
       <section className="section">
         <div className="container">
           <div className="aurora-dark grain card" style={{ '--orb-x': '22%', '--orb-y': '30%', '--orb-1': orb1, '--orb-2': orb2, padding: 'clamp(40px,6vw,68px)', textAlign: 'center', borderRadius: 'var(--r-sheet)' }}>
-            <h2 className="h-1" style={{ color: '#fff', marginBottom: 14 }}>Une question sur le {d.name.toLowerCase()} ?</h2>
+            <h2 className="h-1" style={{ color: '#fff', marginBottom: 14 }}>Une question sur le {d.nom.toLowerCase()} ?</h2>
             <p className="lead" style={{ color: 'rgba(255,255,255,0.82)', maxWidth: 500, margin: '0 auto 28px' }}>
               Posez vos questions avant de réserver — sans engagement, dans un cadre bienveillant.
             </p>
             <div className="row gap-3" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
-              <ModalButton modal="contact" payload={{ name: d.name }} className="btn btn-aurora btn-lg">Poser une question</ModalButton>
+              <ModalButton modal="contact" payload={{ name: d.nom }} className="btn btn-aurora btn-lg">Poser une question</ModalButton>
               <Link href="/praticiens" className="btn btn-soft btn-lg" style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)' }}>Trouver un praticien</Link>
             </div>
           </div>

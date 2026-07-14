@@ -1,15 +1,18 @@
+'use client';
+
 import Link from 'next/link';
-import { disciplines } from '@/lib/data/disciplines';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
 
-export const metadata = {
-  title: 'Disciplines — Aura',
-  description: 'Explorez toutes les disciplines du soin énergétique : magnétisme, Reiki, hypnose, chamanisme et bien plus.',
-};
-
 export default function DisciplinesPage() {
-  const total = disciplines.reduce((n, d) => n + d.count, 0);
+  const { data } = useQuery({
+    queryKey: ['disciplines'],
+    queryFn: () => api.get('/disciplines'),
+  });
+  const disciplines = data?.data ?? [];
+
   return (
     <>
       {/* HERO */}
@@ -23,15 +26,17 @@ export default function DisciplinesPage() {
             Toutes les <span className="italic" style={{ color: 'var(--violet)' }}>disciplines</span> du soin.
           </h1>
           <p className="lead" style={{ color: 'rgba(255,255,255,0.82)', maxWidth: 560, margin: '0 auto' }}>
-            Du magnétisme à l’hypnose, chaque pratique a sa porte d’entrée. Trouvez celle qui vous appelle, et le praticien qui l’incarne.
+            Du magnétisme à l'hypnose, chaque pratique a sa porte d'entrée. Trouvez celle qui vous appelle, et le praticien qui l'incarne.
           </p>
           <div className="row gap-6" style={{ justifyContent: 'center', marginTop: 40, color: 'rgba(255,255,255,0.75)', flexWrap: 'wrap' }}>
-            {[[disciplines.length, 'disciplines'], [`${total.toLocaleString('fr-FR')}`, 'praticiens vérifiés'], ['4,9 / 5', 'satisfaction']].map(([v, l]) => (
-              <div key={l} className="center">
-                <div className="serif" style={{ fontSize: 30, color: '#fff' }}>{v}</div>
-                <div className="tiny" style={{ color: 'rgba(255,255,255,0.6)' }}>{l}</div>
-              </div>
-            ))}
+            <div className="center">
+              <div className="serif" style={{ fontSize: 30, color: '#fff' }}>{disciplines.length}</div>
+              <div className="tiny" style={{ color: 'rgba(255,255,255,0.6)' }}>disciplines</div>
+            </div>
+            <div className="center">
+              <div className="serif" style={{ fontSize: 30, color: '#fff' }}>4,9 / 5</div>
+              <div className="tiny" style={{ color: 'rgba(255,255,255,0.6)' }}>satisfaction</div>
+            </div>
           </div>
         </div>
       </section>
@@ -50,11 +55,10 @@ export default function DisciplinesPage() {
             {disciplines.map((d) => (
               <Link key={d.slug} href={`/discipline/${d.slug}`} className="card card-pad card-hover" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div className="row between" style={{ alignItems: 'flex-start', marginBottom: 14 }}>
-                  <span className={`tile-icon glyph-${d.tone}`} style={{ fontSize: 22 }}>{d.glyph}</span>
-                  <span className="tiny muted">{d.count} praticiens</span>
+                  <span className={`tile-icon glyph-${d.tonalite}`} style={{ fontSize: 22 }}>{d.glyphe}</span>
                 </div>
-                <h3 className="h-3" style={{ marginBottom: 6 }}>{d.name}</h3>
-                <p className="body flex-1" style={{ marginBottom: 14 }}>{d.tagline}.</p>
+                <h3 className="h-3" style={{ marginBottom: 6 }}>{d.nom}</h3>
+                <p className="body flex-1" style={{ marginBottom: 14 }}>{d.accroche}</p>
                 <span className="row gap-1 small accent" style={{ fontWeight: 500 }}>
                   Découvrir <Icon name="arrowRight" size={14} color="var(--violet-2)" />
                 </span>
