@@ -37,6 +37,28 @@ export async function apiFetch(path, { method = 'GET', body, token, headers = {}
   return payload;
 }
 
+// Authenticated binary download (praticien verification documents today; any future
+// file/export route can reuse it). Distinct from `apiFetch` because the response body
+// is a Blob, not a JSON envelope — there is nothing to unwrap and no `Content-Type`
+// header to set on the request.
+export async function apiFetchBlob(path, { token, headers = {} } = {}) {
+  const t = token ?? authToken;
+  const res = await fetch(`${BASE}${path}`, {
+    headers: {
+      ...headers,
+      ...(t ? { Authorization: `Bearer ${t}` } : {}),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    let payload = null;
+    if (text) { try { payload = JSON.parse(text); } catch { payload = text; } }
+    throw new ApiError(payload?.message || `Request failed (${res.status})`, res.status, payload);
+  }
+  return res.blob();
+}
+
 export const api = {
   get: (p, o) => apiFetch(p, { ...o, method: 'GET' }),
   post: (p, body, o) => apiFetch(p, { ...o, method: 'POST', body }),
