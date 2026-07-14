@@ -1,13 +1,10 @@
+'use client';
+
 import Link from 'next/link';
-import { cercles } from '@/lib/data/admin';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 import { Icon } from '@/components/ui/Icon';
 import { ToastButton } from '@/components/ui/ToastButton';
-import { num } from '@/lib/format';
-
-export const metadata = {
-  title: 'Les cercles Aura — Communauté',
-  description: 'Rejoignez un cercle Aura : des espaces de partage continus, en ligne et en présentiel, autour du soin et du bien-être.',
-};
 
 const WHY = [
   { i: 'users', t: 'Un groupe choisi', d: 'Des cercles à taille humaine, modérés, où chacun a sa place.' },
@@ -16,7 +13,12 @@ const WHY = [
 ];
 
 export default function CerclesPage() {
-  const active = cercles.filter((c) => c.status === 'active');
+  const { data } = useQuery({
+    queryKey: ['cercles'],
+    queryFn: () => api.get('/cercles'),
+  });
+  const cercles = data?.data ?? [];
+
   return (
     <>
       {/* HERO */}
@@ -30,7 +32,7 @@ export default function CerclesPage() {
             Les <span className="italic" style={{ color: 'var(--violet)' }}>cercles</span> Aura.
           </h1>
           <p className="lead" style={{ color: 'rgba(255,255,255,0.82)', maxWidth: 580, margin: '0 auto' }}>
-            Cheminer seul·e, c’est bien. Ensemble, c’est plus doux. Les cercles Aura réunissent celles et ceux qui partagent une pratique, une ville, une intention — pour échanger toute l’année.
+            Cheminer seul·e, c'est bien. Ensemble, c'est plus doux. Les cercles Aura réunissent celles et ceux qui partagent une pratique, une ville, une intention — pour échanger toute l'année.
           </p>
         </div>
       </section>
@@ -60,25 +62,26 @@ export default function CerclesPage() {
             </div>
           </div>
           <div className="grid grid-3">
-            {active.map((c) => (
+            {cercles.map((c) => (
               <div key={c.id} className="card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 <Link
                   href={`/cercle/${c.id}`}
                   className="aurora-dark grain"
-                  style={{ height: 120, padding: 18, display: 'flex', alignItems: 'flex-end', '--orb-1': c.tone === 'gold' ? '#E4C896' : c.tone === 'sage' ? '#B8D4C2' : c.tone === 'violet' ? '#C4B0E8' : '#A8C8E8', '--orb-2': '#7B5FCF' }}
+                  style={{ height: 120, padding: 18, display: 'flex', alignItems: 'flex-end', '--orb-1': c.color || '#C4B0E8', '--orb-2': '#7B5FCF' }}
                 >
-                  <span className="serif" style={{ color: '#fff', fontSize: 21, fontWeight: 500, lineHeight: 1.15 }}>{c.name}</span>
+                  <span className="serif" style={{ color: '#fff', fontSize: 21, fontWeight: 500, lineHeight: 1.15 }}>{c.nom}</span>
                 </Link>
                 <div className="card-pad flex-1" style={{ display: 'flex', flexDirection: 'column' }}>
-                  <div className="row gap-3 small muted" style={{ marginBottom: 12 }}>
-                    <span className="row gap-1"><Icon name="users" size={13} color="var(--muted)" />{num(c.members)} membres</span>
-                    <span className="row gap-1"><Icon name="message" size={13} color="var(--muted)" />{num(c.posts)} échanges</span>
-                  </div>
-                  <p className="small flex-1" style={{ marginBottom: 14 }}>Animé par <strong>{c.lead}</strong>.</p>
+                  {c.animateur && (
+                    <p className="small" style={{ marginBottom: 10 }}>Animé par <strong>{c.animateur}</strong>.</p>
+                  )}
+                  {c.description && (
+                    <p className="small muted flex-1" style={{ marginBottom: 14 }}>{c.description}</p>
+                  )}
                   <div className="row gap-2">
                     <Link href={`/cercle/${c.id}`} className="btn btn-soft btn-sm flex-1">Découvrir</Link>
                     <ToastButton
-                      message={`Vous avez rejoint « ${c.name} » 🌿`}
+                      message={`Vous avez rejoint « ${c.nom} » 🌿`}
                       tone="success"
                       className="btn btn-primary btn-sm flex-1"
                     >
@@ -101,10 +104,10 @@ export default function CerclesPage() {
               Praticiens et membres engagés : ouvrez un espace autour de votre pratique ou de votre région.
             </p>
             <div className="row gap-3" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
-              <ToastButton message="Demande envoyée — l’équipe Aura vous recontacte sous 48h." tone="success" className="btn btn-aurora btn-lg">
+              <ToastButton message="Demande envoyée — l'équipe Aura vous recontacte sous 48h." tone="success" className="btn btn-aurora btn-lg">
                 Proposer un cercle
               </ToastButton>
-              <Link href="/evenements" className="btn btn-soft btn-lg" style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)' }}>Voir l’agenda</Link>
+              <Link href="/evenements" className="btn btn-soft btn-lg" style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)' }}>Voir l'agenda</Link>
             </div>
           </div>
         </div>
