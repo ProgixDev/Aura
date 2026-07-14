@@ -86,7 +86,7 @@ export default function RoleChoice() {
         <Button label="Continuer" onPress={continueFlow} />
         <Text style={styles.connect}>
           Déjà membre ?{' '}
-          <Text style={styles.link} onPress={continueFlow}>
+          <Text style={styles.link} onPress={() => router.push('/onboarding/auth?mode=login' as any)}>
             Se connecter
           </Text>
         </Text>

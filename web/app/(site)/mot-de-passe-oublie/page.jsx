@@ -1,9 +1,34 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@/components/ui/Icon';
 import { Lotus } from '@/components/ui/Lotus';
-import { ToastButton } from '@/components/ui/ToastButton';
+import { api, ApiError } from '@/lib/api';
+import { useUI } from '@/lib/store';
 
 export default function MotDePasseOubliePage() {
+  const toast = useUI((s) => s.toast);
+  const [email, setEmail] = useState('');
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await api.post('/client/forgot-password', { email });
+      toast(res.message || 'Lien de réinitialisation envoyé — vérifiez vos emails', 'success');
+      setSent(true);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Une erreur est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className="section">
       <div className="container-narrow" style={{ maxWidth: 480 }}>
@@ -17,22 +42,29 @@ export default function MotDePasseOubliePage() {
               Pas de <span className="serif-accent">panique</span>
             </h1>
             <p className="body">
-              Saisissez votre adresse email : nous vous enverrons un lien sécurisé pour réinitialiser votre mot de passe.
+              Saisissez votre adresse email : si un compte existe, nous vous enverrons un lien sécurisé pour réinitialiser votre mot de passe.
             </p>
           </div>
 
-          <div className="field">
-            <label>Adresse email</label>
-            <input className="input" type="email" placeholder="vous@exemple.fr" autoComplete="email" />
-          </div>
-
-          <ToastButton
-            message="Lien de réinitialisation envoyé — vérifiez vos emails"
-            tone="success"
-            className="btn btn-primary btn-block btn-lg"
-          >
-            Envoyer le lien
-          </ToastButton>
+          {sent ? (
+            <p className="small center" style={{ color: 'var(--ink-soft)' }}>
+              Si un compte existe avec cette adresse, un email vient de vous être envoyé.
+            </p>
+          ) : (
+            <form onSubmit={submit}>
+              {error && <p className="small" style={{ color: 'var(--danger, #b5524f)', marginBottom: 14 }}>{error}</p>}
+              <div className="field">
+                <label>Adresse email</label>
+                <input
+                  className="input" type="email" placeholder="vous@exemple.fr" autoComplete="email" required
+                  value={email} onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading}>
+                {loading ? 'Envoi…' : 'Envoyer le lien'}
+              </button>
+            </form>
+          )}
 
           <div className="center" style={{ marginTop: 22 }}>
             <Link href="/connexion" className="btn btn-ghost btn-sm">
