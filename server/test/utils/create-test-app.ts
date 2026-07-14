@@ -59,7 +59,13 @@ export async function createTestApp(
     builder = builder.overrideProvider(o.provide).useValue(o.useValue);
   }
   const moduleRef = await builder.compile();
-  const app = moduleRef.createNestApplication(undefined, { rawBody: true });
+  // NB: TestingModule#createNestApplication(serverOrOptions, options) has a different arg
+  // shape than NestFactory.create(moduleCls, serverOrOptions, options) — there's no moduleCls
+  // to occupy the first slot here, so options must be passed as the *first* argument. Passing
+  // it as a second argument after `undefined` silently drops it (Nest's internal ternary picks
+  // arg0 as appOptions whenever arg0 isn't an HTTP adapter), which would leave `rawBody: true`
+  // unapplied and req.rawBody undefined in every e2e test.
+  const app = moduleRef.createNestApplication({ rawBody: true });
   applyGlobalConfig(app);
   await app.init();
   return app;

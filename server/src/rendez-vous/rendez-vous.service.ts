@@ -1,11 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import Stripe from 'stripe';
 import { RendezVous } from '../database/entities/rendez-vous.entity';
 import { Paiement } from '../database/entities/paiement.entity';
 import { Praticien } from '../database/entities/praticien.entity';
 import { Client } from '../database/entities/client.entity';
 import { success } from '../common/envelope';
+import { parsePagination, paginateQb } from '../common/pagination';
 import { StripeService } from '../common/stripe.service';
 import { PromotionsService } from '../promotions/promotions.service';
 import { CreateRendezVousDto } from './dto/create-rendez-vous.dto';
@@ -63,5 +65,69 @@ export class RendezVousService {
 
     const fresh = await this.withRelations().where('rdv.id = :id', { id: saved.id }).getOne();
     return success({ rendez_vous: fresh, client_secret: paymentIntent.client_secret });
+  }
+
+  async indexForClient(client: Client, query: Record<string, any>) {
+    const { page, perPage } = parsePagination(query, 10);
+    const qb = this.withRelations().where('rdv.client_id = :cid', { cid: client.id });
+    if (query.statut !== undefined) qb.andWhere('rdv.statut = :st', { st: query.statut });
+    qb.orderBy('rdv.date_heure', 'DESC');
+    const { data, pagination } = await paginateQb(qb, page, perPage);
+    return success(data, undefined, { pagination });
+  }
+
+  async showForClient(client: Client, id: number) {
+    const rdv = await this.withRelations()
+      .where('rdv.id = :id AND rdv.client_id = :cid', { id, cid: client.id }).getOne();
+    if (!rdv) this.notFound('Rendez-vous non trouvé');
+    return success(rdv);
+  }
+
+  async cancelForClient(client: Client, id: number) {
+    const rdv = await this.rendezVous.findOneBy({
+      id, client_id: client.id, statut: In(['en_attente', 'confirme']),
+    });
+    if (!rdv) this.notFound('Rendez-vous non trouvé ou ne peut pas être annulé');
+    await this.rendezVous.update(id, { statut: 'annule' });
+    const fresh = await this.withRelations().where('rdv.id = :id', { id }).getOne();
+    return success(fresh, 'Rendez-vous annulé avec succès');
+  }
+
+  async handleStripeWebhookEvent(event: Stripe.Event) {
+    if (event.type === 'payment_intent.succeeded') {
+      await this.confirmFromPaymentIntent(event.data.object as Stripe.PaymentIntent);
+    } else if (event.type === 'payment_intent.payment_failed') {
+      await this.cancelFromPaymentIntent(event.data.object as Stripe.PaymentIntent);
+    }
+    return success(undefined, 'ok');
+  }
+
+  private async confirmFromPaymentIntent(intent: Stripe.PaymentIntent) {
+    const rdvId = Number(intent.metadata?.rendez_vous_id);
+    if (!rdvId) return;
+    const rdv = await this.rendezVous.findOneBy({ id: rdvId });
+    if (!rdv) return;
+
+    await this.rendezVous.update(rdvId, { statut: 'confirme' });
+
+    const existing = await this.paiements.findOneBy({ rendez_vous_id: rdvId });
+    if (existing) return; // idempotent: this event was already processed
+
+    await this.paiements.save({
+      reference: `RDV-${rdv.id}-${Date.now()}`,
+      client_id: rdv.client_id,
+      praticien_id: rdv.praticien_id,
+      rendez_vous_id: rdv.id,
+      montant_brut: rdv.tarif,
+      moyen_paiement: 'card',
+      statut: 'paid',
+      date_paiement: new Date(),
+    });
+  }
+
+  private async cancelFromPaymentIntent(intent: Stripe.PaymentIntent) {
+    const rdvId = Number(intent.metadata?.rendez_vous_id);
+    if (!rdvId) return;
+    await this.rendezVous.update(rdvId, { statut: 'annule' });
   }
 }

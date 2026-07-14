@@ -89,4 +89,119 @@ describe('rendez-vous', () => {
       .expect(404);
     expect(res.body.message).toBe('Code promo invalide ou expiré');
   });
+
+  it("GET /api/rendez-vous/client lists only the client's own rows, filterable by statut", async () => {
+    const created = await http().post('/api/rendez-vous').set('Authorization', `Bearer ${clientToken}`)
+      .send({ praticien_id: praticienId, date_heure: '2026-08-03T10:00:00', mode: 'visio' }).expect(201);
+    const newId = created.body.data.rendez_vous.id;
+
+    const other = await seedClientUser(app, 'rdv-other@aura.io');
+    await http().post('/api/rendez-vous').set('Authorization', `Bearer ${other.token}`)
+      .send({ praticien_id: praticienId, date_heure: '2026-08-03T11:00:00', mode: 'visio' }).expect(201);
+
+    const res = await http().get('/api/rendez-vous/client')
+      .set('Authorization', `Bearer ${clientToken}`).expect(200);
+    const ids = res.body.data.map((r: any) => r.id);
+    expect(ids).toContain(newId);
+    expect(res.body.data.every((r: any) => r.client_id !== other.client.id)).toBe(true);
+
+    const filtered = await http().get('/api/rendez-vous/client?statut=en_attente')
+      .set('Authorization', `Bearer ${clientToken}`).expect(200);
+    expect(filtered.body.data.every((r: any) => r.statut === 'en_attente')).toBe(true);
+  });
+
+  it("GET /api/rendez-vous/client/:id returns the owner's rendez-vous with the praticien relation, 404s otherwise", async () => {
+    const created = await http().post('/api/rendez-vous').set('Authorization', `Bearer ${clientToken}`)
+      .send({ praticien_id: praticienId, date_heure: '2026-08-04T10:00:00', mode: 'présentiel' }).expect(201);
+    const id = created.body.data.rendez_vous.id;
+
+    const shown = await http().get(`/api/rendez-vous/client/${id}`)
+      .set('Authorization', `Bearer ${clientToken}`).expect(200);
+    expect(shown.body.data.praticien).toMatchObject({ id: praticienId, firstname: 'Elodie' });
+
+    const other = await seedClientUser(app, 'rdv-show-other@aura.io');
+    await http().get(`/api/rendez-vous/client/${id}`)
+      .set('Authorization', `Bearer ${other.token}`).expect(404);
+    await http().get('/api/rendez-vous/client/999999')
+      .set('Authorization', `Bearer ${clientToken}`).expect(404);
+  });
+
+  it('POST /api/rendez-vous/client/:id/cancel cancels an en_attente row; repeat cancel 404s', async () => {
+    const created = await http().post('/api/rendez-vous').set('Authorization', `Bearer ${clientToken}`)
+      .send({ praticien_id: praticienId, date_heure: '2026-08-05T10:00:00', mode: 'visio' }).expect(201);
+    const id = created.body.data.rendez_vous.id;
+
+    const cancelled = await http().post(`/api/rendez-vous/client/${id}/cancel`)
+      .set('Authorization', `Bearer ${clientToken}`).expect(200);
+    expect(cancelled.body.data.statut).toBe('annule');
+    expect(cancelled.body.message).toBe('Rendez-vous annulé avec succès');
+
+    const again = await http().post(`/api/rendez-vous/client/${id}/cancel`)
+      .set('Authorization', `Bearer ${clientToken}`).expect(404);
+    expect(again.body.message).toBe('Rendez-vous non trouvé ou ne peut pas être annulé');
+  });
+
+  it('POST /api/webhooks/stripe returns 400 when the signature cannot be verified', async () => {
+    stripeServiceMock.constructWebhookEvent.mockImplementationOnce(() => {
+      throw new Error('invalid signature');
+    });
+    const res = await http().post('/api/webhooks/stripe')
+      .set('stripe-signature', 'bad-sig')
+      .send({ id: 'evt_bad', type: 'payment_intent.succeeded' })
+      .expect(400);
+    expect(res.body.message).toBe('Signature Stripe invalide');
+  });
+
+  it('POST /api/webhooks/stripe confirms the rendez_vous and creates a paiements row exactly once, even on retry', async () => {
+    const created = await http().post('/api/rendez-vous').set('Authorization', `Bearer ${clientToken}`)
+      .send({ praticien_id: praticienId, date_heure: '2026-08-06T10:00:00', mode: 'présentiel' }).expect(201);
+    const rdv = created.body.data.rendez_vous;
+
+    const fakeEvent = {
+      id: 'evt_succeeded',
+      type: 'payment_intent.succeeded',
+      data: { object: { id: 'pi_test_123', metadata: { rendez_vous_id: String(rdv.id) } } },
+    };
+    stripeServiceMock.constructWebhookEvent.mockImplementation((rawBody: unknown) => {
+      // Proves the raw-body plumbing actually works, not just that the mock returns something.
+      expect(Buffer.isBuffer(rawBody)).toBe(true);
+      expect((rawBody as Buffer).length).toBeGreaterThan(0);
+      return fakeEvent;
+    });
+
+    await http().post('/api/webhooks/stripe').set('stripe-signature', 'sig').send(fakeEvent).expect(200);
+
+    const shown = await http().get(`/api/rendez-vous/client/${rdv.id}`)
+      .set('Authorization', `Bearer ${clientToken}`).expect(200);
+    expect(shown.body.data.statut).toBe('confirme');
+
+    const paiementRows = await ds.getRepository(Paiement).findBy({ rendez_vous_id: rdv.id });
+    expect(paiementRows).toHaveLength(1);
+    expect(paiementRows[0]).toMatchObject({ statut: 'paid', moyen_paiement: 'card' });
+    expect(paiementRows[0].montant_brut).toBe(rdv.tarif);
+
+    // Stripe retries undelivered/unacknowledged events — must not double-create the paiements row.
+    await http().post('/api/webhooks/stripe').set('stripe-signature', 'sig').send(fakeEvent).expect(200);
+    const afterRetry = await ds.getRepository(Paiement).findBy({ rendez_vous_id: rdv.id });
+    expect(afterRetry).toHaveLength(1);
+  });
+
+  it('POST /api/webhooks/stripe cancels the rendez_vous on payment_intent.payment_failed', async () => {
+    const created = await http().post('/api/rendez-vous').set('Authorization', `Bearer ${clientToken}`)
+      .send({ praticien_id: praticienId, date_heure: '2026-08-07T10:00:00', mode: 'visio' }).expect(201);
+    const rdv = created.body.data.rendez_vous;
+
+    const fakeEvent = {
+      id: 'evt_failed',
+      type: 'payment_intent.payment_failed',
+      data: { object: { id: 'pi_test_456', metadata: { rendez_vous_id: String(rdv.id) } } },
+    };
+    stripeServiceMock.constructWebhookEvent.mockImplementation(() => fakeEvent);
+
+    await http().post('/api/webhooks/stripe').set('stripe-signature', 'sig').send(fakeEvent).expect(200);
+
+    const shown = await http().get(`/api/rendez-vous/client/${rdv.id}`)
+      .set('Authorization', `Bearer ${clientToken}`).expect(200);
+    expect(shown.body.data.statut).toBe('annule');
+  });
 });
