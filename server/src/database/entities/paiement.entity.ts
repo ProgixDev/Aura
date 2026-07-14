@@ -13,7 +13,7 @@ export class Paiement {
   @Column({ unique: true }) reference: string;
   @Column() client_id: number;
   @Column({ type: 'int', nullable: true }) praticien_id: number | null;
-  @Column({ type: 'int', nullable: true }) rendez_vous_id: number | null;
+  @Column({ type: 'int', nullable: true, unique: true }) rendez_vous_id: number | null;
   @Column({ type: 'datetime', nullable: true }) date_paiement: Date | null;
   @Column({ type: 'decimal', precision: 10, scale: 2, transformer: decimalTransformer }) montant_brut: number;
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0, transformer: decimalTransformer }) commission: number;

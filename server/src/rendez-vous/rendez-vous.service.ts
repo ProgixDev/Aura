@@ -106,28 +106,52 @@ export class RendezVousService {
     const rdvId = Number(intent.metadata?.rendez_vous_id);
     if (!rdvId) return;
     const rdv = await this.rendezVous.findOneBy({ id: rdvId });
-    if (!rdv) return;
+    // A client-initiated cancel can race a Stripe webhook that was already in flight (Stripe
+    // retries undelivered events for hours) — never let a late success event resurrect a
+    // booking the client explicitly cancelled.
+    if (!rdv || rdv.statut === 'annule') return;
 
     await this.rendezVous.update(rdvId, { statut: 'confirme' });
 
     const existing = await this.paiements.findOneBy({ rendez_vous_id: rdvId });
     if (existing) return; // idempotent: this event was already processed
 
-    await this.paiements.save({
-      reference: `RDV-${rdv.id}-${Date.now()}`,
-      client_id: rdv.client_id,
-      praticien_id: rdv.praticien_id,
-      rendez_vous_id: rdv.id,
-      montant_brut: rdv.tarif,
-      moyen_paiement: 'card',
-      statut: 'paid',
-      date_paiement: new Date(),
-    });
+    try {
+      await this.paiements.save({
+        reference: `RDV-${rdv.id}-${Date.now()}`,
+        client_id: rdv.client_id,
+        praticien_id: rdv.praticien_id,
+        rendez_vous_id: rdv.id,
+        montant_brut: rdv.tarif,
+        moyen_paiement: 'card',
+        statut: 'paid',
+        date_paiement: new Date(),
+      });
+    } catch (err) {
+      // The findOneBy check above is a TOCTOU race under concurrent/duplicate webhook
+      // delivery — the real backstop is the UNIQUE constraint on rendez_vous_id (see the
+      // Paiement entity / RendezVous migration). A concurrent delivery of the same event may
+      // have already inserted the row between our check and this save; that's fine, idempotent.
+      if (!this.isDuplicatePaiementError(err)) throw err;
+    }
   }
 
   private async cancelFromPaymentIntent(intent: Stripe.PaymentIntent) {
     const rdvId = Number(intent.metadata?.rendez_vous_id);
     if (!rdvId) return;
+    const rdv = await this.rendezVous.findOneBy({ id: rdvId });
+    // Stripe doesn't guarantee webhook event ordering — a stale payment_intent.payment_failed
+    // from an earlier failed attempt must not un-confirm a booking a later attempt already paid.
+    if (!rdv || rdv.statut === 'confirme') return;
     await this.rendezVous.update(rdvId, { statut: 'annule' });
+  }
+
+  private isDuplicatePaiementError(err: unknown): boolean {
+    const code = (err as { code?: string } | undefined)?.code;
+    if (code === 'ER_DUP_ENTRY' || code === 'SQLITE_CONSTRAINT_UNIQUE' || code === 'SQLITE_CONSTRAINT') {
+      return true;
+    }
+    const message = (err as { message?: string } | undefined)?.message ?? '';
+    return /UNIQUE constraint failed|Duplicate entry/i.test(message);
   }
 }

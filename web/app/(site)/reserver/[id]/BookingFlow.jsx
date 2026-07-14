@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
@@ -11,7 +11,7 @@ import { Rating } from '@/components/ui/Rating';
 import { Lotus } from '@/components/ui/Lotus';
 import { euro } from '@/lib/format';
 import { computeDiscountedTarif } from '@/lib/pricing';
-import { api, ApiError } from '@/lib/api';
+import { api, errorMessage } from '@/lib/api';
 import { useToast } from '@/lib/store';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
@@ -51,7 +51,17 @@ function PaymentForm({ booking, total, onBack, onSuccess }) {
   const elements = useElements();
   const toast = useToast();
   const [paying, setPaying] = useState(false);
+  const [goingBack, setGoingBack] = useState(false);
   const [error, setError] = useState('');
+
+  async function back() {
+    setGoingBack(true);
+    try {
+      await onBack();
+    } finally {
+      setGoingBack(false);
+    }
+  }
 
   async function pay() {
     if (!stripe || !elements) return;
@@ -90,10 +100,10 @@ function PaymentForm({ booking, total, onBack, onSuccess }) {
         <Icon name="shield" size={14} color="var(--muted)" /> Paiement chiffré. Vos données ne sont jamais stockées en clair.
       </p>
       <div className="row gap-3 mt-6 between">
-        <button type="button" className="btn btn-ghost btn-lg" onClick={onBack} disabled={paying}>
-          <Icon name="arrowLeft" size={16} /> Retour
+        <button type="button" className="btn btn-ghost btn-lg" onClick={back} disabled={paying || goingBack}>
+          <Icon name="arrowLeft" size={16} /> {goingBack ? 'Annulation…' : 'Retour'}
         </button>
-        <button type="button" className="btn btn-aurora btn-lg" onClick={pay} disabled={paying || !stripe || !elements}>
+        <button type="button" className="btn btn-aurora btn-lg" onClick={pay} disabled={paying || goingBack || !stripe || !elements}>
           {paying ? 'Paiement en cours…' : `Payer ${euro(total)}`}
         </button>
       </div>
@@ -112,6 +122,7 @@ export function BookingFlow({ p }) {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
   const toast = useToast();
+  const creatingRef = useRef(false);
 
   const canPresentiel = !/visio uniquement/i.test(p.mode || '');
   const canVisio = /visio/i.test(p.mode || '');
@@ -139,13 +150,17 @@ export function BookingFlow({ p }) {
       setPromoState({ status: 'valid', promo: res.data });
       toast('Code promo appliqué', 'success');
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Code promo invalide';
+      const message = errorMessage(err, 'Code promo invalide');
       setPromoState({ status: 'invalid', message });
       toast(message, 'error');
     }
   }
 
   async function createBooking() {
+    // Guards against a double-tap firing two POSTs before `creating` state commits — the
+    // real per-booking dedup is server-side, this just avoids an easily-avoidable duplicate.
+    if (creatingRef.current) return;
+    creatingRef.current = true;
     setCreating(true);
     setCreateError('');
     try {
@@ -157,10 +172,27 @@ export function BookingFlow({ p }) {
       });
       setBooking({ rendezVous: res.data.rendez_vous, clientSecret: res.data.client_secret });
     } catch (err) {
-      setCreateError(err instanceof ApiError ? err.message : 'Impossible de créer la réservation');
+      setCreateError(errorMessage(err, 'Impossible de créer la réservation'));
     } finally {
       setCreating(false);
+      creatingRef.current = false;
     }
+  }
+
+  // Undoes createBooking(): cancels the just-created en_attente row server-side before
+  // clearing local state, so tapping "Continuer" again doesn't leave the first booking + its
+  // PaymentIntent orphaned while creating a second one. Best-effort — if the cancel call fails
+  // (e.g. a fast webhook already confirmed it), we still let the user go back; the booking's
+  // real status is always what the server says it is, not what this screen assumes.
+  async function backFromPayment() {
+    if (booking) {
+      try {
+        await api.post(`/rendez-vous/client/${booking.rendezVous.id}/cancel`);
+      } catch {
+        // best-effort, see comment above
+      }
+    }
+    setBooking(null);
   }
 
   return (
@@ -397,7 +429,7 @@ export function BookingFlow({ p }) {
                     <PaymentForm
                       booking={booking}
                       total={booking.rendezVous.tarif}
-                      onBack={() => setBooking(null)}
+                      onBack={backFromPayment}
                       onSuccess={() => setStep(4)}
                     />
                   </Elements>

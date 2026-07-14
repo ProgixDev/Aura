@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -20,6 +20,7 @@ import { typography } from '@theme/typography';
 import { useBooking } from '@store/booking';
 import { practitionerRepo, rendezVousRepo } from '@data/repos';
 import { buildDateHeureIso } from '@utils/booking';
+import { errorMessage } from '@data/api/client';
 
 type Mode = 'présentiel' | 'visio';
 
@@ -39,6 +40,7 @@ export default function BookPayment() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [pending, setPending] = useState<PendingBooking | null>(null);
+  const confirmingRef = useRef(false);
 
   const { data: praticien } = useQuery({
     queryKey: ['practitioner', draft?.practitionerId],
@@ -50,6 +52,10 @@ export default function BookPayment() {
 
   const confirm = async () => {
     if (!draft || !draft.day || !draft.slot) return;
+    // Guards against a double-tap firing two POSTs before `submitting` state commits — the
+    // real per-booking dedup is server-side, this just avoids an easily-avoidable duplicate.
+    if (confirmingRef.current) return;
+    confirmingRef.current = true;
     setSubmitting(true);
     setError('');
     try {
@@ -85,9 +91,10 @@ export default function BookPayment() {
 
       router.replace(`/booking/confirmation?id=${booking.id}` as any);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Impossible de créer la réservation');
+      setError(errorMessage(e, 'Impossible de créer la réservation'));
     } finally {
       setSubmitting(false);
+      confirmingRef.current = false;
     }
   };
 

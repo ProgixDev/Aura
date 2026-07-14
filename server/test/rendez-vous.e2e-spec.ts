@@ -224,4 +224,78 @@ describe('rendez-vous', () => {
     expect(paiement?.rendezVous?.id).toBe(rdv.id);
     expect(paiement?.rendezVous?.statut).toBe('confirme');
   });
+
+  it('POST /api/webhooks/stripe stays idempotent under concurrent delivery of the same event', async () => {
+    const created = await http().post('/api/rendez-vous').set('Authorization', `Bearer ${clientToken}`)
+      .send({ praticien_id: praticienId, date_heure: '2026-08-09T10:00:00', mode: 'présentiel' }).expect(201);
+    const rdv = created.body.data.rendez_vous;
+
+    const fakeEvent = {
+      id: 'evt_concurrent',
+      type: 'payment_intent.succeeded',
+      data: { object: { id: 'pi_concurrent', metadata: { rendez_vous_id: String(rdv.id) } } },
+    };
+    stripeServiceMock.constructWebhookEvent.mockImplementation(() => fakeEvent);
+
+    // Fired together (not awaited sequentially) to actually exercise the race the
+    // findOneBy-then-save check alone can't close — the UNIQUE constraint on
+    // rendez_vous_id is the real backstop here.
+    await Promise.all([
+      http().post('/api/webhooks/stripe').set('stripe-signature', 'sig').send(fakeEvent),
+      http().post('/api/webhooks/stripe').set('stripe-signature', 'sig').send(fakeEvent),
+    ]);
+
+    const paiementRows = await ds.getRepository(Paiement).findBy({ rendez_vous_id: rdv.id });
+    expect(paiementRows).toHaveLength(1);
+  });
+
+  it('POST /api/webhooks/stripe does not resurrect an already-cancelled rendez_vous', async () => {
+    const created = await http().post('/api/rendez-vous').set('Authorization', `Bearer ${clientToken}`)
+      .send({ praticien_id: praticienId, date_heure: '2026-08-10T10:00:00', mode: 'visio' }).expect(201);
+    const rdv = created.body.data.rendez_vous;
+
+    await http().post(`/api/rendez-vous/client/${rdv.id}/cancel`)
+      .set('Authorization', `Bearer ${clientToken}`).expect(200);
+
+    const fakeEvent = {
+      id: 'evt_late_success',
+      type: 'payment_intent.succeeded',
+      data: { object: { id: 'pi_late', metadata: { rendez_vous_id: String(rdv.id) } } },
+    };
+    stripeServiceMock.constructWebhookEvent.mockImplementation(() => fakeEvent);
+    await http().post('/api/webhooks/stripe').set('stripe-signature', 'sig').send(fakeEvent).expect(200);
+
+    const shown = await http().get(`/api/rendez-vous/client/${rdv.id}`)
+      .set('Authorization', `Bearer ${clientToken}`).expect(200);
+    expect(shown.body.data.statut).toBe('annule');
+
+    const paiementRows = await ds.getRepository(Paiement).findBy({ rendez_vous_id: rdv.id });
+    expect(paiementRows).toHaveLength(0);
+  });
+
+  it('POST /api/webhooks/stripe does not un-confirm an already-confirmed rendez_vous on a stale payment_intent.payment_failed', async () => {
+    const created = await http().post('/api/rendez-vous').set('Authorization', `Bearer ${clientToken}`)
+      .send({ praticien_id: praticienId, date_heure: '2026-08-11T10:00:00', mode: 'présentiel' }).expect(201);
+    const rdv = created.body.data.rendez_vous;
+
+    const succeeded = {
+      id: 'evt_confirmed_first',
+      type: 'payment_intent.succeeded',
+      data: { object: { id: 'pi_first', metadata: { rendez_vous_id: String(rdv.id) } } },
+    };
+    stripeServiceMock.constructWebhookEvent.mockImplementation(() => succeeded);
+    await http().post('/api/webhooks/stripe').set('stripe-signature', 'sig').send(succeeded).expect(200);
+
+    const stale = {
+      id: 'evt_stale_failed',
+      type: 'payment_intent.payment_failed',
+      data: { object: { id: 'pi_stale', metadata: { rendez_vous_id: String(rdv.id) } } },
+    };
+    stripeServiceMock.constructWebhookEvent.mockImplementation(() => stale);
+    await http().post('/api/webhooks/stripe').set('stripe-signature', 'sig').send(stale).expect(200);
+
+    const shown = await http().get(`/api/rendez-vous/client/${rdv.id}`)
+      .set('Authorization', `Bearer ${clientToken}`).expect(200);
+    expect(shown.body.data.statut).toBe('confirme');
+  });
 });

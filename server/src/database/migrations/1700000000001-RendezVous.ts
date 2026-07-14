@@ -24,11 +24,18 @@ export class RendezVous1700000000001 implements MigrationInterface {
     // the Paiement.rendezVous relation added in this plan (Task 8), which also omits an
     // explicit onDelete — unlike the sibling nullable praticien_id FK on the same table,
     // which uses SET NULL. MySQL's implicit default for an unspecified FK action is RESTRICT.
+    // The UNIQUE constraint enforces at most one paiements row per rendez_vous at the DB level
+    // — the webhook's own findOneBy-then-save idempotency check is a TOCTOU race under
+    // concurrent/duplicate Stripe webhook delivery, so this is the actual backstop. MySQL
+    // (like SQLite/Postgres) treats multiple NULLs as distinct under a UNIQUE constraint, so
+    // this doesn't affect the many other paiements rows with no rendez_vous_id.
     await q.query(`ALTER TABLE paiements
-      ADD CONSTRAINT fk_pai_rendez_vous FOREIGN KEY (rendez_vous_id) REFERENCES rendez_vous(id)`);
+      ADD CONSTRAINT fk_pai_rendez_vous FOREIGN KEY (rendez_vous_id) REFERENCES rendez_vous(id),
+      ADD CONSTRAINT uq_pai_rendez_vous UNIQUE (rendez_vous_id)`);
   }
 
   public async down(q: QueryRunner): Promise<void> {
+    await q.query(`ALTER TABLE paiements DROP INDEX uq_pai_rendez_vous`);
     await q.query(`ALTER TABLE paiements DROP FOREIGN KEY fk_pai_rendez_vous`);
     await q.query(`DROP TABLE IF EXISTS rendez_vous`);
   }
