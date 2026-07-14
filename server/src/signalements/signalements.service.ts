@@ -5,6 +5,7 @@ import { Signalement } from '../database/entities/signalement.entity';
 import { User } from '../database/entities/user.entity';
 import { success } from '../common/envelope';
 import { parsePagination, paginateQb } from '../common/pagination';
+import { sanitizeUser } from '../auth/user.util';
 import { CreateSignalementDto } from './dto/create-signalement.dto';
 
 @Injectable()
@@ -48,7 +49,11 @@ export class SignalementsService {
     if (query.type !== undefined) qb.andWhere('s.type = :ty', { ty: query.type });
     qb.orderBy('s.date_signalement', 'DESC');
     const { data, pagination } = await paginateQb(qb, page, perPage);
-    return success(data, undefined, { pagination });
+    const sanitized = data.map((s: any) => ({
+      ...s,
+      signalePar: s.signalePar ? sanitizeUser(s.signalePar) : s.signalePar,
+    }));
+    return success(sanitized, undefined, { pagination });
   }
 
   async resolve(id: number) {

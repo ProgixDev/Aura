@@ -44,6 +44,7 @@ export default function PractitionerProfile() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('about');
   const [favPending, setFavPending] = useState(false);
+  const [favError, setFavError] = useState<string | null>(null);
 
   const { data: p } = useQuery({
     queryKey: ['practitioner', id],
@@ -69,10 +70,13 @@ export default function PractitionerProfile() {
   const toggleFavorite = async () => {
     if (favPending) return;
     setFavPending(true);
+    setFavError(null);
     try {
       if (isFavorite) await favoriteRepo.remove(p.id);
       else await favoriteRepo.add(p.id);
       await queryClient.invalidateQueries({ queryKey: ['favorites'] });
+    } catch (err: any) {
+      setFavError(err?.message ?? 'Une erreur est survenue, réessayez.');
     } finally {
       setFavPending(false);
     }
@@ -136,6 +140,7 @@ export default function PractitionerProfile() {
 
         {/* Floating card */}
         <View style={[styles.floatCard, shadows.cardHover]}>
+          {favError ? <Text style={styles.favError}>{favError}</Text> : null}
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
             {p.verified ? (
               <Badge
@@ -369,6 +374,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   fcPriceUnit: { ...typography.small, fontSize: 12 },
+  favError: { ...typography.small, fontSize: 12, color: colors.danger, marginBottom: 10 },
 
   tabs: {
     flexDirection: 'row',

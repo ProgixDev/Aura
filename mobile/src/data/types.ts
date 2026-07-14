@@ -171,16 +171,6 @@ export interface ChatMessage {
   };
 }
 
-export interface Review {
-  id: string;
-  practitionerId: string;
-  authorInitial: string;
-  whenLabel: string;
-  modeLabel: string;
-  rating: number;
-  text: string;
-}
-
 /** Real `avis` row (server/src/database/entities/avis.entity.ts) — field names verbatim, no camelCase mapping layer. */
 export interface Avis {
   id: number;
