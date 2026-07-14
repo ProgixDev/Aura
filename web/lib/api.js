@@ -16,14 +16,15 @@ export function setAuthToken(token) { authToken = token; }
 
 export async function apiFetch(path, { method = 'GET', body, token, headers = {} } = {}) {
   const t = token ?? authToken;
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const res = await fetch(`${BASE}${path}`, {
     method,
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...headers,
       ...(t ? { Authorization: `Bearer ${t}` } : {}),
     },
-    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    ...(body !== undefined ? { body: isFormData ? body : JSON.stringify(body) } : {}),
   });
 
   const text = await res.text();

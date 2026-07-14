@@ -7,19 +7,32 @@ import { useUI } from '@/lib/store';
  * Generic form modal. Drives ~all data-entry modals (contact, report, review,
  * add note, invite, promo, send notification, edit field, payout…).
  * Props: title, subtitle, fields, submitLabel, successToast, intro, size, onSubmit(values)
- * field = { name, label, type: text|textarea|select|email|number|rating|checkbox, options?, placeholder?, required?, value? }
+ * field = { name, label, type: text|textarea|select|email|number|rating|checkbox|file, options?, placeholder?, required?, value? }
+ *
+ * onSubmit may be async. It is awaited: the modal only closes and shows the
+ * success toast once it resolves; if it throws (e.g. a backend validation
+ * error), the modal stays open and the error message is shown as a toast so
+ * the user can fix the input and retry.
  */
 export function FormModal({ id, title = 'Formulaire', subtitle, intro, fields = [], submitLabel = 'Envoyer', successToast = 'Enregistré', size = '', onSubmit }) {
   const close = useUI((s) => s.closeModal);
   const toast = useUI((s) => s.toast);
-  const [values, setValues] = useState(() => Object.fromEntries(fields.map((f) => [f.name, f.value ?? (f.type === 'checkbox' ? false : f.type === 'rating' ? 5 : '')])));
+  const [values, setValues] = useState(() => Object.fromEntries(fields.map((f) => [f.name, f.value ?? (f.type === 'checkbox' ? false : f.type === 'rating' ? 5 : f.type === 'file' ? null : '')])));
+  const [submitting, setSubmitting] = useState(false);
   const set = (k, v) => setValues((s) => ({ ...s, [k]: v }));
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    onSubmit?.(values);
-    close(id);
-    if (successToast) toast(successToast, 'success');
+    setSubmitting(true);
+    try {
+      await onSubmit?.(values);
+      close(id);
+      if (successToast) toast(successToast, 'success');
+    } catch (err) {
+      toast(err?.message || 'Une erreur est survenue', 'danger');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -47,14 +60,16 @@ export function FormModal({ id, title = 'Formulaire', subtitle, intro, fields = 
                 <span className={`checkbox ${values[f.name] ? 'checked' : ''}`} onClick={() => set(f.name, !values[f.name])}>{values[f.name] && '✓'}</span>
                 {f.label}
               </label>
+            ) : f.type === 'file' ? (
+              <input className="input" type="file" accept={f.accept} required={f.required && !values[f.name]} onChange={(e) => set(f.name, e.target.files?.[0] ?? null)} />
             ) : (
               <input className="input" type={f.type || 'text'} placeholder={f.placeholder} required={f.required} value={values[f.name]} onChange={(e) => set(f.name, e.target.value)} />
             )}
           </div>
         ))}
         <div className="modal-foot" style={{ padding: '8px 0 0' }}>
-          <button type="button" className="btn btn-soft" onClick={() => close(id)}>Annuler</button>
-          <button type="submit" className="btn btn-primary">{submitLabel}</button>
+          <button type="button" className="btn btn-soft" onClick={() => close(id)} disabled={submitting}>Annuler</button>
+          <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Envoi…' : submitLabel}</button>
         </div>
       </form>
     </Modal>

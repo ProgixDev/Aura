@@ -34,4 +34,14 @@ describe('web api client', () => {
     global.fetch = mockFetch(404, { status: 'error', message: 'Not found' });
     await expect(api.get('/nope')).rejects.toBeInstanceOf(ApiError);
   });
+
+  it('sends FormData bodies as-is, without a JSON content-type header', async () => {
+    global.fetch = mockFetch(201, { status: 'success', data: { id: 1 } });
+    const fd = new FormData();
+    fd.append('motif', 'Test');
+    await api.post('/remboursements/client', fd);
+    const [, opts] = global.fetch.mock.calls[0];
+    expect(opts.body).toBe(fd);
+    expect(opts.headers['Content-Type']).toBeUndefined();
+  });
 });
