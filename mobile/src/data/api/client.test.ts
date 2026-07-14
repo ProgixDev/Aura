@@ -29,4 +29,14 @@ describe('mobile api client', () => {
     (global as any).fetch = mockFetch(500, { status: 'error', message: 'boom' });
     await expect(api.get('/x')).rejects.toBeInstanceOf(ApiError);
   });
+
+  it('sends FormData bodies as-is, without a JSON content-type header', async () => {
+    (global as any).fetch = mockFetch(201, { status: 'success', data: { id: 1 } });
+    const fd = new FormData();
+    fd.append('motif', 'Test');
+    await api.post('/remboursements/client', fd);
+    const opts = (global.fetch as jest.Mock).mock.calls[0][1];
+    expect(opts.body).toBe(fd);
+    expect(opts.headers['Content-Type']).toBeUndefined();
+  });
 });

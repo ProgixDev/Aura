@@ -13,6 +13,7 @@ const ITEMS = [
   { href: '/compte/avis', label: 'Mes avis', icon: 'star' },
   { href: '/compte/echanges', label: 'Échanges', icon: 'share' },
   { href: '/compte/paiements', label: 'Paiements', icon: 'card' },
+  { href: '/compte/remboursements', label: 'Remboursements', icon: 'euro' },
   { href: '/compte/parametres', label: 'Paramètres', icon: 'settings' },
 ];
 
