@@ -43,3 +43,18 @@ export const api = {
   put: (p, body, o) => apiFetch(p, { ...o, method: 'PUT', body }),
   del: (p, o) => apiFetch(p, { ...o, method: 'DELETE' }),
 };
+
+// The backend's validation pipe returns { message: 'Erreur de validation',
+// errors: { field: [msg, ...] } } for 422s — surface the first field message
+// instead of the generic top-level one so the user knows what to fix.
+export function errorMessage(err, fallback = 'Une erreur est survenue') {
+  if (err instanceof ApiError) {
+    const fieldErrors = err.body?.errors;
+    if (fieldErrors && typeof fieldErrors === 'object') {
+      const first = Object.values(fieldErrors)[0];
+      if (Array.isArray(first) && first.length) return first[0];
+    }
+    return err.message || fallback;
+  }
+  return err?.message || fallback;
+}

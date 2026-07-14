@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Modal } from './Modal';
 import { useUI } from '@/lib/store';
+import { errorMessage } from '@/lib/api';
 
 /**
  * Confirm / action modal. Props (via openModal('confirm', props)):
@@ -25,7 +26,7 @@ export function ConfirmModal({ id, title = 'Confirmer', message, confirmLabel = 
       close(id);
       if (successToast) toast(successToast, danger ? 'danger' : 'success');
     } catch (err) {
-      toast(err?.message || 'Une erreur est survenue', 'danger');
+      toast(errorMessage(err), 'danger');
     } finally {
       setSubmitting(false);
     }

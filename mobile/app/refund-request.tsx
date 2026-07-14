@@ -12,7 +12,7 @@ import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { remboursementRepo } from '@data/repos';
 import { dateFr } from '@utils/format';
-import { ApiError } from '@data/api/client';
+import { errorMessage } from '@data/api/client';
 import type { Remboursement } from '@data/types';
 
 // Mirrors server/src/database/entities/remboursement.entity.ts
@@ -78,8 +78,7 @@ export default function RefundRequest() {
       await invalidate();
       router.back();
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Une erreur est survenue.';
-      Alert.alert('Envoi impossible', message);
+      Alert.alert('Envoi impossible', errorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -95,8 +94,12 @@ export default function RefundRequest() {
           text: 'Annuler la demande',
           style: 'destructive',
           onPress: async () => {
-            await remboursementRepo.cancel(r.id);
-            await invalidate();
+            try {
+              await remboursementRepo.cancel(r.id);
+              await invalidate();
+            } catch (err) {
+              Alert.alert('Annulation impossible', errorMessage(err));
+            }
           },
         },
       ],

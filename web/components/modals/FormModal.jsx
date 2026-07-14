@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Modal } from './Modal';
 import { useUI } from '@/lib/store';
+import { errorMessage } from '@/lib/api';
 
 /**
  * Generic form modal. Drives ~all data-entry modals (contact, report, review,
@@ -29,7 +30,7 @@ export function FormModal({ id, title = 'Formulaire', subtitle, intro, fields = 
       close(id);
       if (successToast) toast(successToast, 'success');
     } catch (err) {
-      toast(err?.message || 'Une erreur est survenue', 'danger');
+      toast(errorMessage(err), 'danger');
     } finally {
       setSubmitting(false);
     }

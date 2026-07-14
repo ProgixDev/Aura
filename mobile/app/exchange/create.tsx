@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@components/Button';
 import { Chip } from '@components/Chip';
 import { EscrowNotice } from '@components/EscrowNotice';
@@ -12,6 +12,7 @@ import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { exchangeRepo } from '@data/repos';
 import { buildEchangeSujet } from '@utils/echange';
+import { errorMessage } from '@data/api/client';
 
 type Format = 'Présentiel' | 'Visio' | 'Peu importe';
 const formats: readonly Format[] = ['Présentiel', 'Visio', 'Peu importe'] as const;
@@ -19,6 +20,7 @@ const formats: readonly Format[] = ['Présentiel', 'Visio', 'Peu importe'] as co
 export default function ExchangeCreate() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const isEditing = Boolean(id);
 
@@ -30,9 +32,12 @@ export default function ExchangeCreate() {
 
   const [propose, setPropose] = useState('');
   const [recherche, setRecherche] = useState('');
-  const [format, setFormat] = useState<Format>('Présentiel');
+  // null = "no format selected" — must stay null when editing an échange
+  // that has no format set, otherwise saving would silently force one in.
+  const [format, setFormat] = useState<Format | null>(isEditing ? null : 'Présentiel');
   const [message, setMessage] = useState('');
   const [delai, setDelai] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Seed the form from the fetched échange exactly once, when it first
   // arrives — avoids clobbering in-progress edits on every re-render.
@@ -42,12 +47,13 @@ export default function ExchangeCreate() {
     seededId.current = existing.id;
     setPropose(existing.ce_que_je_propose ?? '');
     setRecherche(existing.ce_que_je_recherche ?? '');
-    setFormat((existing.format as Format) || 'Présentiel');
+    setFormat((existing.format as Format) || null);
     setMessage(existing.message ?? '');
     setDelai(existing.delai_souhaite ?? '');
   }, [existing]);
 
   const publish = async () => {
+    if (submitting) return;
     const payload = {
       sujet: buildEchangeSujet(propose, recherche),
       message,
@@ -56,12 +62,20 @@ export default function ExchangeCreate() {
       format: format || undefined,
       delai_souhaite: delai || undefined,
     };
-    if (isEditing) {
-      await exchangeRepo.update(Number(id), payload);
-    } else {
-      await exchangeRepo.create({ ...payload, type: 'proposition' });
+    setSubmitting(true);
+    try {
+      if (isEditing) {
+        await exchangeRepo.update(Number(id), payload);
+      } else {
+        await exchangeRepo.create({ ...payload, type: 'proposition' });
+      }
+      await queryClient.invalidateQueries({ queryKey: ['exchanges'] });
+      router.replace('/exchange' as any);
+    } catch (err) {
+      Alert.alert('Envoi impossible', errorMessage(err));
+    } finally {
+      setSubmitting(false);
     }
-    router.replace('/exchange' as any);
   };
 
   return (
@@ -118,7 +132,11 @@ export default function ExchangeCreate() {
       </ScrollView>
 
       <View style={[styles.dock, { paddingBottom: insets.bottom + 14 }]}>
-        <Button label={isEditing ? 'Enregistrer' : 'Publier mon échange'} onPress={publish} />
+        <Button
+          label={submitting ? 'Envoi…' : isEditing ? 'Enregistrer' : 'Publier mon échange'}
+          onPress={publish}
+          disabled={submitting}
+        />
       </View>
     </View>
   );

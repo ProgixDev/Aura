@@ -13,6 +13,7 @@ import { typography } from '@theme/typography';
 import { shadows } from '@theme/shadows';
 import { exchangeRepo } from '@data/repos';
 import { dateFr } from '@utils/format';
+import { errorMessage } from '@data/api/client';
 
 // Chip has no dedicated "danger" tone, so `signale` borrows `violet` to stay
 // visually distinct from the warm/positive statuses.
@@ -55,9 +56,13 @@ export default function ExchangeDetail() {
         text: 'Supprimer',
         style: 'destructive',
         onPress: async () => {
-          await exchangeRepo.remove(x.id);
-          await queryClient.invalidateQueries({ queryKey: ['exchanges'] });
-          router.replace('/exchange' as any);
+          try {
+            await exchangeRepo.remove(x.id);
+            await queryClient.invalidateQueries({ queryKey: ['exchanges'] });
+            router.replace('/exchange' as any);
+          } catch (err) {
+            Alert.alert('Suppression impossible', errorMessage(err));
+          }
         },
       },
     ]);
