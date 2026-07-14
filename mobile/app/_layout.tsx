@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { StripeProvider } from '@stripe/stripe-react-native';
 import { StatusBar } from 'expo-status-bar';
 import {
   useFonts,
@@ -35,6 +36,8 @@ const queryClient = new QueryClient({
   },
 });
 
+const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     CormorantGaramond_300Light,
@@ -58,47 +61,49 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.pearl }}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
-          <StatusBar style="dark" />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: colors.pearl },
-              animation: 'slide_from_right',
-            }}
-          >
-            <Stack.Screen name="index" options={{ animation: 'fade' }} />
-            <Stack.Screen name="onboarding/index" options={{ animation: 'fade' }} />
-            <Stack.Screen name="onboarding/role" />
-            <Stack.Screen name="onboarding/auth" />
-            <Stack.Screen name="onboarding/quiz" />
-            <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
-            <Stack.Screen
-              name="praticien/[id]"
-              options={{ animation: 'slide_from_bottom' }}
-            />
-            <Stack.Screen name="domain/[slug]" />
-            <Stack.Screen name="booking/slot" />
-            <Stack.Screen name="booking/payment" />
-            <Stack.Screen name="booking/confirmation" options={{ animation: 'fade' }} />
-            <Stack.Screen name="chat/[id]" />
-            <Stack.Screen name="event/[id]" />
-            <Stack.Screen name="exchange/index" />
-            <Stack.Screen name="exchange/[id]" />
-            <Stack.Screen name="exchange/create" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="payment-history" />
-            <Stack.Screen name="refund-request" options={{ presentation: 'modal', title: 'Remboursement' }} />
-            <Stack.Screen name="cercles/index" />
-            <Stack.Screen name="cercles/[id]" />
-            <Stack.Screen name="blog/index" />
-            <Stack.Screen name="blog/[slug]" />
-            <Stack.Screen name="review" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="report" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="founder" />
-            <Stack.Screen name="dashboard" />
-            <Stack.Screen name="subscription" />
-          </Stack>
-        </QueryClientProvider>
+        <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY} urlScheme="aura">
+          <QueryClientProvider client={queryClient}>
+            <StatusBar style="dark" />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.pearl },
+                animation: 'slide_from_right',
+              }}
+            >
+              <Stack.Screen name="index" options={{ animation: 'fade' }} />
+              <Stack.Screen name="onboarding/index" options={{ animation: 'fade' }} />
+              <Stack.Screen name="onboarding/role" />
+              <Stack.Screen name="onboarding/auth" />
+              <Stack.Screen name="onboarding/quiz" />
+              <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+              <Stack.Screen
+                name="praticien/[id]"
+                options={{ animation: 'slide_from_bottom' }}
+              />
+              <Stack.Screen name="domain/[slug]" />
+              <Stack.Screen name="booking/slot" />
+              <Stack.Screen name="booking/payment" />
+              <Stack.Screen name="booking/confirmation" options={{ animation: 'fade' }} />
+              <Stack.Screen name="chat/[id]" />
+              <Stack.Screen name="event/[id]" />
+              <Stack.Screen name="exchange/index" />
+              <Stack.Screen name="exchange/[id]" />
+              <Stack.Screen name="exchange/create" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="payment-history" />
+              <Stack.Screen name="refund-request" options={{ presentation: 'modal', title: 'Remboursement' }} />
+              <Stack.Screen name="cercles/index" />
+              <Stack.Screen name="cercles/[id]" />
+              <Stack.Screen name="blog/index" />
+              <Stack.Screen name="blog/[slug]" />
+              <Stack.Screen name="review" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="report" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="founder" />
+              <Stack.Screen name="dashboard" />
+              <Stack.Screen name="subscription" />
+            </Stack>
+          </QueryClientProvider>
+        </StripeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

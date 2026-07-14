@@ -8,7 +8,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Badge } from '@components/Badge';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useStripe } from '@stripe/stripe-react-native';
 import { Button } from '@components/Button';
 import { Card } from '@components/Card';
 import { EscrowNotice } from '@components/EscrowNotice';
@@ -17,36 +18,74 @@ import { ScreenHeader } from '@components/ScreenHeader';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { useBooking } from '@store/booking';
-import { bookingRepo } from '@data/repos';
+import { practitionerRepo, rendezVousRepo } from '@data/repos';
+import { buildDateHeureIso } from '@utils/booking';
 
 type Mode = 'présentiel' | 'visio';
-type Pay = 'visa' | 'apple' | 'add';
+
+interface PendingBooking {
+  id: number;
+  clientSecret: string;
+  tarif: number;
+}
 
 export default function BookPayment() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const draft = useBooking((s) => s.draft);
-  const patchDraft = useBooking((s) => s.patchDraft);
   const [mode, setMode] = useState<Mode>('présentiel');
-  const [pay, setPay] = useState<Pay>('visa');
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [pending, setPending] = useState<PendingBooking | null>(null);
 
-  const subtotal = 75;
-  const platform = 3.5;
-  const total = subtotal + platform;
+  const { data: praticien } = useQuery({
+    queryKey: ['practitioner', draft?.practitionerId],
+    queryFn: () => practitionerRepo.byId(draft?.practitionerId ?? ''),
+    enabled: !!draft?.practitionerId,
+  });
+
+  const subtotal = pending?.tarif ?? praticien?.price ?? 0;
 
   const confirm = async () => {
-    if (!draft) return;
+    if (!draft || !draft.day || !draft.slot) return;
     setSubmitting(true);
+    setError('');
     try {
-      patchDraft({ mode, total });
-      const booking = await bookingRepo.hold({
-        practitionerId: draft.practitionerId,
-        when: `${draft.day?.label} · ${draft.slot}`,
-        mode,
-        total,
+      let booking = pending;
+      if (!booking) {
+        const { rendez_vous, client_secret } = await rendezVousRepo.create({
+          praticien_id: Number(draft.practitionerId),
+          date_heure: buildDateHeureIso(draft.day.date, draft.slot),
+          mode,
+        });
+        // Seeds the query cache confirmation.tsx reads from, so its useQuery resolves
+        // instantly with data we already have instead of flashing a loading state.
+        queryClient.setQueryData(['rendezVous', String(rendez_vous.id)], rendez_vous);
+        booking = { id: rendez_vous.id, clientSecret: client_secret, tarif: rendez_vous.tarif };
+        setPending(booking);
+      }
+
+      const { error: initError } = await initPaymentSheet({
+        merchantDisplayName: 'Aura',
+        paymentIntentClientSecret: booking.clientSecret,
       });
-      router.replace(`/booking/confirmation?ref=${booking.id}` as any);
+      if (initError) {
+        setError(initError.message);
+        return;
+      }
+
+      const { error: presentError } = await presentPaymentSheet();
+      if (presentError) {
+        // A user-dismissed sheet isn't a failure — nothing to show, just let them retry.
+        if (presentError.code !== 'Canceled') setError(presentError.message);
+        return;
+      }
+
+      router.replace(`/booking/confirmation?id=${booking.id}` as any);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Impossible de créer la réservation');
     } finally {
       setSubmitting(false);
     }
@@ -65,18 +104,20 @@ export default function BookPayment() {
           <Pressable
             style={[styles.tile, mode === 'présentiel' && styles.tileActive]}
             onPress={() => setMode('présentiel')}
+            disabled={!!pending}
           >
             <View style={styles.tileIcon}>
               <Icon name="inperson" size={22} color={colors.ink} />
             </View>
             <View>
               <Text style={styles.tileH}>En présentiel</Text>
-              <Text style={styles.tileP}>Atelier d'Élodie · Annecy-le-Vieux</Text>
+              <Text style={styles.tileP}>Au cabinet, {praticien?.city ?? 'près de vous'}</Text>
             </View>
           </Pressable>
           <Pressable
             style={[styles.tile, mode === 'visio' && styles.tileActive]}
             onPress={() => setMode('visio')}
+            disabled={!!pending}
           >
             <View style={styles.tileIcon}>
               <Icon name="video" size={22} color={colors.ink} />
@@ -87,57 +128,23 @@ export default function BookPayment() {
             </View>
           </Pressable>
 
-          <Text style={[styles.section, { marginTop: 24 }]}>Mode de paiement</Text>
-
-          <Pressable
-            onPress={() => setPay('visa')}
-            style={[styles.payRow, pay === 'visa' && styles.tileActive]}
-          >
-            <View style={[styles.payLogo, { backgroundColor: '#1a1f71' }]}>
-              <Text style={styles.payLogoTxt}>VISA</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.payN}>•••• •••• •••• 4242</Text>
-              <Text style={styles.paySub}>Expire 04/27</Text>
-            </View>
-            <Badge label="Par défaut" variant="online" />
-          </Pressable>
-
-          <Pressable
-            onPress={() => setPay('apple')}
-            style={[styles.payRow, pay === 'apple' && styles.tileActive]}
-          >
-            <View style={[styles.payLogo, { backgroundColor: '#000' }]}>
-              <Text style={[styles.payLogoTxt, { fontSize: 11 }]}> Pay</Text>
-            </View>
-            <Text style={styles.payN}>Apple Pay</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setPay('add')}
-            style={[styles.payRow, pay === 'add' && styles.tileActive]}
-          >
-            <View style={styles.payLogo}>
-              <Text style={styles.payLogoTxt}>+</Text>
-            </View>
-            <Text style={[styles.payN, { color: colors.violet2 }]}>
-              Ajouter une carte
-            </Text>
-          </Pressable>
-
           <View style={{ height: 14 }} />
           <EscrowNotice
-            title="Paiement séquestré, via Stripe."
-            body="Votre carte est débitée maintenant, mais les fonds ne sont reversés à la praticienne qu'après la séance, une fois validée par vous. Aura est tiers de confiance."
+            title="Paiement sécurisé, via Stripe."
+            body="Vos coordonnées bancaires ne transitent jamais par nos serveurs. Le prélèvement est confirmé dès la validation du paiement."
           />
+
+          {!!error && <Text style={styles.error}>{error}</Text>}
 
           <Text style={[styles.section, { marginTop: 24 }]}>Récapitulatif</Text>
           <Card style={{ padding: 18, marginBottom: 24 }}>
-            <SummaryRow label="Séance — 75 min" value={`${subtotal.toFixed(2)} €`} />
-            <SummaryRow label="Frais de plateforme" value={`${platform.toFixed(2)} €`} />
+            <SummaryRow
+              label={`Séance${praticien?.specialties?.[0] ? ` — ${praticien.specialties[0]}` : ''}`}
+              value={`${subtotal.toFixed(2)} €`}
+            />
             <View style={styles.total}>
               <Text style={styles.totalLabel}>Total à régler</Text>
-              <Text style={styles.totalValue}>{total.toFixed(2)} €</Text>
+              <Text style={styles.totalValue}>{subtotal.toFixed(2)} €</Text>
             </View>
           </Card>
         </View>
@@ -146,10 +153,10 @@ export default function BookPayment() {
       <View style={[styles.dock, { paddingBottom: insets.bottom + 14 }]}>
         <Button
           variant="aurora"
-          label={`Régler ${total.toFixed(2)} € en toute sécurité`}
+          label={submitting ? 'Paiement en cours…' : `Régler ${subtotal.toFixed(2)} € en toute sécurité`}
           leftIcon={<Icon name="shield" size={18} color="#fff" />}
           onPress={confirm}
-          disabled={submitting}
+          disabled={submitting || !draft || !praticien}
         />
       </View>
     </View>
@@ -195,28 +202,7 @@ const styles = StyleSheet.create({
   tileH: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 18 },
   tileP: { ...typography.tiny, fontSize: 12 },
 
-  payRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 14,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    marginBottom: 10,
-  },
-  payLogo: {
-    width: 40,
-    height: 28,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.mist,
-  },
-  payLogoTxt: { color: '#fff', fontSize: 10, fontFamily: 'Outfit_600SemiBold' },
-  payN: { ...typography.bodyMedium, fontSize: 14 },
-  paySub: { ...typography.tiny, fontSize: 11 },
+  error: { ...typography.small, color: colors.danger, fontSize: 13, marginTop: 10 },
 
   summaryRow: {
     flexDirection: 'row',

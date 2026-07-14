@@ -34,7 +34,13 @@
           "origin": false
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "@stripe/stripe-react-native",
+        {
+          "enableGooglePay": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

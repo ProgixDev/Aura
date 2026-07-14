@@ -23,6 +23,7 @@ import type {
   Review,
   Circle,
   Article,
+  RendezVous,
 } from '../types';
 
 const delay = <T>(value: T, ms = 60): Promise<T> =>
@@ -252,4 +253,25 @@ export const bookingRepo = {
     delay({ bookingId, status: 'released' as const }),
   refund: async (bookingId: string) =>
     delay({ bookingId, status: 'refunded' as const }),
+};
+
+// ---------- Rendez-vous (real backend) ----------
+interface CreateRendezVousParams {
+  praticien_id: number;
+  date_heure: string;
+  mode: 'présentiel' | 'visio';
+  promotion_code?: string;
+}
+
+export const rendezVousRepo = {
+  create: (params: CreateRendezVousParams): Promise<{ rendez_vous: RendezVous; client_secret: string }> =>
+    api
+      .post<{ status: string; data: { rendez_vous: RendezVous; client_secret: string } }>('/rendez-vous', params)
+      .then((res) => res.data),
+
+  byId: (id: number): Promise<RendezVous> =>
+    api.get<{ status: string; data: RendezVous }>(`/rendez-vous/client/${id}`).then((res) => res.data),
+
+  cancel: (id: number): Promise<RendezVous> =>
+    api.post<{ status: string; data: RendezVous }>(`/rendez-vous/client/${id}/cancel`).then((res) => res.data),
 };

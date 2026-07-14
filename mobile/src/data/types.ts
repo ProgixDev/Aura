@@ -188,3 +188,28 @@ export interface BookingDraft {
   mode?: 'présentiel' | 'visio';
   total?: number;
 }
+
+export interface RendezVousPraticien {
+  id: number;
+  firstname: string;
+  lastname: string;
+  ville: string;
+  specialite: string;
+  tarif: number;
+}
+
+export interface RendezVous {
+  id: number;
+  client_id: number;
+  praticien_id: number;
+  date_heure: string;
+  duree_minutes: number;
+  mode: 'présentiel' | 'visio';
+  statut: 'en_attente' | 'confirme' | 'annule' | 'termine';
+  tarif: number;
+  promotion_id: number | null;
+  stripe_payment_intent_id: string | null;
+  created_at: string;
+  updated_at: string;
+  praticien?: RendezVousPraticien;
+}
