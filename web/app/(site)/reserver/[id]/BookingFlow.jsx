@@ -2,13 +2,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
 import { Badge } from '@/components/ui/Badge';
 import { Rating } from '@/components/ui/Rating';
-import { ToastButton } from '@/components/ui/ToastButton';
 import { Lotus } from '@/components/ui/Lotus';
 import { euro } from '@/lib/format';
+import { computeDiscountedTarif } from '@/lib/pricing';
+import { api, ApiError } from '@/lib/api';
+import { useToast } from '@/lib/store';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 const DAYS = [
   { key: 'd1', dow: 'Lun', dom: '02', month: 'juin', full: 'lundi 2 juin' },
@@ -26,19 +32,97 @@ const SLOTS = [
 
 const STEPS = ['Créneau', 'Modalité', 'Paiement', 'Confirmation'];
 
+// DAYS/SLOTS above are UI-only mock content (R3: no calendar/availability engine in this
+// plan) — French month name, no year. This maps what's already selected into a real ISO
+// datetime for the backend, without changing the picker itself.
+const FRENCH_MONTHS = {
+  janvier: '01', février: '02', mars: '03', avril: '04', mai: '05', juin: '06',
+  juillet: '07', août: '08', septembre: '09', octobre: '10', novembre: '11', décembre: '12',
+};
+
+function buildDateHeureIso(day, slotTime) {
+  const year = new Date().getFullYear();
+  const month = FRENCH_MONTHS[day.month] ?? '01';
+  return `${year}-${month}-${day.dom}T${slotTime}:00`;
+}
+
+function PaymentForm({ booking, total, onBack, onSuccess }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const toast = useToast();
+  const [paying, setPaying] = useState(false);
+  const [error, setError] = useState('');
+
+  async function pay() {
+    if (!stripe || !elements) return;
+    setPaying(true);
+    setError('');
+    const { error: submitError } = await elements.submit();
+    if (submitError) {
+      setError(submitError.message);
+      setPaying(false);
+      return;
+    }
+    const { error: confirmError } = await stripe.confirmPayment({
+      elements,
+      clientSecret: booking.clientSecret,
+      confirmParams: { return_url: window.location.href },
+      redirect: 'if_required',
+    });
+    if (confirmError) {
+      setError(confirmError.message);
+      toast(confirmError.message, 'error');
+      setPaying(false);
+      return;
+    }
+    toast('Paiement confirmé', 'success');
+    onSuccess();
+  }
+
+  return (
+    <div className="card card-pad">
+      <h3 className="h-4 mb-3">Paiement sécurisé</h3>
+      <PaymentElement />
+      {error && (
+        <p className="tiny" style={{ color: 'var(--danger, #C0524A)', marginTop: 8 }}>{error}</p>
+      )}
+      <p className="tiny muted row gap-2" style={{ marginTop: 8 }}>
+        <Icon name="shield" size={14} color="var(--muted)" /> Paiement chiffré. Vos données ne sont jamais stockées en clair.
+      </p>
+      <div className="row gap-3 mt-6 between">
+        <button type="button" className="btn btn-ghost btn-lg" onClick={onBack} disabled={paying}>
+          <Icon name="arrowLeft" size={16} /> Retour
+        </button>
+        <button type="button" className="btn btn-aurora btn-lg" onClick={pay} disabled={paying || !stripe || !elements}>
+          {paying ? 'Paiement en cours…' : `Payer ${euro(total)}`}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function BookingFlow({ p }) {
   const [step, setStep] = useState(1);
   const [day, setDay] = useState('');
   const [slot, setSlot] = useState('');
   const [mode, setMode] = useState('');
-  const [promo, setPromo] = useState('');
+  const [promoCode, setPromoCode] = useState('');
+  const [promoState, setPromoState] = useState({ status: 'idle' }); // idle | checking | valid | invalid
+  const [booking, setBooking] = useState(null); // { rendezVous, clientSecret }
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const toast = useToast();
 
   const canPresentiel = !/visio uniquement/i.test(p.mode || '');
   const canVisio = /visio/i.test(p.mode || '');
 
   const selectedDay = DAYS.find((d) => d.key === day);
-  const fee = 2;
-  const total = p.price + fee;
+
+  const discountedPrice = computeDiscountedTarif(
+    p.price,
+    promoState.status === 'valid' ? promoState.promo : null,
+  );
+  const total = booking ? booking.rendezVous.tarif : discountedPrice;
 
   const next = () => setStep((s) => Math.min(4, s + 1));
   const back = () => setStep((s) => Math.max(1, s - 1));
@@ -46,6 +130,38 @@ export function BookingFlow({ p }) {
 
   const step1Ready = day && slot;
   const step2Ready = !!mode;
+
+  async function applyPromo() {
+    if (!promoCode.trim()) return;
+    setPromoState({ status: 'checking' });
+    try {
+      const res = await api.post('/promotions/validate', { code: promoCode.trim() });
+      setPromoState({ status: 'valid', promo: res.data });
+      toast('Code promo appliqué', 'success');
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Code promo invalide';
+      setPromoState({ status: 'invalid', message });
+      toast(message, 'error');
+    }
+  }
+
+  async function createBooking() {
+    setCreating(true);
+    setCreateError('');
+    try {
+      const res = await api.post('/rendez-vous', {
+        praticien_id: Number(p.id),
+        date_heure: buildDateHeureIso(selectedDay, slot),
+        mode,
+        ...(promoState.status === 'valid' ? { promotion_code: promoState.promo.code } : {}),
+      });
+      setBooking({ rendezVous: res.data.rendez_vous, clientSecret: res.data.client_secret });
+    } catch (err) {
+      setCreateError(err instanceof ApiError ? err.message : 'Impossible de créer la réservation');
+    } finally {
+      setCreating(false);
+    }
+  }
 
   return (
     <section className="section">
@@ -219,7 +335,7 @@ export function BookingFlow({ p }) {
                 <h1 className="h-2" style={{ margin: '6px 0 4px' }}>
                   Récapitulatif &amp; <span className="serif-accent">paiement</span>
                 </h1>
-                <p className="body mb-4">Le montant n’est débité qu’après la séance. Annulation gratuite jusqu’à 24h avant.</p>
+                <p className="body mb-4">Le montant est débité à la confirmation du paiement. Annulation gratuite jusqu’à 24h avant.</p>
 
                 <div className="card card-pad mb-4">
                   <h3 className="h-4 mb-3">Votre séance</h3>
@@ -232,49 +348,60 @@ export function BookingFlow({ p }) {
                   </dl>
                 </div>
 
-                <div className="card card-pad">
-                  <h3 className="h-4 mb-3">Paiement sécurisé</h3>
-                  <div className="field">
-                    <label>Titulaire de la carte</label>
-                    <input className="input" placeholder="Prénom Nom" defaultValue="" />
-                  </div>
-                  <div className="field">
-                    <label>Numéro de carte</label>
-                    <div className="row gap-2" style={{ position: 'relative' }}>
-                      <input className="input" placeholder="4242 4242 4242 4242" inputMode="numeric" style={{ flex: 1 }} />
-                      <Icon name="card" size={18} color="var(--muted)" />
+                {!booking && (
+                  <div className="card card-pad">
+                    <h3 className="h-4 mb-3">Code promo</h3>
+                    <div className="field">
+                      <div className="row gap-2">
+                        <input
+                          className="input"
+                          placeholder="AURA10"
+                          value={promoCode}
+                          onChange={(e) => { setPromoCode(e.target.value); setPromoState({ status: 'idle' }); }}
+                          style={{ flex: 1 }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-soft"
+                          onClick={applyPromo}
+                          disabled={promoState.status === 'checking' || !promoCode.trim()}
+                        >
+                          {promoState.status === 'checking' ? 'Vérification…' : 'Appliquer'}
+                        </button>
+                      </div>
+                      {promoState.status === 'valid' && (
+                        <p className="tiny" style={{ color: 'var(--sage-2, #6BA77C)', marginTop: 6 }}>
+                          Code {promoState.promo.code} appliqué — nouveau total {euro(discountedPrice)}
+                        </p>
+                      )}
+                      {promoState.status === 'invalid' && (
+                        <p className="tiny" style={{ color: 'var(--danger, #C0524A)', marginTop: 6 }}>{promoState.message}</p>
+                      )}
+                    </div>
+                    {createError && (
+                      <p className="tiny" style={{ color: 'var(--danger, #C0524A)', marginTop: 8 }}>{createError}</p>
+                    )}
+                    <div className="row gap-3 mt-6 between">
+                      <button type="button" className="btn btn-ghost btn-lg" onClick={back}>
+                        <Icon name="arrowLeft" size={16} /> Retour
+                      </button>
+                      <button type="button" className="btn btn-aurora btn-lg" onClick={createBooking} disabled={creating}>
+                        {creating ? 'Préparation du paiement…' : `Continuer vers le paiement · ${euro(discountedPrice)}`}
+                      </button>
                     </div>
                   </div>
-                  <div className="grid grid-2" style={{ gap: 12 }}>
-                    <div className="field"><label>Expiration</label><input className="input" placeholder="MM / AA" /></div>
-                    <div className="field"><label>CVC</label><input className="input" placeholder="123" inputMode="numeric" /></div>
-                  </div>
-                  <div className="field">
-                    <label>Code promo</label>
-                    <div className="row gap-2">
-                      <input className="input" placeholder="AURA10" value={promo} onChange={(e) => setPromo(e.target.value)} style={{ flex: 1 }} />
-                      <ToastButton message="Code promo appliqué" tone="success" className="btn btn-soft">Appliquer</ToastButton>
-                    </div>
-                  </div>
-                  <p className="tiny muted row gap-2" style={{ marginTop: 8 }}>
-                    <Icon name="shield" size={14} color="var(--muted)" /> Paiement chiffré. Vos données ne sont jamais stockées en clair.
-                  </p>
-                </div>
+                )}
 
-                <div className="row gap-3 mt-6 between">
-                  <button type="button" className="btn btn-ghost btn-lg" onClick={back}>
-                    <Icon name="arrowLeft" size={16} /> Retour
-                  </button>
-                  <ToastButton
-                    message={`Paiement confirmé — ${euro(total)}`}
-                    tone="success"
-                    className="btn btn-aurora btn-lg"
-                  >
-                    <span onClick={next} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                      Payer {euro(total)}
-                    </span>
-                  </ToastButton>
-                </div>
+                {booking && (
+                  <Elements stripe={stripePromise} options={{ clientSecret: booking.clientSecret }}>
+                    <PaymentForm
+                      booking={booking}
+                      total={booking.rendezVous.tarif}
+                      onBack={() => setBooking(null)}
+                      onSuccess={() => setStep(4)}
+                    />
+                  </Elements>
+                )}
               </div>
             )}
 
@@ -306,8 +433,9 @@ export function BookingFlow({ p }) {
                   <div className="divider" />
                   <dl className="dl">
                     <dt>Date</dt><dd>{selectedDay?.full} à {slot}</dd>
-                    <dt>Modalité</dt><dd style={{ textTransform: 'capitalize' }}>{mode}</dd>
-                    <dt>Total payé</dt><dd>{euro(total)}</dd>
+                    <dt>Modalité</dt><dd style={{ textTransform: 'capitalize' }}>{booking?.rendezVous.mode}</dd>
+                    <dt>Total payé</dt><dd>{euro(booking?.rendezVous.tarif ?? 0)}</dd>
+                    <dt>Référence</dt><dd>RDV-{booking?.rendezVous.id}</dd>
                   </dl>
                 </div>
 
@@ -341,16 +469,18 @@ export function BookingFlow({ p }) {
                 <span className="small muted">Séance ({p.duration} min)</span>
                 <span className="small">{euro(p.price)}</span>
               </div>
-              <div className="between" style={{ marginTop: 4 }}>
-                <span className="small muted">Frais de service</span>
-                <span className="small">{euro(fee)}</span>
-              </div>
+              {promoState.status === 'valid' && (
+                <div className="between" style={{ marginTop: 4 }}>
+                  <span className="small muted">Réduction ({promoState.promo.code})</span>
+                  <span className="small">−{euro(p.price - discountedPrice)}</span>
+                </div>
+              )}
               <div className="between" style={{ marginTop: 10 }}>
                 <span className="serif" style={{ fontSize: 17 }}>Total</span>
                 <span className="price" style={{ fontSize: 22 }}>{euro(total)}</span>
               </div>
               <p className="tiny muted row gap-2" style={{ marginTop: 14 }}>
-                <Icon name="shield" size={14} color="var(--muted)" /> Débité après la séance
+                <Icon name="shield" size={14} color="var(--muted)" /> Débité à la confirmation du paiement
               </p>
             </aside>
           )}

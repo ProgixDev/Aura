@@ -204,4 +204,24 @@ describe('rendez-vous', () => {
       .set('Authorization', `Bearer ${clientToken}`).expect(200);
     expect(shown.body.data.statut).toBe('annule');
   });
+
+  it('Paiement.rendezVous relation loads the linked rendez_vous', async () => {
+    const created = await http().post('/api/rendez-vous').set('Authorization', `Bearer ${clientToken}`)
+      .send({ praticien_id: praticienId, date_heure: '2026-08-08T10:00:00', mode: 'présentiel' }).expect(201);
+    const rdv = created.body.data.rendez_vous;
+
+    const fakeEvent = {
+      id: 'evt_relation_check',
+      type: 'payment_intent.succeeded',
+      data: { object: { id: 'pi_relation', metadata: { rendez_vous_id: String(rdv.id) } } },
+    };
+    stripeServiceMock.constructWebhookEvent.mockImplementation(() => fakeEvent);
+    await http().post('/api/webhooks/stripe').set('stripe-signature', 'sig').send(fakeEvent).expect(200);
+
+    const paiement = await ds.getRepository(Paiement).findOne({
+      where: { rendez_vous_id: rdv.id }, relations: { rendezVous: true },
+    });
+    expect(paiement?.rendezVous?.id).toBe(rdv.id);
+    expect(paiement?.rendezVous?.statut).toBe('confirme');
+  });
 });

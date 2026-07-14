@@ -1,14 +1,27 @@
 import {
-  Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, Req,
+  Body, Controller, Delete, Get, HttpCode, Param, ParseIntPipe, Post, Put, Query, Req,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { PromotionsService } from './promotions.service';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
+import { ValidatePromotionDto } from './dto/validate-promotion.dto';
+import { success } from '../common/envelope';
 
 @Controller('promotions')
 export class PromotionsController {
   constructor(private readonly service: PromotionsService) {}
+
+  // ---- public promo-code check (used by the booking flow before payment) ----
+
+  @HttpCode(200)
+  @Post('validate')
+  async validate(@Body() dto: ValidatePromotionDto) {
+    const promo = await this.service.validate(dto.code);
+    return success({ id: promo.id, code: promo.code, type: promo.type, valeur: promo.valeur });
+  }
+
+  // ---- admin CRUD ----
 
   @Get()
   index(@Query() query: Record<string, any>, @Req() req: Request) {

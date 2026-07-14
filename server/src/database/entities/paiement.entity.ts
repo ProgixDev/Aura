@@ -5,6 +5,7 @@ import {
 import { decimalTransformer, jsonTransformer } from '../../common/transformers';
 import { Client } from './client.entity';
 import { Praticien } from './praticien.entity';
+import { RendezVous } from './rendez-vous.entity';
 
 @Entity('paiements')
 export class Paiement {
@@ -32,4 +33,7 @@ export class Paiement {
   @ManyToOne(() => Praticien, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'praticien_id' })
   praticien: Praticien | null;
+  @ManyToOne(() => RendezVous, { nullable: true })
+  @JoinColumn({ name: 'rendez_vous_id' })
+  rendezVous: RendezVous | null;
 }

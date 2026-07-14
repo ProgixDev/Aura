@@ -1,7 +1,9 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { DataSource } from 'typeorm';
 import { createTestApp } from './utils/create-test-app';
 import { PromotionsModule } from '../src/promotions/promotions.module';
+import { Promotion } from '../src/database/entities/promotion.entity';
 
 const future = () => {
   const d = new Date(); d.setFullYear(d.getFullYear() + 1);
@@ -47,5 +49,27 @@ describe('promotions', () => {
     await http().delete(`/api/promotions/${id}`).expect(200);
     const nf = await http().get(`/api/promotions/${id}`).expect(404);
     expect(nf.body.message).toBe('Promotion non trouvée');
+  });
+
+  it('POST /api/promotions/validate returns the promotion for a valid, non-expired code', async () => {
+    await http().post('/api/promotions')
+      .send({ code: 'VALID20', type: 'fixe', valeur: 20, date_expiration: future() }).expect(201);
+    const res = await http().post('/api/promotions/validate').send({ code: 'VALID20' }).expect(200);
+    expect(res.body.data).toMatchObject({ code: 'VALID20', type: 'fixe', valeur: 20 });
+    expect(res.body.data.id).toBeDefined();
+  });
+
+  it('POST /api/promotions/validate 404s for an unknown code', async () => {
+    const res = await http().post('/api/promotions/validate').send({ code: 'NOPE' }).expect(404);
+    expect(res.body.message).toBe('Code promo invalide ou expiré');
+  });
+
+  it('POST /api/promotions/validate 404s for an expired code', async () => {
+    await http().post('/api/promotions')
+      .send({ code: 'EXPIRED1', type: 'fixe', valeur: 5, date_expiration: future() }).expect(201);
+    const ds = app.get(DataSource);
+    await ds.getRepository(Promotion).update({ code: 'EXPIRED1' }, { date_expiration: '2020-01-01' });
+    const res = await http().post('/api/promotions/validate').send({ code: 'EXPIRED1' }).expect(404);
+    expect(res.body.message).toBe('Code promo invalide ou expiré');
   });
 });
