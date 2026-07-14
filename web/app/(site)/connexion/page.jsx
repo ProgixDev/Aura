@@ -1,7 +1,14 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@/components/ui/Icon';
 import { Lotus } from '@/components/ui/Lotus';
 import { ModalButton } from '@/components/ui/ModalButton';
+import { api, ApiError } from '@/lib/api';
+import { useAuthStore } from '@/lib/auth-store';
+import { useUI } from '@/lib/store';
 
 const POINTS = [
   'Praticiens vérifiés un par un',
@@ -10,6 +17,30 @@ const POINTS = [
 ];
 
 export default function ConnexionPage() {
+  const router = useRouter();
+  const setSession = useAuthStore((s) => s.setSession);
+  const toast = useUI((s) => s.toast);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await api.post('/client/login', { email, password });
+      setSession(res.data.token, res.data.client);
+      toast('Bienvenue', 'success');
+      router.push('/compte');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Une erreur est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className="section">
       <div className="container">
@@ -47,23 +78,36 @@ export default function ConnexionPage() {
               <span className="eyebrow">Connexion</span>
               <h1 className="h-2" style={{ margin: '6px 0 22px' }}>Se connecter</h1>
 
-              <div className="field">
-                <label>Adresse email</label>
-                <input className="input" type="email" placeholder="vous@exemple.fr" autoComplete="email" />
-              </div>
-              <div className="field">
-                <div className="between">
-                  <label>Mot de passe</label>
-                  <Link href="/mot-de-passe-oublie" className="tiny" style={{ color: 'var(--violet-2)' }}>Oublié ?</Link>
+              <form onSubmit={submit}>
+                {error && (
+                  <p className="small" style={{ color: 'var(--danger, #b5524f)', marginBottom: 14 }}>{error}</p>
+                )}
+                <div className="field">
+                  <label>Adresse email</label>
+                  <input
+                    className="input" type="email" placeholder="vous@exemple.fr" autoComplete="email" required
+                    value={email} onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
-                <input className="input" type="password" placeholder="••••••••" autoComplete="current-password" />
-              </div>
+                <div className="field">
+                  <div className="between">
+                    <label>Mot de passe</label>
+                    <Link href="/mot-de-passe-oublie" className="tiny" style={{ color: 'var(--violet-2)' }}>Oublié ?</Link>
+                  </div>
+                  <input
+                    className="input" type="password" placeholder="••••••••" autoComplete="current-password" required
+                    value={password} onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
 
-              <label className="row gap-2 small" style={{ margin: '4px 0 18px', cursor: 'pointer' }}>
-                <input type="checkbox" className="checkbox" /> Rester connecté(e)
-              </label>
+                <label className="row gap-2 small" style={{ margin: '4px 0 18px', cursor: 'pointer' }}>
+                  <input type="checkbox" className="checkbox" /> Rester connecté(e)
+                </label>
 
-              <ModalButton modal="login" className="btn btn-primary btn-block btn-lg">Se connecter</ModalButton>
+                <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading}>
+                  {loading ? 'Connexion…' : 'Se connecter'}
+                </button>
+              </form>
 
               <div className="row gap-3" style={{ alignItems: 'center', margin: '20px 0' }}>
                 <div className="divider flex-1" style={{ margin: 0 }} />
