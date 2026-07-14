@@ -1,35 +1,46 @@
+'use client';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { PageHead } from '@/components/ui/PageHead';
 import { Badge } from '@/components/ui/Badge';
-import { Icon } from '@/components/ui/Icon';
-import { ModalButton } from '@/components/ui/ModalButton';
-import { ToastButton } from '@/components/ui/ToastButton';
-import { transactions, getTransaction, getBooking } from '@/lib/data/admin';
-import { euro, dateFr, tone } from '@/lib/format';
+import { api } from '@/lib/api';
+import { euro, dateFr } from '@/lib/format';
 
-export function generateStaticParams() {
-  return transactions.map((t) => ({ id: t.id }));
-}
+const STATUT_TONE = { paid: 'success', en_attente: 'warning', rembourse: 'info' };
 
-export default async function AdminPaiementDetailPage({ params }) {
-  const { id } = await params;
-  const tx = getTransaction(id);
-  if (!tx) notFound();
-  const booking = tx.bookingId ? getBooking(tx.bookingId) : null;
+export default function AdminPaiementDetailPage() {
+  const { id } = useParams();
+  // No dedicated admin GET /paiements/:id exists (`:id` is ClientGuard-only, scoped to
+  // the calling client) — reuse the same admin-index query + queryKey the list page
+  // uses and find the row client-side. See the note above Task 20 in the plan for the
+  // "outside the first 100 rows" limitation this implies.
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['admin', 'paiements'],
+    queryFn: () => api.get('/paiements?per_page=100'),
+  });
+  const tx = (data?.data ?? []).find((p) => String(p.id) === String(id));
+
+  if (isLoading) return <div className="empty"><div className="glyph">❍</div>Chargement…</div>;
+  if (isError || !tx) {
+    return (
+      <>
+        <PageHead title="Paiement introuvable" crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Paiements', href: '/admin/paiements' }, { label: 'Introuvable' }]} />
+        <div className="empty">
+          <div className="glyph">❍</div>
+          Ce paiement n'existe pas, ou n'est pas dans les 100 transactions les plus récentes.
+          <div className="mt-3"><Link href="/admin/paiements" className="btn btn-soft btn-sm">Retour aux paiements</Link></div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
       <PageHead
-        title={tx.ref}
-        subtitle={`Transaction du ${dateFr(tx.date)}`}
-        crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Paiements', href: '/admin/paiements' }, { label: tx.ref }]}
-        actions={<>
-          <ToastButton message="Reçu téléchargé" tone="success" className="btn btn-soft btn-sm"><Icon name="download" size={15} /> Télécharger le reçu</ToastButton>
-          {tx.status !== 'refunded' && (
-            <ModalButton modal="refund" payload={{ ref: tx.ref, amount: euro(tx.gross) }} className="btn btn-danger-soft btn-sm"><Icon name="arrowLeft" size={15} /> Rembourser</ModalButton>
-          )}
-        </>}
+        title={tx.reference}
+        subtitle={`Transaction du ${dateFr(tx.date_paiement)}`}
+        crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Paiements', href: '/admin/paiements' }, { label: tx.reference }]}
       />
 
       <div className="grid" style={{ gridTemplateColumns: '1.5fr 1fr', gap: 20 }}>
@@ -37,22 +48,22 @@ export default async function AdminPaiementDetailPage({ params }) {
           <div className="card card-pad">
             <div className="between" style={{ marginBottom: 18 }}>
               <h3 className="h-3">Détail du montant</h3>
-              <Badge variant={tone(tx.status)}>{tx.status}</Badge>
+              <Badge variant={STATUT_TONE[tx.statut] || 'neutral'}>{tx.statut}</Badge>
             </div>
             <div className="stack gap-3">
-              <div className="between"><span className="muted">Montant brut</span><strong>{euro(tx.gross)}</strong></div>
-              <div className="between"><span className="muted">Commission Aura (15 %)</span><span style={{ color: 'var(--danger)' }}>− {euro(tx.fee)}</span></div>
+              <div className="between"><span className="muted">Montant brut</span><strong>{euro(tx.montant_brut)}</strong></div>
+              <div className="between"><span className="muted">Commission Aura</span><span style={{ color: 'var(--danger)' }}>− {euro(tx.commission)}</span></div>
               <div className="divider" />
-              <div className="between"><span style={{ fontWeight: 500 }}>Net reversé au praticien</span><strong className="h-4">{euro(tx.net)}</strong></div>
+              <div className="between"><span style={{ fontWeight: 500 }}>Net reversé au praticien</span><strong className="h-4">{euro(tx.montant_net_praticien)}</strong></div>
             </div>
           </div>
 
           <div className="card card-pad">
             <h3 className="h-3" style={{ marginBottom: 16 }}>Parties</h3>
             <div className="dl">
-              <dt>Client</dt><dd>{tx.clientName}</dd>
-              <dt>Praticien</dt><dd>{tx.practitionerName}</dd>
-              <dt>Moyen de paiement</dt><dd><Badge variant="neutral">{tx.method}</Badge></dd>
+              <dt>Client</dt><dd>{tx.client ? `${tx.client.firstname} ${tx.client.lastname}` : '—'}</dd>
+              <dt>Praticien</dt><dd>{tx.praticien ? `${tx.praticien.firstname} ${tx.praticien.lastname}` : 'N/A'}</dd>
+              <dt>Moyen de paiement</dt><dd><Badge variant="neutral">{tx.moyen_paiement}</Badge></dd>
             </div>
           </div>
         </div>
@@ -61,33 +72,18 @@ export default async function AdminPaiementDetailPage({ params }) {
           <div className="card card-pad">
             <h3 className="h-3" style={{ marginBottom: 16 }}>Informations</h3>
             <div className="dl">
-              <dt>Référence</dt><dd>{tx.ref}</dd>
-              <dt>Date</dt><dd>{dateFr(tx.date)}</dd>
-              <dt>Statut</dt><dd><Badge variant={tone(tx.status)}>{tx.status}</Badge></dd>
+              <dt>Référence</dt><dd>{tx.reference}</dd>
+              <dt>Date</dt><dd>{dateFr(tx.date_paiement)}</dd>
+              <dt>Statut</dt><dd><Badge variant={STATUT_TONE[tx.statut] || 'neutral'}>{tx.statut}</Badge></dd>
             </div>
           </div>
 
-          {booking && (
-            <div className="card card-pad">
-              <h3 className="h-3" style={{ marginBottom: 12 }}>Réservation liée</h3>
-              <Link href={'/admin/reservation/' + booking.id} className="row gap-3 between">
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: 14 }}>{booking.ref}</div>
-                  <div className="tiny">{booking.discipline} · {dateFr(booking.date)} · {booking.slot}</div>
-                </div>
-                <Icon name="chevronRight" size={16} color="var(--muted)" />
-              </Link>
-            </div>
-          )}
-
           <div className="card card-pad">
-            <h3 className="h-3" style={{ marginBottom: 12 }}>Actions</h3>
-            <div className="stack gap-2">
-              <ToastButton message="Reçu envoyé au client" tone="success" className="btn btn-soft btn-sm btn-block"><Icon name="mail" size={15} /> Renvoyer le reçu</ToastButton>
-              {tx.status !== 'refunded' && (
-                <ModalButton modal="refund" payload={{ ref: tx.ref, amount: euro(tx.gross) }} className="btn btn-danger-soft btn-sm btn-block">Rembourser la transaction</ModalButton>
-              )}
-            </div>
+            <h3 className="h-3" style={{ marginBottom: 12 }}>Remboursement</h3>
+            <p className="small" style={{ marginBottom: 12 }}>
+              Les remboursements sont initiés par le client puis traités depuis la file dédiée — il n'existe pas d'action « rembourser » directe depuis un paiement.
+            </p>
+            <Link href="/admin/remboursements" className="btn btn-soft btn-sm btn-block">Voir la file des remboursements</Link>
           </div>
         </div>
       </div>

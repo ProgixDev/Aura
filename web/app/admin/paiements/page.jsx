@@ -1,28 +1,58 @@
 'use client';
+import { useQuery } from '@tanstack/react-query';
 import { PageHead } from '@/components/ui/PageHead';
 import { StatCard } from '@/components/ui/StatCard';
 import { DataTable } from '@/components/ui/DataTable';
 import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
-import { ModalButton } from '@/components/ui/ModalButton';
-import { transactions } from '@/lib/data/admin';
-import { euro, dateFr, tone } from '@/lib/format';
+import { api } from '@/lib/api';
+import { euro, dateFr } from '@/lib/format';
+
+const STATUT_TONE = { paid: 'success', en_attente: 'warning', rembourse: 'info' };
+
+function downloadCsv({ filename, csv }) {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
 
 export default function AdminPaiementsPage() {
-  const volume = transactions.reduce((s, t) => s + t.gross, 0);
-  const fees = transactions.reduce((s, t) => s + t.fee, 0);
-  const net = transactions.reduce((s, t) => s + t.net, 0);
+  const { data, isError } = useQuery({
+    queryKey: ['admin', 'paiements'],
+    queryFn: () => api.get('/paiements?per_page=100'),
+  });
+  // Real, table-wide aggregates (not affected by the 100-row page cap) — this is why
+  // the stat cards hit a separate endpoint instead of reducing over `paiements` below.
+  const { data: statsData } = useQuery({
+    queryKey: ['admin', 'paiements', 'statistics'],
+    queryFn: () => api.get('/paiements/statistics'),
+  });
+  const stats = statsData?.data?.general;
+
+  const paiements = (data?.data ?? []).map((p) => ({
+    ...p,
+    client_nom: p.client ? `${p.client.firstname} ${p.client.lastname}` : '',
+    praticien_nom: p.praticien ? `${p.praticien.firstname} ${p.praticien.lastname}` : '',
+  }));
+
+  const exportCsv = async () => {
+    const res = await api.get('/paiements/export/csv');
+    downloadCsv(res.data);
+  };
 
   const columns = [
-    { key: 'ref', label: 'Réf.', sortable: true, render: (r) => <span className="table-cell-main">{r.ref}</span> },
-    { key: 'date', label: 'Date', sortable: true, render: (r) => <span className="small">{dateFr(r.date)}</span> },
-    { key: 'clientName', label: 'Client', sortable: true },
-    { key: 'practitionerName', label: 'Praticien', sortable: true },
-    { key: 'gross', label: 'Brut', sortable: true, render: (r) => euro(r.gross) },
-    { key: 'fee', label: 'Commission', sortable: true, render: (r) => <span className="muted">{euro(r.fee)}</span> },
-    { key: 'net', label: 'Net praticien', sortable: true, render: (r) => <strong>{euro(r.net)}</strong> },
-    { key: 'method', label: 'Moyen', render: (r) => <Badge variant="neutral">{r.method}</Badge> },
-    { key: 'status', label: 'Statut', render: (r) => <Badge variant={tone(r.status)}>{r.status}</Badge> },
+    { key: 'reference', label: 'Réf.', sortable: true, render: (r) => <span className="table-cell-main">{r.reference}</span> },
+    { key: 'date_paiement', label: 'Date', sortable: true, render: (r) => <span className="small">{dateFr(r.date_paiement)}</span> },
+    { key: 'client_nom', label: 'Client', sortable: true, render: (r) => <span className="small">{r.client_nom || '—'}</span> },
+    { key: 'praticien_nom', label: 'Praticien', render: (r) => <span className="small">{r.praticien_nom || 'N/A'}</span> },
+    { key: 'montant_brut', label: 'Brut', sortable: true, render: (r) => euro(r.montant_brut) },
+    { key: 'commission', label: 'Commission', sortable: true, render: (r) => <span className="muted">{euro(r.commission)}</span> },
+    { key: 'montant_net_praticien', label: 'Net praticien', render: (r) => <strong>{euro(r.montant_net_praticien)}</strong> },
+    { key: 'moyen_paiement', label: 'Moyen', render: (r) => <Badge variant="neutral">{r.moyen_paiement}</Badge> },
+    { key: 'statut', label: 'Statut', render: (r) => <Badge variant={STATUT_TONE[r.statut] || 'neutral'}>{r.statut}</Badge> },
   ];
 
   return (
@@ -31,28 +61,32 @@ export default function AdminPaiementsPage() {
         title="Paiements"
         subtitle="Tous les flux financiers transitant par Aura."
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Paiements' }]}
-        actions={<ModalButton modal="exportData" className="btn btn-soft btn-sm"><Icon name="download" size={15} /> Exporter</ModalButton>}
+        actions={<button className="btn btn-soft btn-sm" onClick={exportCsv}><Icon name="download" size={15} /> Exporter (CSV)</button>}
       />
 
       <div className="grid grid-3" style={{ marginBottom: 24 }}>
-        <StatCard label="Volume total" value={euro(volume)} delta="+8,2%" deltaDir="up" icon="euro" />
-        <StatCard label="Commissions Aura" value={euro(fees)} delta="+6,1%" deltaDir="up" icon="chart" />
-        <StatCard label="Net reversé" value={euro(net)} delta="+9,0%" deltaDir="up" icon="card" />
+        <StatCard label="Volume total" value={euro(stats?.montant_total)} icon="euro" />
+        <StatCard label="Commissions Aura" value={euro(stats?.commission_totale)} icon="chart" />
+        <StatCard label="Net reversé" value={euro(stats?.net_total)} icon="card" />
       </div>
 
-      <DataTable
-        columns={columns}
-        rows={transactions}
-        searchKeys={['ref', 'clientName', 'practitionerName']}
-        filters={[
-          { key: 'status', label: 'Statut', options: [{ value: 'paid', label: 'Payé' }, { value: 'processing', label: 'En cours' }, { value: 'refunded', label: 'Remboursé' }] },
-          { key: 'method', label: 'Moyen', options: [{ value: 'Carte', label: 'Carte' }, { value: 'PayPal', label: 'PayPal' }, { value: 'Apple Pay', label: 'Apple Pay' }] },
-        ]}
-        rowHref={(r) => '/admin/paiement/' + r.id}
-        searchPlaceholder="Rechercher une transaction…"
-        pageSize={10}
-        toolbar={<ModalButton modal="exportData" className="btn btn-soft btn-sm"><Icon name="download" size={15} /> Export comptable</ModalButton>}
-      />
+      {isError && <div className="empty"><div className="glyph">❍</div>Impossible de charger les paiements.</div>}
+
+      {!isError && (
+        <DataTable
+          columns={columns}
+          rows={paiements}
+          searchKeys={['reference', 'client_nom', 'praticien_nom']}
+          filters={[
+            { key: 'statut', label: 'Statut', options: [...new Set(paiements.map((p) => p.statut))].filter(Boolean).map((s) => ({ value: s, label: s })) },
+            { key: 'moyen_paiement', label: 'Moyen', options: [...new Set(paiements.map((p) => p.moyen_paiement))].filter(Boolean).map((m) => ({ value: m, label: m })) },
+          ]}
+          rowHref={(r) => `/admin/paiement/${r.id}`}
+          searchPlaceholder="Rechercher une transaction…"
+          pageSize={10}
+          toolbar={<button className="btn btn-soft btn-sm" onClick={exportCsv}><Icon name="download" size={15} /> Export comptable</button>}
+        />
+      )}
     </>
   );
 }

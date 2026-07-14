@@ -1,47 +1,56 @@
 'use client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageHead } from '@/components/ui/PageHead';
 import { DataTable } from '@/components/ui/DataTable';
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
-import { cercles } from '@/lib/data/admin';
-import { num, tone } from '@/lib/format';
+import { useUI } from '@/lib/store';
+import { api } from '@/lib/api';
+import { dateFr } from '@/lib/format';
+
+const cercleFields = (c) => [
+  { name: 'nom', label: 'Nom du cercle', type: 'text', value: c?.nom, required: true },
+  { name: 'animateur', label: 'Animateur', type: 'text', value: c?.animateur },
+  { name: 'color', label: 'Couleur', type: 'color', value: c?.color || '#7B5FCF' },
+  { name: 'description', label: 'Description', type: 'textarea', value: c?.description },
+];
 
 export default function AdminCerclesPage() {
-  const activeCount = cercles.filter((c) => c.status === 'active').length;
-  const totalMembers = cercles.reduce((s, c) => s + c.members, 0);
-  const totalPosts = cercles.reduce((s, c) => s + c.posts, 0);
+  const queryClient = useQueryClient();
+  const toast = useUI((s) => s.toast);
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['admin', 'cercles'],
+    queryFn: () => api.get('/cercles?per_page=100'),
+  });
+  const cercles = data?.data ?? [];
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'cercles'] });
+
+  const createMutation = useMutation({
+    mutationFn: (values) => api.post('/cercles', values),
+    onSuccess: () => { invalidate(); toast('Cercle créé', 'success'); },
+  });
 
   const columns = [
-    {
-      key: 'name', label: 'Cercle', sortable: true,
-      render: (c) => (
-        <div className="row gap-3">
-          <span className={`tile-icon glyph-${c.tone}`}><Icon name="users" size={16} /></span>
-          <div><div style={{ fontWeight: 500 }}>{c.name}</div><div className="tiny">Animé par {c.lead}</div></div>
+    { key: 'nom', label: 'Cercle', sortable: true, render: (c) => (
+      <div className="row gap-3">
+        <span className="tile-icon" style={{ background: c.color || 'var(--violet-2)' }}><Icon name="users" size={16} color="#fff" /></span>
+        <div>
+          <div style={{ fontWeight: 500 }}>{c.nom}</div>
+          {c.animateur && <div className="tiny">Animé par {c.animateur}</div>}
         </div>
-      ),
-    },
-    { key: 'members', label: 'Membres', sortable: true, render: (c) => <span>{num(c.members)}</span> },
-    { key: 'posts', label: 'Publications', sortable: true, render: (c) => <span>{num(c.posts)}</span> },
-    { key: 'lead', label: 'Animateur', render: (c) => <span className="small">{c.lead}</span> },
-    { key: 'status', label: 'Statut', render: (c) => <Badge variant={tone(c.status)} dot>{c.status}</Badge> },
+      </div>
+    ) },
+    { key: 'description', label: 'Description', render: (c) => <span className="small" style={{ display: 'block', maxWidth: 360 }}>{c.description || '—'}</span> },
+    { key: 'created_at', label: 'Créé le', sortable: true, render: (c) => <span className="small">{dateFr(c.created_at)}</span> },
   ];
 
-  const createCercle = (
+  const createButton = (
     <ModalButton
       modal="form"
       payload={{
-        title: 'Créer un cercle',
-        submitLabel: 'Créer le cercle',
-        successToast: 'Cercle créé',
-        fields: [
-          { name: 'name', label: 'Nom du cercle', type: 'text', required: true },
-          { name: 'lead', label: 'Animateur', type: 'text', required: true },
-          { name: 'tone', label: 'Couleur', type: 'select', options: ['violet', 'sky', 'sage', 'gold'] },
-          { name: 'desc', label: 'Description', type: 'textarea' },
-        ],
+        title: 'Créer un cercle', fields: cercleFields(null),
+        submitLabel: 'Créer le cercle', successToast: null,
+        onSubmit: (values) => createMutation.mutateAsync(values),
       }}
       className="btn btn-primary btn-sm"
     >
@@ -53,29 +62,24 @@ export default function AdminCerclesPage() {
     <>
       <PageHead
         title="Cercles"
-        subtitle={`${cercles.length} cercles · ${activeCount} actifs`}
+        subtitle={isLoading ? 'Chargement…' : `${cercles.length} cercle${cercles.length > 1 ? 's' : ''}`}
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Cercles' }]}
-        actions={createCercle}
+        actions={createButton}
       />
 
-      <div className="grid grid-3" style={{ marginBottom: 22 }}>
-        <div className="card card-pad"><div className="eyebrow">Communautés</div><div className="h-2" style={{ marginTop: 6 }}>{cercles.length}</div><div className="small">{activeCount} actifs</div></div>
-        <div className="card card-pad"><div className="eyebrow">Membres</div><div className="h-2" style={{ marginTop: 6 }}>{num(totalMembers)}</div><div className="small">toutes communautés</div></div>
-        <div className="card card-pad"><div className="eyebrow">Publications</div><div className="h-2" style={{ marginTop: 6 }}>{num(totalPosts)}</div><div className="small">échanges partagés</div></div>
-      </div>
+      {isError && <div className="empty"><div className="glyph">❍</div>Impossible de charger les cercles.</div>}
 
-      <DataTable
-        columns={columns}
-        rows={cercles}
-        searchKeys={['name', 'lead']}
-        filters={[
-          { key: 'status', label: 'Tous les statuts', options: [{ value: 'active', label: 'Actif' }, { value: 'archived', label: 'Archivé' }] },
-        ]}
-        rowHref={(c) => `/admin/cercle/${c.id}`}
-        searchPlaceholder="Rechercher un cercle…"
-        toolbar={createCercle}
-        pageSize={8}
-      />
+      {!isError && (
+        <DataTable
+          columns={columns}
+          rows={cercles}
+          searchKeys={['nom', 'animateur']}
+          rowHref={(c) => `/admin/cercle/${c.id}`}
+          searchPlaceholder="Rechercher un cercle…"
+          toolbar={createButton}
+          pageSize={8}
+        />
+      )}
     </>
   );
 }

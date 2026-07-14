@@ -1,50 +1,88 @@
+'use client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageHead } from '@/components/ui/PageHead';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
-import { practitioners } from '@/lib/data/practitioners';
+import { useUI } from '@/lib/store';
+import { api, apiFetchBlob } from '@/lib/api';
 import { dateFr } from '@/lib/format';
 
-const DOCS = [
-  { label: "Pièce d'identité", ok: true },
-  { label: 'Certification / diplôme', ok: true },
-  { label: 'Attestation d\'assurance', ok: true },
-  { label: 'Justificatif de domicile', ok: false },
-  { label: 'Charte éthique signée', ok: true },
-];
+const DOC_TYPES = ['piece_identite', 'certification', 'assurance', 'domicile', 'charte'];
+const DOC_LABELS = {
+  piece_identite: "Pièce d'identité", certification: 'Certification',
+  assurance: 'Assurance', domicile: 'Justificatif de domicile', charte: 'Charte signée',
+};
+
+async function openDocument(doc, toast) {
+  try {
+    const blob = await apiFetchBlob(`/v1/admin/praticiens/verification/documents/${doc.id}/file`);
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener');
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch (err) {
+    toast(err.message || "Impossible d'ouvrir le document", 'danger');
+  }
+}
 
 export default function VerificationQueuePage() {
-  const queue = practitioners.slice(0, 4).map((p, i) => ({
-    ...p,
-    docs: DOCS.map((d, j) => ({ ...d, ok: (i + j) % 5 !== 3 })),
-  }));
+  const queryClient = useQueryClient();
+  const toast = useUI((s) => s.toast);
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['admin', 'praticiens', 'verification'],
+    queryFn: () => api.get('/v1/admin/praticiens/verification?per_page=100'),
+  });
+  const queue = data?.data ?? [];
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'praticiens', 'verification'] });
+
+  const verifyMutation = useMutation({
+    mutationFn: (p) => api.post(`/v1/admin/praticiens/verification/${p.id}/verify`, {
+      documents: (p.documents || []).map((d) => ({ id: d.id, statut: 'valide' })),
+    }),
+    onSuccess: (res) => { invalidate(); toast(res.message || 'Praticien vérifié', 'success'); },
+  });
+  const rejectMutation = useMutation({
+    mutationFn: ({ id, motif_rejet }) => api.post(`/v1/admin/praticiens/verification/${id}/reject`, { motif_rejet }),
+    onSuccess: () => { invalidate(); toast('Candidature rejetée', 'success'); },
+  });
+  const relanceMutation = useMutation({
+    mutationFn: (id) => api.post(`/v1/admin/praticiens/verification/${id}/relance`),
+    onSuccess: () => toast('Relance envoyée avec succès', 'success'),
+    onError: (err) => toast(err.message || 'Erreur', 'danger'),
+  });
 
   return (
     <>
       <PageHead
         title="File de vérification"
-        subtitle={`${queue.length} praticiens en attente de validation manuelle.`}
+        subtitle={isLoading ? 'Chargement…' : `${queue.length} praticien${queue.length > 1 ? 's' : ''} en attente de validation manuelle.`}
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Praticiens', href: '/admin/praticiens' }, { label: 'Vérification' }]}
         actions={<Badge variant="warning" dot>{queue.length} en attente</Badge>}
       />
 
       <div className="note tint-gold" style={{ marginBottom: 22 }}>
         <Icon name="shield" size={16} color="var(--gold-2)" />
-        <span className="small">Vérifiez chaque document avant d'approuver. Une fois validé, le praticien obtient le badge <strong>vérifié</strong> et apparaît dans les résultats de recherche.</span>
+        <span className="small">Vérifiez chaque document avant d'approuver. Une fois les 5 documents validés, le praticien obtient le statut <strong>validé</strong> et apparaît dans les résultats de recherche.</span>
       </div>
+
+      {isError && <div className="empty"><div className="glyph">❍</div>Impossible de charger la file de vérification.</div>}
+      {!isLoading && !isError && queue.length === 0 && (
+        <div className="empty"><div className="glyph">❍</div>Aucun praticien en attente.</div>
+      )}
 
       <div className="grid grid-2">
         {queue.map((p) => {
-          const missing = p.docs.filter((d) => !d.ok).length;
+          const docs = p.documents || [];
+          const missing = DOC_TYPES.length - docs.length;
           return (
             <div key={p.id} className="card card-pad">
               <div className="row gap-3" style={{ marginBottom: 16 }}>
-                <Avatar src={p.photo} name={p.name} tone={p.tone} size={52} />
+                <Avatar name={`${p.firstname} ${p.lastname}`} size={52} />
                 <div className="flex-1">
-                  <div className="row gap-2"><strong>{p.name}</strong><Badge variant="warning">En attente</Badge></div>
-                  <div className="small">{p.specialties.join(' · ')}</div>
-                  <div className="tiny">{p.city} · inscrit le {dateFr(p.joined)}</div>
+                  <div className="row gap-2"><strong>{p.firstname} {p.lastname}</strong><Badge variant="warning">{p.statut_verification}</Badge></div>
+                  <div className="small">{p.specialite} · {p.niveau}</div>
+                  <div className="tiny">{p.ville} · inscrit le {dateFr(p.date_inscription || p.created_at)}</div>
                 </div>
               </div>
 
@@ -52,31 +90,50 @@ export default function VerificationQueuePage() {
 
               <div className="eyebrow" style={{ marginTop: 4, marginBottom: 10 }}>Documents soumis</div>
               <div className="stack gap-2" style={{ marginBottom: 16 }}>
-                {p.docs.map((d) => (
-                  <div key={d.label} className="row gap-2 between">
-                    <span className="row gap-2 small">
-                      <Icon name={d.ok ? 'checkCircle' : 'clock'} size={15} color={d.ok ? 'var(--sage-2)' : 'var(--gold-2)'} />
-                      {d.label}
-                    </span>
-                    <Badge variant={d.ok ? 'success' : 'warning'}>{d.ok ? 'Reçu' : 'Manquant'}</Badge>
-                  </div>
-                ))}
+                {DOC_TYPES.map((type) => {
+                  const doc = docs.find((d) => d.type === type);
+                  const ok = doc?.statut === 'valide';
+                  const submitted = !!doc;
+                  return (
+                    <div key={type} className="row gap-2 between">
+                      <span className="row gap-2 small">
+                        <Icon name={submitted ? (ok ? 'checkCircle' : 'clock') : 'x'} size={15} color={ok ? 'var(--sage-2)' : submitted ? 'var(--gold-2)' : 'var(--danger)'} />
+                        {DOC_LABELS[type]}
+                      </span>
+                      <div className="row gap-2">
+                        <Badge variant={ok ? 'success' : submitted ? 'warning' : 'danger'}>{submitted ? doc.statut : 'manquant'}</Badge>
+                        {submitted && <button className="btn btn-link btn-sm" onClick={() => openDocument(doc, toast)}>Voir</button>}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {missing > 0 && (
                 <div className="note tint-violet" style={{ marginBottom: 14 }}>
-                  <span className="tiny">{missing} document{missing > 1 ? 's' : ''} en attente — relancez le praticien si besoin.</span>
+                  <span className="tiny">{missing} document{missing > 1 ? 's' : ''} manquant{missing > 1 ? 's' : ''} — </span>
+                  <button className="btn btn-link btn-sm" onClick={() => relanceMutation.mutate(p.id)}>relancer le praticien</button>
                 </div>
               )}
 
               <div className="row gap-2 wrap">
-                <ModalButton modal="verifyPractitioner" payload={{ name: p.name }} successToast="Praticien vérifié" className="btn btn-primary btn-sm flex-1">
+                <ModalButton modal="confirm" payload={{
+                  title: 'Vérifier le praticien',
+                  message: 'Confirmer que les documents soumis sont conformes ? Le statut sera mis à jour selon les documents validés.',
+                  confirmLabel: 'Vérifier', successToast: null,
+                  onConfirm: () => verifyMutation.mutateAsync(p),
+                }} className="btn btn-primary btn-sm flex-1">
                   <Icon name="check" size={15} /> Vérifier
                 </ModalButton>
-                <ModalButton modal="rejectPractitioner" payload={{ name: p.name }} className="btn btn-danger-soft btn-sm flex-1">
+                <ModalButton modal="confirm" payload={{
+                  title: 'Rejeter la candidature', danger: true, withReason: true,
+                  reasonLabel: 'Motif du rejet (10 caractères minimum)',
+                  message: 'Le praticien sera notifié du refus.', confirmLabel: 'Rejeter', successToast: null,
+                  onConfirm: (reason) => rejectMutation.mutateAsync({ id: p.id, motif_rejet: reason }),
+                }} className="btn btn-danger-soft btn-sm flex-1">
                   <Icon name="x" size={15} /> Rejeter
                 </ModalButton>
-                <ModalButton modal="contact" payload={{ name: p.name }} className="btn btn-soft btn-sm btn-icon" as="button" title="Contacter">
+                <ModalButton modal="contact" payload={{ name: `${p.firstname} ${p.lastname}` }} className="btn btn-soft btn-sm btn-icon" as="button" title="Contacter">
                   <Icon name="mail" size={15} />
                 </ModalButton>
               </div>
