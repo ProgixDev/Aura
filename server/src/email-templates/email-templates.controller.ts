@@ -1,10 +1,13 @@
 import {
-  Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query,
+  Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards,
 } from '@nestjs/common';
 import { EmailTemplatesService } from './email-templates.service';
 import { CreateEmailTemplateDto } from './dto/create-email-template.dto';
 import { UpdateEmailTemplateDto } from './dto/update-email-template.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '../auth/guards/admin.guard';
 
+@UseGuards(JwtAuthGuard, AdminGuard)
 @Controller('emails')
 export class EmailTemplatesController {
   constructor(private readonly service: EmailTemplatesService) {}
