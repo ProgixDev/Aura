@@ -1,96 +1,106 @@
 'use client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageHead } from '@/components/ui/PageHead';
 import { DataTable } from '@/components/ui/DataTable';
 import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
-import { ToastButton } from '@/components/ui/ToastButton';
-import { emailTemplates } from '@/lib/data/admin';
+import { useUI } from '@/lib/store';
+import { api } from '@/lib/api';
 import { dateFr } from '@/lib/format';
 
-const STATUS_LABEL = { active: 'Actif', draft: 'Brouillon' };
+const STATUT_LABEL = { actif: 'Actif', inactif: 'Inactif', archive: 'Archivé' };
+const STATUT_TONE = { actif: 'success', inactif: 'neutral', archive: 'neutral' };
+
+const templateFields = (t) => [
+  { name: 'nom', label: 'Nom du modèle', type: 'text', value: t?.nom, required: true },
+  { name: 'objet', label: 'Objet', type: 'text', value: t?.objet, required: true },
+  { name: 'corps', label: "Corps de l'email", type: 'textarea', value: t?.corps, required: true },
+  { name: 'statut', label: 'Statut', type: 'select', options: Object.keys(STATUT_LABEL), value: t?.statut || 'actif' },
+];
 
 export default function AdminEmailsPage() {
-  const active = emailTemplates.filter((t) => t.status === 'active').length;
+  const queryClient = useQueryClient();
+  const toast = useUI((s) => s.toast);
+  const { data, isError } = useQuery({
+    queryKey: ['admin', 'emails'],
+    queryFn: () => api.get('/emails?per_page=100'),
+  });
+  const templates = data?.data ?? [];
+  const active = templates.filter((t) => t.statut === 'actif').length;
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'emails'] });
+
+  const createMutation = useMutation({
+    mutationFn: (values) => api.post('/emails', values),
+    onSuccess: () => { invalidate(); toast('Modèle créé', 'success'); },
+  });
+  const updateMutation = useMutation({
+    mutationFn: ({ id, values }) => api.put(`/emails/${id}`, values),
+    onSuccess: () => { invalidate(); toast('Modèle mis à jour', 'success'); },
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id) => api.del(`/emails/${id}`),
+    onSuccess: () => { invalidate(); toast('Modèle supprimé', 'success'); },
+  });
 
   const columns = [
-    {
-      key: 'name', label: 'Modèle',
-      render: (t) => (
-        <div className="row gap-2">
-          <span className="tile-icon glyph-violet" style={{ fontSize: 15, width: 30, height: 30 }}><Icon name="mail" size={15} /></span>
-          <span className="table-cell-main">{t.name}</span>
+    { key: 'nom', label: 'Modèle', render: (t) => (
+      <div className="row gap-2">
+        <span className="tile-icon glyph-violet" style={{ fontSize: 15, width: 30, height: 30 }}><Icon name="mail" size={15} /></span>
+        <div>
+          <span className="table-cell-main">{t.nom}</span>
+          {t.variables?.length > 0 && <div className="tiny muted">{t.variables.map((v) => `{{${v}}}`).join(' ')}</div>}
         </div>
-      ),
-    },
-    { key: 'subject', label: 'Objet', render: (t) => <span className="small" style={{ display: 'block', maxWidth: 320 }}>{t.subject}</span> },
-    { key: 'updated', label: 'Mis à jour', width: 130, sortable: true, render: (t) => <span className="small">{dateFr(t.updated)}</span> },
-    { key: 'status', label: 'Statut', width: 110, render: (t) => <Badge variant={t.status === 'active' ? 'success' : 'neutral'} dot>{STATUS_LABEL[t.status] || t.status}</Badge> },
-    {
-      key: 'actions', label: '', width: 150,
-      render: (t) => (
-        <div className="row gap-1">
-          <ToastButton message={`Aperçu de « ${t.name} » (démo)`} tone="success" className="btn btn-soft btn-sm btn-icon" title="Aperçu">
-            <Icon name="mail" size={15} />
-          </ToastButton>
-          <ModalButton
-            modal="editField"
-            payload={{ title: `Modifier « ${t.name} »`, fields: [
-              { name: 'name', label: 'Nom du modèle', type: 'text' },
-              { name: 'subject', label: 'Objet', type: 'text' },
-              { name: 'body', label: 'Corps de l\'email', type: 'textarea' },
-              { name: 'status', label: 'Statut', type: 'select', options: ['active', 'draft'] },
-            ] }}
-            className="btn btn-soft btn-sm btn-icon"
-            title="Modifier"
-          >
-            <Icon name="edit" size={15} />
-          </ModalButton>
-        </div>
-      ),
-    },
+      </div>
+    ) },
+    { key: 'objet', label: 'Objet', render: (t) => <span className="small" style={{ display: 'block', maxWidth: 320 }}>{t.objet}</span> },
+    { key: 'updated_at', label: 'Mis à jour', width: 130, sortable: true, render: (t) => <span className="small">{dateFr(t.updated_at)}</span> },
+    { key: 'statut', label: 'Statut', width: 110, render: (t) => <Badge variant={STATUT_TONE[t.statut] || 'neutral'} dot>{STATUT_LABEL[t.statut] || t.statut}</Badge> },
+    { key: 'actions', label: '', width: 100, render: (t) => (
+      <div className="row gap-1" onClick={(e) => e.stopPropagation()}>
+        <ModalButton modal="form" payload={{
+          title: `Modifier « ${t.nom} »`, submitLabel: 'Enregistrer', successToast: null,
+          fields: templateFields(t),
+          onSubmit: (values) => updateMutation.mutateAsync({ id: t.id, values }),
+        }} className="btn btn-soft btn-sm btn-icon" as="div" title="Modifier"><Icon name="edit" size={15} /></ModalButton>
+        <ModalButton modal="confirm" payload={{
+          title: 'Supprimer le modèle', message: `« ${t.nom} » sera archivé (suppression douce).`,
+          confirmLabel: 'Supprimer', danger: true, successToast: null,
+          onConfirm: () => deleteMutation.mutateAsync(t.id),
+        }} className="btn btn-danger-soft btn-sm btn-icon" as="div" title="Supprimer"><Icon name="trash" size={15} /></ModalButton>
+      </div>
+    ) },
   ];
 
   return (
     <>
       <PageHead
         title="Modèles d'emails"
-        subtitle={`${emailTemplates.length} modèles · ${active} actifs`}
+        subtitle={`${templates.length} modèles · ${active} actifs`}
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Emails' }]}
         actions={
-          <ModalButton
-            modal="form"
-            payload={{ title: 'Nouveau modèle', submitLabel: 'Créer le modèle', successToast: 'Modèle créé', fields: [
-              { name: 'name', label: 'Nom du modèle', type: 'text', required: true },
-              { name: 'subject', label: 'Objet', type: 'text', required: true },
-              { name: 'body', label: 'Corps de l\'email', type: 'textarea' },
-            ] }}
-            className="btn btn-primary btn-sm"
-          >
+          <ModalButton modal="form" payload={{
+            title: 'Nouveau modèle', submitLabel: 'Créer le modèle', successToast: null,
+            fields: templateFields(null),
+            onSubmit: (values) => createMutation.mutateAsync(values),
+          }} className="btn btn-primary btn-sm">
             <Icon name="plus" size={15} /> Nouveau modèle
           </ModalButton>
         }
       />
 
-      <div className="grid grid-3" style={{ marginBottom: 22 }}>
-        <div className="card card-pad"><div className="eyebrow">Modèles</div><div className="h-2" style={{ marginTop: 6 }}>{emailTemplates.length}</div><div className="small">transactionnels & marketing</div></div>
-        <div className="card card-pad"><div className="eyebrow">Actifs</div><div className="h-2" style={{ marginTop: 6 }}>{active}</div><div className="small">envoyés automatiquement</div></div>
-        <div className="card card-pad"><div className="eyebrow">Brouillons</div><div className="h-2" style={{ marginTop: 6 }}>{emailTemplates.filter((t) => t.status === 'draft').length}</div><div className="small">en préparation</div></div>
-      </div>
+      {isError && <div className="empty"><div className="glyph">❍</div>Impossible de charger les modèles.</div>}
 
-      <DataTable
-        columns={columns}
-        rows={emailTemplates}
-        searchKeys={['name', 'subject']}
-        filters={[
-          { key: 'status', label: 'Tous les statuts', options: [
-            { value: 'active', label: 'Actif' },
-            { value: 'draft', label: 'Brouillon' },
-          ] },
-        ]}
-        searchPlaceholder="Rechercher un modèle…"
-        pageSize={8}
-      />
+      {!isError && (
+        <DataTable
+          columns={columns}
+          rows={templates}
+          searchKeys={['nom', 'objet']}
+          filters={[{ key: 'statut', label: 'Tous les statuts', options: Object.entries(STATUT_LABEL).map(([value, label]) => ({ value, label })) }]}
+          searchPlaceholder="Rechercher un modèle…"
+          pageSize={8}
+        />
+      )}
     </>
   );
 }
