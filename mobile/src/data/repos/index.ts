@@ -16,6 +16,7 @@ import type {
   Conversation,
   ChatMessage,
   Review,
+  Circle,
 } from '../types';
 
 const delay = <T>(value: T, ms = 60): Promise<T> =>
@@ -97,6 +98,16 @@ export function mapEvent(row: any): Event {
   };
 }
 
+export function mapCircle(row: any): Circle {
+  return {
+    id: String(row.id),
+    nom: row.nom,
+    description: row.description,
+    color: row.color,
+    animateur: row.animateur,
+  };
+}
+
 // ---------- Practitioners ----------
 export const practitionerRepo = {
   list: (): Promise<Practitioner[]> =>
@@ -127,6 +138,14 @@ export const eventRepo = {
   byId: (id: string): Promise<Event | undefined> =>
     api.get<{ data: any }>(`/events/${id}`).then((res) => mapEvent(res.data)).catch(() => undefined),
   featured: (): Promise<Event[]> => eventRepo.list().then((list) => list.slice(0, 2)),
+};
+
+// ---------- Cercles ----------
+export const cercleRepo = {
+  list: (): Promise<Circle[]> =>
+    api.get<{ data: any[] }>('/cercles?per_page=50').then((res) => res.data.map(mapCircle)),
+  byId: (id: string): Promise<Circle | undefined> =>
+    api.get<{ data: any }>(`/cercles/${id}`).then((res) => mapCircle(res.data)).catch(() => undefined),
 };
 
 // ---------- Exchanges ----------

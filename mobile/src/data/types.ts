@@ -37,6 +37,14 @@ export interface Discipline {
   heroImage?: import('react-native').ImageSourcePropType;
 }
 
+export interface Circle {
+  id: string;
+  nom: string;
+  description: string | null;
+  color: string | null;
+  animateur: string | null;
+}
+
 export interface Event {
   id: string;
   title: string;

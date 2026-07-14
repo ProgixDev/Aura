@@ -1,4 +1,4 @@
-import { mapDiscipline, mapPraticien, mapEvent } from './index';
+import { mapDiscipline, mapPraticien, mapEvent, mapCircle } from './index';
 
 describe('mapPraticien', () => {
   const row = {
@@ -70,5 +70,19 @@ describe('mapEvent', () => {
     const withHosts = mapEvent({ ...row, animateurs: [{ firstname: 'A', lastname: 'B', specialite: 'yoga' }] });
     expect(withHosts.hosts).toEqual([{ name: 'A B', spec: 'yoga', gradient: ['#C4B0E8', '#A8C8E8'] }]);
     expect(mapEvent(row).hosts).toEqual([]);
+  });
+});
+
+describe('mapCircle', () => {
+  it('maps real fields verbatim and stringifies the numeric id', () => {
+    const row = { id: 3, nom: 'Cercle Aura — Paris', description: 'Un espace de partage.', color: '#7B5FCF', animateur: 'Camille Rossi' };
+    expect(mapCircle(row)).toEqual({
+      id: '3', nom: 'Cercle Aura — Paris', description: 'Un espace de partage.', color: '#7B5FCF', animateur: 'Camille Rossi',
+    });
+  });
+
+  it('passes through null fields as-is', () => {
+    const row = { id: 5, nom: 'Cercle sans détails', description: null, color: null, animateur: null };
+    expect(mapCircle(row)).toEqual({ id: '5', nom: 'Cercle sans détails', description: null, color: null, animateur: null });
   });
 });
