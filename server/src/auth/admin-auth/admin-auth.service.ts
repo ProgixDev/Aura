@@ -14,6 +14,7 @@ import { parsePagination, paginateQb } from '../../common/pagination';
 import { RegisterAdminDto } from './dto/register-admin.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateAdminRoleDto } from './dto/update-admin-role.dto';
 
 @Injectable()
 export class AdminAuthService {
@@ -36,10 +37,11 @@ export class AdminAuthService {
     const user = await this.users.save({
       name: dto.name, email: dto.email,
       password: await this.hash.hash(dto.password), is_admin: true,
+      role: dto.role ?? 'admin',
     });
     return success(
       {
-        user: pickUser(user, ['id', 'name', 'email', 'is_admin', 'created_at']),
+        user: pickUser(user, ['id', 'name', 'email', 'is_admin', 'role', 'created_at']),
         ...this.tokens.tokenPayload(user),
       },
       'Compte administrateur créé avec succès',
@@ -61,7 +63,7 @@ export class AdminAuthService {
     const fresh = await this.users.findOneByOrFail({ id: user.id });
     return success(
       {
-        user: pickUser(fresh, ['id', 'name', 'email', 'is_admin', 'last_login_at']),
+        user: pickUser(fresh, ['id', 'name', 'email', 'is_admin', 'role', 'last_login_at']),
         ...this.tokens.tokenPayload(fresh),
       },
       'Connexion administrateur réussie',
@@ -79,7 +81,7 @@ export class AdminAuthService {
   profile(user: User) {
     return success({
       user: pickUser(user, [
-        'id', 'name', 'email', 'is_admin', 'last_login_at', 'ip_address', 'created_at', 'updated_at',
+        'id', 'name', 'email', 'is_admin', 'role', 'last_login_at', 'ip_address', 'created_at', 'updated_at',
       ]),
     });
   }
@@ -142,5 +144,13 @@ export class AdminAuthService {
     if (!admin) throw new NotFoundException({ status: 'error', message: 'Administrateur non trouvé' });
     await this.users.delete(id);
     return success(undefined, 'Administrateur supprimé avec succès');
+  }
+
+  async updateRole(id: number, dto: UpdateAdminRoleDto) {
+    const admin = await this.users.findOneBy({ id, is_admin: true });
+    if (!admin) throw new NotFoundException({ status: 'error', message: 'Administrateur non trouvé' });
+    await this.users.update(id, { role: dto.role });
+    const fresh = await this.users.findOneByOrFail({ id });
+    return success(sanitizeUser(fresh), 'Rôle mis à jour avec succès');
   }
 }

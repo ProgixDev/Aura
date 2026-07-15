@@ -6,6 +6,7 @@ import { AdminAuthService } from './admin-auth.service';
 import { RegisterAdminDto } from './dto/register-admin.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateAdminRoleDto } from './dto/update-admin-role.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { AdminGuard } from '../guards/admin.guard';
 import { CurrentUser } from '../decorators';
@@ -62,6 +63,13 @@ export class AdminAuthController {
   @HttpCode(200)
   @Post(':id/activate')
   activate(@Param('id', ParseIntPipe) id: number) { return this.service.activate(id); }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @HttpCode(200)
+  @Post(':id/role')
+  updateRole(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateAdminRoleDto) {
+    return this.service.updateRole(id, dto);
+  }
 
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Delete(':id')

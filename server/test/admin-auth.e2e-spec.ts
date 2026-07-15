@@ -114,4 +114,50 @@ describe('admin auth', () => {
     await http().delete(`/api/admin/${other.id}`)
       .set('Authorization', `Bearer ${token}`).expect(404);
   });
+
+  it('register accepts an optional role, defaulting to admin', async () => {
+    const withRole = await http().post('/api/admin/register').send({
+      name: 'Modo', email: 'modo@aura.io', password: 'secret123', password_confirmation: 'secret123',
+      role: 'moderateur',
+    }).expect(201);
+    expect(withRole.body.data.user.role).toBe('moderateur');
+
+    const noRole = await http().post('/api/admin/register').send({
+      name: 'Defaultist', email: 'defaultist@aura.io', password: 'secret123', password_confirmation: 'secret123',
+    }).expect(201);
+    expect(noRole.body.data.user.role).toBe('admin');
+  });
+
+  it('register rejects an unknown role', async () => {
+    const res = await http().post('/api/admin/register').send({
+      name: 'Bad', email: 'badrole@aura.io', password: 'secret123', password_confirmation: 'secret123',
+      role: 'superadmin',
+    }).expect(422);
+    expect(res.body.errors.role).toBeDefined();
+  });
+
+  it('list returns each admin\'s role', async () => {
+    const { token } = await seedAdmin(app, 'roles-list@aura.io');
+    const res = await http().get('/api/admin/list')
+      .set('Authorization', `Bearer ${token}`).expect(200);
+    expect(res.body.data.find((u: any) => u.email === 'roles-list@aura.io').role).toBe('admin');
+  });
+
+  it('admin management: update role, rejects unknown role, 404s on unknown id', async () => {
+    const { token } = await seedAdmin(app, 'role-updater@aura.io');
+    const { user: other } = await seedAdmin(app, 'role-target@aura.io');
+
+    const bad = await http().post(`/api/admin/${other.id}/role`)
+      .set('Authorization', `Bearer ${token}`).send({ role: 'superadmin' }).expect(422);
+    expect(bad.body.errors.role).toBeDefined();
+
+    const ok = await http().post(`/api/admin/${other.id}/role`)
+      .set('Authorization', `Bearer ${token}`).send({ role: 'support' }).expect(200);
+    expect(ok.body.data.role).toBe('support');
+
+    await http().post('/api/admin/999999/role')
+      .set('Authorization', `Bearer ${token}`).send({ role: 'support' }).expect(404);
+
+    await http().post(`/api/admin/${other.id}/role`).send({ role: 'admin' }).expect(401);
+  });
 });
