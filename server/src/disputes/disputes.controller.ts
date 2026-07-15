@@ -6,6 +6,8 @@ import { CreateDisputeDto } from './dto/create-dispute.dto';
 import { ResolveDisputeDto } from './dto/resolve-dispute.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
+import { CapabilityGuard } from '../auth/guards/capability.guard';
+import { RequireCapability } from '../auth/decorators';
 
 @Controller()
 export class DisputesController {
@@ -17,7 +19,8 @@ export class DisputesController {
     return this.service.index(query);
   }
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard, CapabilityGuard)
+  @RequireCapability('signalements_litiges')
   @Post('admin/disputes')
   store(@Body() dto: CreateDisputeDto) {
     return this.service.store(dto);
@@ -29,7 +32,8 @@ export class DisputesController {
     return this.service.show(id);
   }
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard, CapabilityGuard)
+  @RequireCapability('signalements_litiges')
   @HttpCode(200)
   @Post('admin/disputes/:id/resolve')
   resolve(@Param('id', ParseIntPipe) id: number, @Body() dto: ResolveDisputeDto) {
