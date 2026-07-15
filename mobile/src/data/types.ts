@@ -258,3 +258,18 @@ export interface RendezVous {
   updated_at: string;
   praticien?: RendezVousPraticien;
 }
+
+export type SubscriptionPlan = 'essentiel' | 'pro' | 'premium';
+export type SubscriptionStatut = 'active' | 'past_due' | 'canceled' | 'trialing';
+
+export interface Subscription {
+  id: number;
+  praticien_id: number;
+  plan: SubscriptionPlan;
+  statut: SubscriptionStatut;
+  stripe_subscription_id: string | null;
+  stripe_customer_id: string | null;
+  current_period_end: string | null;
+  created_at: string;
+  updated_at: string;
+}

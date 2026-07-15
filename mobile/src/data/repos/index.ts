@@ -27,6 +27,7 @@ import type {
   Signalement,
   NotificationPreferences,
   FavoritePraticien,
+  Subscription,
 } from '../types';
 
 const delay = <T>(value: T, ms = 60): Promise<T> =>
@@ -387,4 +388,18 @@ export const rendezVousRepo = {
 
   cancel: (id: number): Promise<RendezVous> =>
     api.post<{ status: string; data: RendezVous }>(`/rendez-vous/client/${id}/cancel`).then((res) => res.data),
+};
+
+// ---------- Subscriptions (praticien billing) — real backend ----------
+export const subscriptionRepo = {
+  current: (): Promise<Subscription> =>
+    api.get<{ status: string; data: Subscription }>('/praticien/subscription').then((res) => res.data),
+
+  checkout: (plan: 'pro' | 'premium'): Promise<{ url: string }> =>
+    api
+      .post<{ status: string; data: { url: string } }>('/praticien/subscription/checkout', { plan })
+      .then((res) => res.data),
+
+  cancel: (): Promise<Subscription> =>
+    api.post<{ status: string; data: Subscription }>('/praticien/subscription/cancel').then((res) => res.data),
 };

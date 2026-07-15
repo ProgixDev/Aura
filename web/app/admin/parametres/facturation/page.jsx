@@ -1,6 +1,11 @@
+'use client';
+import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageHead } from '@/components/ui/PageHead';
 import { Icon } from '@/components/ui/Icon';
 import { ToastButton } from '@/components/ui/ToastButton';
+import { api, errorMessage } from '@/lib/api';
+import { useToast } from '@/lib/store';
 
 const OPTIONS = [
   { label: 'Facturation automatique', desc: 'Émettre une facture à chaque séance confirmée.', on: true },
@@ -10,13 +15,44 @@ const OPTIONS = [
 ];
 
 export default function BillingSettingsPage() {
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const { data } = useQuery({
+    queryKey: ['admin', 'settings', 'commission'],
+    queryFn: () => api.get('/admin/settings/commission'),
+  });
+  // Backend stores/returns a decimal fraction (0.15); this field displays/edits a
+  // percentage (15) — the only conversion boundary, kept entirely in this component.
+  const [ratePercent, setRatePercent] = useState('15');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (typeof data?.data?.commission_rate === 'number') {
+      setRatePercent(String(Math.round(data.data.commission_rate * 1000) / 10));
+    }
+  }, [data]);
+
+  const saveCommission = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      await api.put('/admin/settings/commission', { commission_rate: Number(ratePercent) / 100 });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'settings', 'commission'] });
+      toast('Taux de commission mis à jour', 'success');
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <>
       <PageHead
         title="Facturation"
         subtitle="Commission, versements et fiscalité."
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Réglages', href: '/admin/parametres' }, { label: 'Facturation' }]}
-        actions={<ToastButton message="Réglages de facturation enregistrés" tone="success" className="btn btn-primary btn-sm"><Icon name="check" size={15} /> Enregistrer</ToastButton>}
       />
 
       <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
@@ -25,7 +61,18 @@ export default function BillingSettingsPage() {
           <div className="stack gap-4">
             <div className="field">
               <label>Taux de commission (%)</label>
-              <input className="input" type="number" defaultValue="15" min="0" max="100" />
+              <input
+                className="input"
+                type="number"
+                min="0"
+                max="100"
+                value={ratePercent}
+                onChange={(e) => setRatePercent(e.target.value)}
+              />
+              {error && <div className="tiny" style={{ color: 'var(--danger)', marginTop: 4 }}>{error}</div>}
+              <div className="tiny" style={{ marginTop: 4 }}>
+                Utilisé par Stripe Connect pour calculer la part reversée aux praticiens sur chaque séance payée.
+              </div>
             </div>
             <div className="field">
               <label>Fréquence des versements</label>
@@ -87,8 +134,18 @@ export default function BillingSettingsPage() {
         </div>
       </div>
 
-      <div className="row" style={{ justifyContent: 'flex-end' }}>
-        <ToastButton message="Réglages de facturation enregistrés" tone="success" className="btn btn-primary"><Icon name="check" size={16} /> Enregistrer les modifications</ToastButton>
+      <div className="row" style={{ justifyContent: 'flex-end', gap: 10 }}>
+        <ToastButton
+          message="Autres réglages de facturation enregistrés"
+          tone="success"
+          className="btn btn-soft"
+          title="Les autres champs de cette page (TVA, versements, options) restent décoratifs — hors périmètre de ce plan"
+        >
+          Enregistrer les autres champs
+        </ToastButton>
+        <button type="button" className="btn btn-primary" onClick={saveCommission} disabled={saving}>
+          <Icon name="check" size={16} /> {saving ? 'Enregistrement…' : 'Enregistrer la commission'}
+        </button>
       </div>
     </>
   );
