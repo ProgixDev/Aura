@@ -30,6 +30,7 @@ import { ConversationsModule } from './conversations/conversations.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { DisputesModule } from './disputes/disputes.module';
 import { PlatformSettingsModule } from './platform-settings/platform-settings.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { PlatformSettingsModule } from './platform-settings/platform-settings.mo
     AuditLogModule,
     DisputesModule,
     PlatformSettingsModule,
+    SubscriptionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -8,9 +8,10 @@ import { StripeWebhookController } from './stripe-webhook.controller';
 import { RendezVousService } from './rendez-vous.service';
 import { StripeService } from '../common/stripe.service';
 import { PromotionsModule } from '../promotions/promotions.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([RendezVous, Paiement, Praticien]), PromotionsModule],
+  imports: [TypeOrmModule.forFeature([RendezVous, Paiement, Praticien]), PromotionsModule, SubscriptionsModule],
   controllers: [RendezVousController, StripeWebhookController],
   providers: [RendezVousService, StripeService],
 })
