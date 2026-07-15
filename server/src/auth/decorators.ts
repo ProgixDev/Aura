@@ -6,3 +6,6 @@ export const CurrentUser = createParamDecorator(
 export const CurrentClient = createParamDecorator(
   (_: unknown, ctx: ExecutionContext) => ctx.switchToHttp().getRequest().client,
 );
+export const CurrentPraticien = createParamDecorator(
+  (_: unknown, ctx: ExecutionContext) => ctx.switchToHttp().getRequest().praticien,
+);

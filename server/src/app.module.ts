@@ -26,6 +26,7 @@ import { AvisModule } from './avis/avis.module';
 import { SignalementsModule } from './signalements/signalements.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { NotificationPreferencesModule } from './notification-preferences/notification-preferences.module';
+import { ConversationsModule } from './conversations/conversations.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { NotificationPreferencesModule } from './notification-preferences/notifi
     FavoritesModule,
     NotificationPreferencesModule,
     RendezVousModule,
+    ConversationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

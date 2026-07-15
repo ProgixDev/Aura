@@ -25,6 +25,8 @@ import { Avis } from '../../src/database/entities/avis.entity';
 import { Signalement } from '../../src/database/entities/signalement.entity';
 import { Favorite } from '../../src/database/entities/favorite.entity';
 import { NotificationPreference } from '../../src/database/entities/notification-preference.entity';
+import { Conversation } from '../../src/database/entities/conversation.entity';
+import { Message } from '../../src/database/entities/message.entity';
 import * as bcrypt from 'bcryptjs';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret';
@@ -40,6 +42,7 @@ const ALL_ENTITIES = [
   User, Client, Praticien, PraticienDocument, Cercle, Event, EventPraticien,
   Promotion, Discipline, Article, Notification, EmailTemplate, Echange, Paiement,
   Remboursement, RendezVous, Avis, Signalement, Favorite, NotificationPreference,
+  Conversation, Message,
 ];
 
 export async function createTestApp(
@@ -101,6 +104,32 @@ export async function seedClientUser(app: INestApplication, email = 'client@test
     city: 'Paris',
   });
   return { user, client, token: signToken(app, user) };
+}
+
+export async function seedPraticienUser(app: INestApplication, email = 'praticien@test.io') {
+  const ds = app.get(DataSource);
+  const user = await ds.getRepository(User).save({
+    name: 'Praticien Test',
+    email,
+    password: await bcrypt.hash('password123', 10),
+    is_admin: false,
+  });
+  const praticien = await ds.getRepository(Praticien).save({
+    firstname: 'Praticien',
+    lastname: 'Test',
+    email,
+    telephone: '0600000000',
+    ville: 'Paris',
+    niveau: 'expert',
+    specialite: 'yoga',
+    mode: 'presentiel',
+    status: 'actif',
+    tarif: 50,
+    experience: 3,
+    bio: 'b'.repeat(60),
+    statut_verification: 'valide',
+  });
+  return { user, praticien, token: signToken(app, user) };
 }
 
 export function signToken(app: INestApplication, user: User): string {
