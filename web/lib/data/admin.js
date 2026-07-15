@@ -136,24 +136,6 @@ export const emailTemplates = [
   { id: 'em5', name: 'Demande d\'avis', subject: 'Comment s\'est passée votre séance ?', updated: '2026-03-30', status: 'draft' },
 ];
 
-// ----- Analytics series -----
-export const analytics = {
-  revenueMonthly: [38200, 41500, 39800, 45200, 48600, 52400, 49800, 55100, 58300, 61200, 59800, 64500],
-  revenueLabels: ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'],
-  bookingsWeekly: [220, 245, 238, 280, 312, 298, 340],
-  weekLabels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
-  signups: [180, 210, 240, 290, 320, 360, 410, 480, 520, 560, 610, 680],
-  retention: 72,
-  disciplineShare: [
-    { name: 'Soin énergétique', pct: 24, tone: 'sky' },
-    { name: 'Magnétisme', pct: 19, tone: 'violet' },
-    { name: 'Reiki', pct: 16, tone: 'sage' },
-    { name: 'Hypnose', pct: 14, tone: 'gold' },
-    { name: 'Massage', pct: 12, tone: 'sky' },
-    { name: 'Autres', pct: 15, tone: 'violet' },
-  ],
-};
-
 export const getClient = (id) => clients.find((c) => c.id === id);
 export const getBooking = (id) => bookings.find((b) => b.id === id);
 export const getTransaction = (id) => transactions.find((t) => t.id === id);
