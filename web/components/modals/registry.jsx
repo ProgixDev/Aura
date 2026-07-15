@@ -74,7 +74,6 @@ export const MODAL_REGISTRY = {
   invite: (p) => <FormModal title="Inviter un membre"
     fields={[{ name: 'email', label: 'Email', type: 'email', required: true }, { name: 'role', label: 'Rôle', type: 'select', options: ['Administrateur', 'Modérateur', 'Support', 'Comptabilité'], required: true }]}
     submitLabel="Envoyer l'invitation" successToast="Invitation envoyée" {...p} />,
-  editRole: (p) => <FormModal title="Modifier le rôle" fields={[{ name: 'role', label: 'Rôle', type: 'select', options: ['Administrateur', 'Modérateur', 'Support', 'Comptabilité'], required: true }, { name: 'scope', label: 'Périmètre', type: 'textarea', placeholder: 'Permissions…' }]} submitLabel="Enregistrer" successToast="Rôle mis à jour" {...p} />,
   exportData: (p) => <FormModal title="Exporter" fields={[{ name: 'format', label: 'Format', type: 'select', options: ['CSV', 'Excel (.xlsx)', 'PDF'], required: true }, { name: 'range', label: 'Période', type: 'select', options: ['30 derniers jours', 'Trimestre', 'Année', 'Tout'] }]} submitLabel="Générer l'export" successToast="Export généré" {...p} />,
   editField: (p) => <FormModal title={p?.title || 'Modifier'} fields={p?.fields || [{ name: 'value', label: 'Valeur', type: 'text' }]} submitLabel="Enregistrer" successToast="Modifié" {...p} />,
   approveEvent: (p) => <ConfirmModal title="Publier l'événement" message="L'événement sera visible publiquement." confirmLabel="Publier" successToast="Événement publié" {...p} />,
