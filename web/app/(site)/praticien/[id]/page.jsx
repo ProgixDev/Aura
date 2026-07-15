@@ -2,6 +2,7 @@
 
 import { use } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { mapPraticien } from '@/lib/data/praticien-adapter';
@@ -15,6 +16,7 @@ import FavoriteButton from './FavoriteButton';
 
 export default function PractitionerProfilePage({ params }) {
   const { id } = use(params);
+  const router = useRouter();
 
   const { data, isLoading } = useQuery({
     queryKey: ['praticien', id],
@@ -155,7 +157,16 @@ export default function PractitionerProfilePage({ params }) {
                 <div style={{ height: 10 }} />
                 <ModalButton
                   modal="contact"
-                  payload={{ name: p.name }}
+                  payload={{
+                    name: p.name,
+                    onSubmit: async (values) => {
+                      const res = await api.post('/client/conversations', {
+                        praticien_id: Number(p.id),
+                        text: values.message,
+                      });
+                      router.push(`/compte/message/${res.data.conversation.id}`);
+                    },
+                  }}
                   as="button"
                   className="btn btn-soft btn-block"
                 >
