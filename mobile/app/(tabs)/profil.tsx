@@ -10,7 +10,6 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '@components/Avatar';
 import { AuroraBackground } from '@components/AuroraBackground';
-import { Button } from '@components/Button';
 import { Icon } from '@components/Icon';
 import { Lotus } from '@components/Lotus';
 import { MenuRow } from '@components/MenuRow';
@@ -47,10 +46,6 @@ export default function Profil() {
           <Stat label="SÉANCES" value="7" />
           <Stat label="PRATICIENS" value="3" />
           <Stat label="FAVORIS" value="12" />
-        </View>
-
-        <View style={{ paddingHorizontal: 20, paddingVertical: 16 }}>
-          <Button label="Modifier mon profil" variant="soft" />
         </View>
 
         <Section title="Mon parcours">
@@ -93,7 +88,6 @@ export default function Profil() {
             label="Moyens de paiement"
             onPress={() => router.push('/payment-history' as any)}
           />
-          <MenuRow icon={<Icon name="shield" size={18} color={colors.ink} />} label="Confidentialité & sécurité" />
         </Section>
 
         <Section title="Praticien ?">

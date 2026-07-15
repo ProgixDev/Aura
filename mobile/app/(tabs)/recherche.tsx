@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
@@ -9,14 +9,16 @@ import { PractitionerCard } from '@components/PractitionerCard';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { practitionerRepo } from '@data/repos';
+import { filterPractitioners } from '@utils/filterPractitioners';
 
 export default function Recherche() {
   const insets = useSafeAreaInsets();
-  const [query, setQuery] = useState('Reiki à Annecy');
+  const [query, setQuery] = useState('');
   const { data: results = [] } = useQuery({
     queryKey: ['practitioners'],
     queryFn: practitionerRepo.list,
   });
+  const filtered = useMemo(() => filterPractitioners(results, query), [results, query]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.pearl }}>
@@ -63,7 +65,7 @@ export default function Recherche() {
 
         <View style={styles.metaRow}>
           <Text style={typography.eyebrow}>
-            {results.length} PRATICIENS TROUVÉS
+            {filtered.length} PRATICIENS TROUVÉS
           </Text>
           <Text style={styles.sort}>
             Trier : <Text style={styles.sortBold}>Pertinence</Text>
@@ -71,7 +73,7 @@ export default function Recherche() {
         </View>
 
         <View style={{ paddingHorizontal: 20 }}>
-          {results.map((p) => (
+          {filtered.map((p) => (
             <PractitionerCard key={p.id} practitioner={p} />
           ))}
         </View>
