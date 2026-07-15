@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
@@ -9,17 +9,18 @@ import { Icon } from '@components/Icon';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { eventRepo } from '@data/repos';
-
-type Filter = 'soon' | 'retraites' | 'cercles' | 'formations' | 'ateliers';
+import { filterEvents, type EventFilter } from '@utils/filterEvents';
 
 export default function Evenements() {
   const insets = useSafeAreaInsets();
-  const [filter, setFilter] = useState<Filter>('soon');
+  const [filter, setFilter] = useState<EventFilter>('soon');
 
   const { data: events = [] } = useQuery({
     queryKey: ['events'],
     queryFn: eventRepo.list,
   });
+
+  const filtered = useMemo(() => filterEvents(events, filter), [events, filter]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.pearl }}>
@@ -58,7 +59,7 @@ export default function Evenements() {
           <Chip label="Prix" />
         </ScrollView>
 
-        {events.map((e) => (
+        {filtered.map((e) => (
           <EventCard key={e.id} event={e} />
         ))}
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -16,6 +16,7 @@ import { ScreenHeader } from '@components/ScreenHeader';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { exchangeRepo } from '@data/repos';
+import { filterExchanges, type ExchangeFilter } from '@utils/filterExchanges';
 
 export default function ExchangeList() {
   const insets = useSafeAreaInsets();
@@ -24,6 +25,8 @@ export default function ExchangeList() {
     queryKey: ['exchanges'],
     queryFn: exchangeRepo.list,
   });
+  const [filter, setFilter] = useState<ExchangeFilter>('all');
+  const filtered = useMemo(() => filterExchanges(list, filter), [list, filter]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.pearl }}>
@@ -59,14 +62,14 @@ export default function ExchangeList() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 20, gap: 8, marginBottom: 14 }}
         >
-          <Chip label="Tous" active />
-          <Chip label="Soin ↔ soin" tone="violet" />
-          <Chip label="Service ↔ soin" tone="gold" />
-          <Chip label="Formation" tone="sky" />
-          <Chip label="Bénévolat" tone="sage" />
+          <Chip label="Tous" active={filter === 'all'} onPress={() => setFilter('all')} />
+          <Chip label="Propositions" tone="violet" active={filter === 'proposition'} onPress={() => setFilter('proposition')} />
+          <Chip label="Demandes" tone="gold" active={filter === 'demande'} onPress={() => setFilter('demande')} />
+          <Chip label="Informations" tone="sky" active={filter === 'information'} onPress={() => setFilter('information')} />
+          <Chip label="Autres" tone="sage" active={filter === 'autre'} onPress={() => setFilter('autre')} />
         </ScrollView>
 
-        {list.map((x) => (
+        {filtered.map((x) => (
           <ExchangeCard key={x.id} exchange={x} />
         ))}
       </ScrollView>

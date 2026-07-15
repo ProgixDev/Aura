@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -20,12 +20,14 @@ import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { messageRepo } from '@data/repos';
 import type { ChatMessage } from '@data/types';
+import { appendOptimisticMessage } from '@utils/appendOptimisticMessage';
 
 export default function Chat() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [text, setText] = useState('');
+  const [pending, setPending] = useState<ChatMessage[]>([]);
   const scrollRef = useRef<ScrollView>(null);
 
   const { data: conv } = useQuery({
@@ -36,11 +38,17 @@ export default function Chat() {
     queryKey: ['messages', id],
     queryFn: () => messageRepo.messages(String(id)),
   });
+  const allMsgs = useMemo(() => [...msgs, ...pending], [msgs, pending]);
 
   const send = () => {
     if (!text.trim()) return;
+    // Local-only optimistic append: there is no messaging backend anywhere
+    // in this program (messaging was folded into "Plan 08", deferred
+    // indefinitely — see the master roadmap). This makes sending feel
+    // functional within the current app session; it does not persist
+    // anywhere and the other party never receives it.
+    setPending((prev) => appendOptimisticMessage(prev, text));
     setText('');
-    // In production: write to conversations realtime channel.
   };
 
   return (
@@ -71,7 +79,7 @@ export default function Chat() {
           contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 10 }}
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
         >
-          {msgs.map((m) => (
+          {allMsgs.map((m) => (
             <Bubble key={m.id} m={m} />
           ))}
         </ScrollView>
