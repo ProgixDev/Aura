@@ -17,22 +17,26 @@ export default function AdminDashboard() {
   const recent = bookings.slice(0, 6);
   const pendingVerif = practitioners.slice(0, 4);
 
-  const { data: dashboardData } = useQuery({
+  const { data: dashboardData, isError: dashboardError } = useQuery({
     queryKey: ['admin', 'analytics', 'dashboard'],
     queryFn: () => api.get('/admin/analytics/dashboard'),
   });
-  const { data: revenueData } = useQuery({
+  const { data: revenueData, isError: revenueError } = useQuery({
     queryKey: ['admin', 'analytics', 'revenue'],
     queryFn: () => api.get('/admin/analytics/revenue'),
   });
-  const { data: growthData } = useQuery({
+  const { data: growthData, isError: growthError } = useQuery({
     queryKey: ['admin', 'analytics', 'growth'],
     queryFn: () => api.get('/admin/analytics/growth'),
   });
-  const { data: retentionData } = useQuery({
+  const { data: retentionData, isError: retentionError } = useQuery({
     queryKey: ['admin', 'analytics', 'retention'],
     queryFn: () => api.get('/admin/analytics/retention'),
   });
+  // Only the analytics-driven widgets below (StatCards, charts, retention donut) depend on
+  // these queries — the rest of this page (recent bookings, verification queue, alerts,
+  // reports) is still decorative mock data, unaffected by an analytics fetch failure.
+  const analyticsError = dashboardError || revenueError || growthError || retentionError;
 
   const dash = dashboardData?.data;
   const revenueMonthly = (revenueData?.data?.par_mois ?? []).map((r) => r.total);
@@ -47,35 +51,41 @@ export default function AdminDashboard() {
           <ModalButton modal="sendNotification" className="btn btn-primary btn-sm"><Icon name="bell" size={15} /> Notifier</ModalButton>
         </>} />
 
-      <div className="grid grid-4" style={{ marginBottom: 24 }}>
-        <StatCard label="Revenu du mois" value={euro(dash?.revenue_this_month)}
-          delta={dash?.revenue_delta_pct != null ? `${dash.revenue_delta_pct > 0 ? '+' : ''}${dash.revenue_delta_pct}%` : undefined}
-          deltaDir={dash?.revenue_delta_pct != null && dash.revenue_delta_pct < 0 ? 'down' : 'up'}
-          icon="euro" />
-        <StatCard label="Réservations" value={dash?.bookings_this_month ?? '—'}
-          delta={dash?.bookings_delta_pct != null ? `${dash.bookings_delta_pct > 0 ? '+' : ''}${dash.bookings_delta_pct}%` : undefined}
-          deltaDir={dash?.bookings_delta_pct != null && dash.bookings_delta_pct < 0 ? 'down' : 'up'}
-          icon="calendar" />
-        <StatCard label="Nouveaux praticiens" value={dash?.new_praticiens_this_month ?? '—'}
-          delta={dash?.new_praticiens_delta != null ? `${dash.new_praticiens_delta > 0 ? '+' : ''}${dash.new_praticiens_delta}` : undefined}
-          deltaDir={dash?.new_praticiens_delta != null && dash.new_praticiens_delta < 0 ? 'down' : 'up'}
-          icon="sparkle" />
-        <StatCard label="Taux de remboursement" value={dash?.refund_rate ?? '—'} icon="shield" />
-      </div>
+      {analyticsError && <div className="empty"><div className="glyph">❍</div>Impossible de charger les statistiques analytiques.</div>}
 
-      <div className="grid" style={{ gridTemplateColumns: '1.6fr 1fr', gap: 20, marginBottom: 24 }}>
-        <div className="card card-pad">
-          <div className="between" style={{ marginBottom: 18 }}>
-            <div><div className="eyebrow">12 derniers mois</div><h3 className="h-3" style={{ marginTop: 4 }}>Revenu</h3></div>
-            <Link href="/admin/analytique/revenus" className="more">Détails →</Link>
+      {!analyticsError && (
+        <>
+          <div className="grid grid-4" style={{ marginBottom: 24 }}>
+            <StatCard label="Revenu du mois" value={euro(dash?.revenue_this_month)}
+              delta={dash?.revenue_delta_pct != null ? `${dash.revenue_delta_pct > 0 ? '+' : ''}${dash.revenue_delta_pct}%` : undefined}
+              deltaDir={dash?.revenue_delta_pct != null && dash.revenue_delta_pct < 0 ? 'down' : 'up'}
+              icon="euro" />
+            <StatCard label="Réservations" value={dash?.bookings_this_month ?? '—'}
+              delta={dash?.bookings_delta_pct != null ? `${dash.bookings_delta_pct > 0 ? '+' : ''}${dash.bookings_delta_pct}%` : undefined}
+              deltaDir={dash?.bookings_delta_pct != null && dash.bookings_delta_pct < 0 ? 'down' : 'up'}
+              icon="calendar" />
+            <StatCard label="Nouveaux praticiens" value={dash?.new_praticiens_this_month ?? '—'}
+              delta={dash?.new_praticiens_delta != null ? `${dash.new_praticiens_delta > 0 ? '+' : ''}${dash.new_praticiens_delta}` : undefined}
+              deltaDir={dash?.new_praticiens_delta != null && dash.new_praticiens_delta < 0 ? 'down' : 'up'}
+              icon="sparkle" />
+            <StatCard label="Taux de remboursement" value={dash?.refund_rate ?? '—'} icon="shield" />
           </div>
-          <LineChart data={revenueMonthly} height={180} />
-        </div>
-        <div className="card card-pad">
-          <h3 className="h-3" style={{ marginBottom: 18 }}>Réservations / semaine</h3>
-          <BarChart data={bookingsWeekly.map((d) => d.count)} labels={bookingsWeekly.map((d) => d.jour)} height={150} color="var(--sage-2)" />
-        </div>
-      </div>
+
+          <div className="grid" style={{ gridTemplateColumns: '1.6fr 1fr', gap: 20, marginBottom: 24 }}>
+            <div className="card card-pad">
+              <div className="between" style={{ marginBottom: 18 }}>
+                <div><div className="eyebrow">12 derniers mois</div><h3 className="h-3" style={{ marginTop: 4 }}>Revenu</h3></div>
+                <Link href="/admin/analytique/revenus" className="more">Détails →</Link>
+              </div>
+              <LineChart data={revenueMonthly} height={180} />
+            </div>
+            <div className="card card-pad">
+              <h3 className="h-3" style={{ marginBottom: 18 }}>Réservations / semaine</h3>
+              <BarChart data={bookingsWeekly.map((d) => d.count)} labels={bookingsWeekly.map((d) => d.jour)} height={150} color="var(--sage-2)" />
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="grid" style={{ gridTemplateColumns: '1.6fr 1fr', gap: 20 }}>
         {/* Recent bookings */}

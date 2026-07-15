@@ -93,15 +93,24 @@ export class AnalyticsService {
       .orderBy('mois', 'ASC')
       .getRawMany();
 
+    // leftJoin (not innerJoin): Paiement.praticien is onDelete SET NULL, so a paiement can
+    // outlive its praticien — an inner join would silently drop that revenue from every
+    // discipline bucket (and from disciplineTotal) while `general` (no join at all) still
+    // counts it, overstating every remaining discipline's true share. Orphaned rows are bucketed
+    // under an explicit label instead of being dropped.
     const disciplineRows = await this.paiements.createQueryBuilder('p')
-      .innerJoin('p.praticien', 'praticien')
-      .select('praticien.specialite', 'specialite')
+      .leftJoin('p.praticien', 'praticien')
+      .select("COALESCE(praticien.specialite, 'Non attribué')", 'specialite')
       .addSelect('COALESCE(SUM(p.montant_brut),0)', 'total')
       .where('p.date_paiement >= :ws', { ws: windowStart })
-      .groupBy('praticien.specialite')
+      .groupBy('specialite')
       .orderBy('total', 'DESC')
       .getRawMany();
-    const disciplineTotal = disciplineRows.reduce((s, r) => s + Number(r.total), 0);
+    // Percentages are computed against the real grand total (`general.montant_total`, unjoined),
+    // not a locally re-summed disciplineTotal — keeps this consistent with `general` even if a
+    // future edge case (e.g. a null date_paiement) excludes a row from one query but not the
+    // other.
+    const generalTotal = Number((base.general as { montant_total: number }).montant_total);
 
     return success({
       general: base.general,
@@ -111,7 +120,7 @@ export class AnalyticsService {
       par_discipline: disciplineRows.map((r) => ({
         specialite: r.specialite,
         total: Number(r.total),
-        pct: disciplineTotal > 0 ? round1((Number(r.total) / disciplineTotal) * 100) : 0,
+        pct: generalTotal > 0 ? round1((Number(r.total) / generalTotal) * 100) : 0,
       })),
     });
   }

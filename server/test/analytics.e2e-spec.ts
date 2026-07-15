@@ -124,7 +124,11 @@ describe('analytics: dashboard', () => {
       bookings_delta_pct: 50,
       new_praticiens_this_month: 2,
       new_praticiens_delta: 1,
-      refund_rate: '33.3%',
+      // Refund rate is refunds-created-this-month ÷ paid-payments-this-month: 1 refund / 2 paid
+      // paiements this month (DASH-1, DASH-2 — DASH-3 is last month) = 50%. Both numerator and
+      // denominator are scoped to the same date_debut/date_fin window (review-fixed: previously
+      // the denominator was silently all-time regardless of any date filter).
+      refund_rate: '50.0%',
     });
   });
 });

@@ -241,7 +241,14 @@ export class RemboursementsService {
 
     const totalCompleted = await sumWhere(['completed']);
     const totalRemboursements = await filtered().getCount();
-    const totalPaiements = await this.paiements.countBy({ statut: 'paid' });
+    // Scoped to the same date_debut/date_fin window as totalRemboursements (when provided) so
+    // taux_remboursement stays a true "refunds ÷ paid payments, within this window" ratio rather
+    // than "this window's refunds ÷ all-time paid payments" — the latter silently drifts toward
+    // 0 as payment history accumulates, independent of the real refund rate for that window.
+    const paiementsQb = this.paiements.createQueryBuilder('p').where("p.statut = 'paid'");
+    if (query.date_debut !== undefined) paiementsQb.andWhere('DATE(p.date_paiement) >= :dd', { dd: query.date_debut });
+    if (query.date_fin !== undefined) paiementsQb.andWhere('DATE(p.date_paiement) <= :df', { df: query.date_fin });
+    const totalPaiements = await paiementsQb.getCount();
     const taux = totalPaiements > 0 ? (totalRemboursements / totalPaiements) * 100 : 0;
 
     const parMotif = (await filtered()
