@@ -5,14 +5,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Avis } from '../database/entities/avis.entity';
 import { Client } from '../database/entities/client.entity';
+import { User } from '../database/entities/user.entity';
 import { success } from '../common/envelope';
 import { parsePagination, paginateQb } from '../common/pagination';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { CreateAvisDto } from './dto/create-avis.dto';
 import { UpdateAvisDto } from './dto/update-avis.dto';
 
 @Injectable()
 export class AvisService {
-  constructor(@InjectRepository(Avis) private readonly avis: Repository<Avis>) {}
+  constructor(
+    @InjectRepository(Avis) private readonly avis: Repository<Avis>,
+    private readonly auditLog: AuditLogService,
+  ) {}
 
   private notFound(message: string): never {
     throw new NotFoundException({ status: 'error', message });
@@ -96,17 +101,31 @@ export class AvisService {
     return success(data, undefined, { pagination });
   }
 
-  async publish(id: number) {
+  async publish(actor: User, id: number) {
     const avis = await this.avis.findOneBy({ id });
     if (!avis) this.notFound('Avis non trouvé');
     await this.avis.update(id, { statut: 'publié' });
+    await this.auditLog.record(
+      actor,
+      'a publié un avis',
+      { type: 'avis', id: avis.id, label: `Avis #${avis.id} — ${avis.full_name_author}` },
+      'moderation',
+      { praticien_id: avis.praticien_id },
+    );
     return success(await this.avis.findOneBy({ id }), 'Avis publié avec succès');
   }
 
-  async reject(id: number) {
+  async reject(actor: User, id: number) {
     const avis = await this.avis.findOneBy({ id });
     if (!avis) this.notFound('Avis non trouvé');
     await this.avis.update(id, { statut: 'rejeté' });
+    await this.auditLog.record(
+      actor,
+      'a rejeté un avis',
+      { type: 'avis', id: avis.id, label: `Avis #${avis.id} — ${avis.full_name_author}` },
+      'moderation',
+      { praticien_id: avis.praticien_id },
+    );
     return success(await this.avis.findOneBy({ id }), 'Avis rejeté');
   }
 
