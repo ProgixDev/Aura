@@ -32,6 +32,7 @@ import { DisputesModule } from './disputes/disputes.module';
 import { PlatformSettingsModule } from './platform-settings/platform-settings.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { StripeConnectModule } from './stripe-connect/stripe-connect.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { StripeConnectModule } from './stripe-connect/stripe-connect.module';
     PlatformSettingsModule,
     SubscriptionsModule,
     StripeConnectModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

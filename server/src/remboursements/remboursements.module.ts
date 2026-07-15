@@ -11,5 +11,6 @@ import { AuditLogModule } from '../audit-log/audit-log.module';
   imports: [TypeOrmModule.forFeature([Remboursement, Paiement]), AuditLogModule],
   controllers: [RemboursementsController],
   providers: [RemboursementsService, StorageService],
+  exports: [RemboursementsService],
 })
 export class RemboursementsModule {}
