@@ -102,6 +102,8 @@ export default function RootLayout() {
               <Stack.Screen name="notification-settings" />
               <Stack.Screen name="founder" />
               <Stack.Screen name="dashboard" />
+              <Stack.Screen name="praticien-messages/index" />
+              <Stack.Screen name="praticien-messages/[id]" />
               <Stack.Screen name="subscription" />
             </Stack>
           </QueryClientProvider>

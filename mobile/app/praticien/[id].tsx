@@ -21,7 +21,7 @@ import { Rating } from '@components/Rating';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { shadows } from '@theme/shadows';
-import { practitionerRepo, favoriteRepo } from '@data/repos';
+import { practitionerRepo, favoriteRepo, messageRepo } from '@data/repos';
 
 type Tab = 'about' | 'reviews' | 'exchanges';
 
@@ -45,6 +45,8 @@ export default function PractitionerProfile() {
   const [tab, setTab] = useState<Tab>('about');
   const [favPending, setFavPending] = useState(false);
   const [favError, setFavError] = useState<string | null>(null);
+  const [contactPending, setContactPending] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
 
   const { data: p } = useQuery({
     queryKey: ['practitioner', id],
@@ -79,6 +81,20 @@ export default function PractitionerProfile() {
       setFavError(err?.message ?? 'Une erreur est survenue, réessayez.');
     } finally {
       setFavPending(false);
+    }
+  };
+
+  const startChat = async () => {
+    if (contactPending) return;
+    setContactPending(true);
+    setContactError(null);
+    try {
+      const conversation = await messageRepo.startConversation(Number(id));
+      router.push(`/chat/${conversation.id}` as any);
+    } catch (err: any) {
+      setContactError(err?.message ?? 'Impossible de démarrer la conversation, réessayez.');
+    } finally {
+      setContactPending(false);
     }
   };
 
@@ -140,7 +156,7 @@ export default function PractitionerProfile() {
 
         {/* Floating card */}
         <View style={[styles.floatCard, shadows.cardHover]}>
-          {favError ? <Text style={styles.favError}>{favError}</Text> : null}
+          {(favError || contactError) ? <Text style={styles.favError}>{favError || contactError}</Text> : null}
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
             {p.verified ? (
               <Badge
@@ -303,9 +319,10 @@ export default function PractitionerProfile() {
       {/* Bottom dock */}
       <View style={[styles.dock, { paddingBottom: insets.bottom + 14 }]}>
         <Button
-          label="Contacter"
+          label={contactPending ? 'Un instant…' : 'Contacter'}
           variant="soft"
-          onPress={() => router.push('/chat/m1' as any)}
+          onPress={startChat}
+          disabled={contactPending}
           style={{ flex: 1 }}
         />
         <Button

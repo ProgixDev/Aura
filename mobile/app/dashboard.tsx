@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQuery } from '@tanstack/react-query';
 import { AuroraBackground } from '@components/AuroraBackground';
 import { Button } from '@components/Button';
 import { Icon } from '@components/Icon';
@@ -16,6 +17,7 @@ import { Toggle } from '@components/Toggle';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { useSession } from '@store/session';
+import { praticienMessageRepo } from '@data/repos';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -23,6 +25,12 @@ export default function Dashboard() {
   const active = useSession((s) => s.practitionerActive);
   const toggle = useSession((s) => s.togglePractitionerActive);
   const trialDays = useSession((s) => s.trialDaysLeft);
+
+  const { data: conversations = [] } = useQuery({
+    queryKey: ['praticien-conversations'],
+    queryFn: praticienMessageRepo.conversations,
+  });
+  const unreadCount = conversations.filter((c) => c.unread).length;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.pearl }}>
@@ -106,6 +114,12 @@ export default function Dashboard() {
           title="Mes échanges"
           sub="1 en cours"
           onPress={() => router.push('/exchange' as any)}
+        />
+        <Row
+          icon={<Icon name="message" size={20} color={colors.ink} />}
+          title="Mes messages"
+          sub={unreadCount > 0 ? `${unreadCount} non lu${unreadCount > 1 ? 's' : ''}` : 'Aucun nouveau message'}
+          onPress={() => router.push('/praticien-messages' as any)}
         />
         <Row
           icon={<Icon name="card" size={20} color={colors.ink} />}
