@@ -6,11 +6,13 @@ import {
 } from '../database/entities/remboursement.entity';
 import { Paiement } from '../database/entities/paiement.entity';
 import { Client } from '../database/entities/client.entity';
+import { User } from '../database/entities/user.entity';
 import { success } from '../common/envelope';
 import { parsePagination, paginateQb } from '../common/pagination';
 import { StorageService } from '../common/storage.service';
 import { assertUpload } from '../common/upload.util';
 import { euro, formatDateFr, formatDateTimeFr, isOnOrAfterToday, numberFormat } from '../common/format';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { CreateRemboursementDto } from './dto/create-remboursement.dto';
 import { ApproveRemboursementDto } from './dto/approve-remboursement.dto';
 import { RefuseRemboursementDto } from './dto/refuse-remboursement.dto';
@@ -24,6 +26,7 @@ export class RemboursementsService {
     @InjectRepository(Remboursement) private readonly remboursements: Repository<Remboursement>,
     @InjectRepository(Paiement) private readonly paiements: Repository<Paiement>,
     private readonly storage: StorageService,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   private notFound(message: string): never {
@@ -161,7 +164,7 @@ export class RemboursementsService {
     return success(r);
   }
 
-  async adminApprove(id: number, dto: ApproveRemboursementDto) {
+  async adminApprove(actor: User, id: number, dto: ApproveRemboursementDto) {
     const r = await this.remboursements.findOneBy({
       id, statut: In(['en_attente', 'en_cours']),
     });
@@ -178,10 +181,17 @@ export class RemboursementsService {
       date_remboursement: dto.date_remboursement ? new Date(dto.date_remboursement) : new Date(),
     });
     await this.paiements.update(r.paiement_id, { statut: 'rembourse' });
+    await this.auditLog.record(
+      actor,
+      'a approuvé un remboursement',
+      { type: 'remboursement', id: r.id, label: r.reference },
+      'finance',
+      { montant: r.montant, client_id: r.client_id },
+    );
     return success(await this.loaded(id), 'Demande de remboursement approuvée avec succès');
   }
 
-  async adminRefuse(id: number, dto: RefuseRemboursementDto) {
+  async adminRefuse(actor: User, id: number, dto: RefuseRemboursementDto) {
     const r = await this.remboursements.findOneBy({
       id, statut: In(['en_attente', 'en_cours']),
     });
@@ -189,15 +199,29 @@ export class RemboursementsService {
     await this.remboursements.update(id, {
       statut: 'refuse', commentaire_admin: dto.commentaire_admin, date_traitement: new Date(),
     });
+    await this.auditLog.record(
+      actor,
+      'a refusé un remboursement',
+      { type: 'remboursement', id: r.id, label: r.reference },
+      'finance',
+      { montant: r.montant, client_id: r.client_id, motif: dto.commentaire_admin },
+    );
     return success(await this.loaded(id), 'Demande de remboursement refusée');
   }
 
-  async adminComplete(id: number) {
+  async adminComplete(actor: User, id: number) {
     const r = await this.remboursements.findOneBy({ id, statut: 'approuve' });
     if (!r) this.notFound('Remboursement non trouvé ou ne peut pas être complété');
     await this.remboursements.update(id, {
       statut: 'completed', date_remboursement: new Date(),
     });
+    await this.auditLog.record(
+      actor,
+      'a marqué un remboursement comme complété',
+      { type: 'remboursement', id: r.id, label: r.reference },
+      'finance',
+      { montant: r.montant },
+    );
     return success(await this.loaded(id), 'Remboursement marqué comme complété');
   }
 

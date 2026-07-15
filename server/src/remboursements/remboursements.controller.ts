@@ -11,8 +11,9 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ClientGuard } from '../auth/guards/client.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { CapabilityGuard } from '../auth/guards/capability.guard';
-import { CurrentClient, RequireCapability } from '../auth/decorators';
+import { CurrentClient, CurrentUser, RequireCapability } from '../auth/decorators';
 import { Client } from '../database/entities/client.entity';
+import { User } from '../database/entities/user.entity';
 
 @Controller('remboursements')
 export class RemboursementsController {
@@ -80,22 +81,30 @@ export class RemboursementsController {
   @RequireCapability('paiements_remboursements')
   @HttpCode(200)
   @Post('admin/:id/approve')
-  adminApprove(@Param('id', ParseIntPipe) id: number, @Body() dto: ApproveRemboursementDto) {
-    return this.service.adminApprove(id, dto);
+  adminApprove(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ApproveRemboursementDto,
+  ) {
+    return this.service.adminApprove(user, id, dto);
   }
 
   @UseGuards(JwtAuthGuard, AdminGuard, CapabilityGuard)
   @RequireCapability('paiements_remboursements')
   @HttpCode(200)
   @Post('admin/:id/refuse')
-  adminRefuse(@Param('id', ParseIntPipe) id: number, @Body() dto: RefuseRemboursementDto) {
-    return this.service.adminRefuse(id, dto);
+  adminRefuse(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RefuseRemboursementDto,
+  ) {
+    return this.service.adminRefuse(user, id, dto);
   }
 
   @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(200)
   @Post('admin/:id/complete') // fixes real PHP route typo 'admi/{id}/complete'
-  adminComplete(@Param('id', ParseIntPipe) id: number) {
-    return this.service.adminComplete(id);
+  adminComplete(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
+    return this.service.adminComplete(user, id);
   }
 }

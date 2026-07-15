@@ -29,15 +29,15 @@ export class SignalementsController {
   @RequireCapability('signalements_litiges')
   @HttpCode(200)
   @Post('admin/signalements/:id/resolve')
-  resolve(@Param('id', ParseIntPipe) id: number) {
-    return this.service.resolve(id);
+  resolve(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
+    return this.service.resolve(user, id);
   }
 
   @UseGuards(JwtAuthGuard, AdminGuard, CapabilityGuard)
   @RequireCapability('signalements_litiges')
   @HttpCode(200)
   @Post('admin/signalements/:id/reject')
-  reject(@Param('id', ParseIntPipe) id: number) {
-    return this.service.reject(id);
+  reject(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
+    return this.service.reject(user, id);
   }
 }

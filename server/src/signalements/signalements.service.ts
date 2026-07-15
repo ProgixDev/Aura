@@ -6,12 +6,14 @@ import { User } from '../database/entities/user.entity';
 import { success } from '../common/envelope';
 import { parsePagination, paginateQb } from '../common/pagination';
 import { sanitizeUser } from '../auth/user.util';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { CreateSignalementDto } from './dto/create-signalement.dto';
 
 @Injectable()
 export class SignalementsService {
   constructor(
     @InjectRepository(Signalement) private readonly signalements: Repository<Signalement>,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   private notFound(message: string): never {
@@ -56,17 +58,31 @@ export class SignalementsService {
     return success(sanitized, undefined, { pagination });
   }
 
-  async resolve(id: number) {
+  async resolve(actor: User, id: number) {
     const s = await this.signalements.findOneBy({ id });
     if (!s) this.notFound('Signalement non trouvé');
     await this.signalements.update(id, { statut: 'resolved' });
+    await this.auditLog.record(
+      actor,
+      'a résolu un signalement',
+      { type: 'signalement', id: s.id, label: `Signalement — ${s.sujet}` },
+      'moderation',
+      { praticien_id: s.praticien_id, priorite: s.priorite },
+    );
     return success(await this.signalements.findOneBy({ id }), 'Signalement résolu');
   }
 
-  async reject(id: number) {
+  async reject(actor: User, id: number) {
     const s = await this.signalements.findOneBy({ id });
     if (!s) this.notFound('Signalement non trouvé');
     await this.signalements.update(id, { statut: 'rejected' });
+    await this.auditLog.record(
+      actor,
+      'a rejeté un signalement',
+      { type: 'signalement', id: s.id, label: `Signalement — ${s.sujet}` },
+      'moderation',
+      { praticien_id: s.praticien_id, priorite: s.priorite },
+    );
     return success(await this.signalements.findOneBy({ id }), 'Signalement rejeté');
   }
 }

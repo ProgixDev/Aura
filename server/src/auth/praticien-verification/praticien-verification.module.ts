@@ -5,9 +5,10 @@ import { PraticienDocument } from '../../database/entities/praticien-document.en
 import { PraticienVerificationController } from './praticien-verification.controller';
 import { PraticienVerificationService } from './praticien-verification.service';
 import { StorageService } from '../../common/storage.service';
+import { AuditLogModule } from '../../audit-log/audit-log.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Praticien, PraticienDocument])],
+  imports: [TypeOrmModule.forFeature([Praticien, PraticienDocument]), AuditLogModule],
   controllers: [PraticienVerificationController],
   providers: [PraticienVerificationService, StorageService],
 })

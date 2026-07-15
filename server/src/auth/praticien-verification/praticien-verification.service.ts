@@ -7,6 +7,7 @@ import { Praticien } from '../../database/entities/praticien.entity';
 import { PraticienDocument } from '../../database/entities/praticien-document.entity';
 import { User } from '../../database/entities/user.entity';
 import { StorageService } from '../../common/storage.service';
+import { AuditLogService } from '../../audit-log/audit-log.service';
 import { success } from '../../common/envelope';
 import { parsePagination, paginateQb } from '../../common/pagination';
 import { VerifyDocumentsDto } from './dto/verify-documents.dto';
@@ -30,6 +31,7 @@ export class PraticienVerificationService {
     @InjectRepository(Praticien) private readonly praticiens: Repository<Praticien>,
     @InjectRepository(PraticienDocument) private readonly documents: Repository<PraticienDocument>,
     private readonly storage: StorageService,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   private notFound(message: string): never {
@@ -141,6 +143,15 @@ export class PraticienVerificationService {
       statutFinal === 'valide' ? 'Praticien validé avec succès'
       : statutFinal === 'rejete' ? 'Praticien rejeté'
       : 'Vérification en cours';
+    await this.auditLog.record(
+      admin,
+      statutFinal === 'valide' ? 'a vérifié un praticien'
+        : statutFinal === 'rejete' ? 'a rejeté un praticien'
+        : 'a mis à jour la vérification d’un praticien',
+      { type: 'praticien', id, label: `${fresh.firstname} ${fresh.lastname}` },
+      'verification',
+      { statut_final: statutFinal },
+    );
     return success(fresh, message);
   }
 
@@ -159,6 +170,13 @@ export class PraticienVerificationService {
     const fresh = await this.praticiens.findOne({
       where: { id }, relations: { documents: true, verifiePar: true },
     });
+    await this.auditLog.record(
+      admin,
+      'a rejeté un praticien',
+      { type: 'praticien', id, label: `${fresh.firstname} ${fresh.lastname}` },
+      'verification',
+      { motif_rejet: dto.motif_rejet },
+    );
     return success(fresh, 'Praticien rejeté avec succès');
   }
 
