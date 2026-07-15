@@ -160,4 +160,23 @@ describe('admin auth', () => {
 
     await http().post(`/api/admin/${other.id}/role`).send({ role: 'admin' }).expect(401);
   });
+
+  it('update role requires the equipe_roles capability — a non-admin-role admin cannot self-promote or change anyone else', async () => {
+    const supportAdmin = await seedAdmin(app, 'role-support@aura.io', 'support');
+    const target = await seedAdmin(app, 'role-escalation-target@aura.io', 'support');
+
+    // The support-role admin cannot promote themselves to admin.
+    await http().post(`/api/admin/${supportAdmin.user.id}/role`)
+      .set('Authorization', `Bearer ${supportAdmin.token}`).send({ role: 'admin' }).expect(403);
+
+    // Nor can they change any other admin's role.
+    await http().post(`/api/admin/${target.user.id}/role`)
+      .set('Authorization', `Bearer ${supportAdmin.token}`).send({ role: 'admin' }).expect(403);
+
+    // An admin-role admin still can (equipe_roles is admin-only in the matrix).
+    const { token: adminToken } = await seedAdmin(app, 'role-admin@aura.io');
+    const ok = await http().post(`/api/admin/${target.user.id}/role`)
+      .set('Authorization', `Bearer ${adminToken}`).send({ role: 'admin' }).expect(200);
+    expect(ok.body.data.role).toBe('admin');
+  });
 });

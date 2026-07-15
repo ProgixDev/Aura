@@ -9,7 +9,8 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateAdminRoleDto } from './dto/update-admin-role.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { AdminGuard } from '../guards/admin.guard';
-import { CurrentUser } from '../decorators';
+import { CapabilityGuard } from '../guards/capability.guard';
+import { CurrentUser, RequireCapability } from '../decorators';
 import { User } from '../../database/entities/user.entity';
 
 @Controller('admin')
@@ -64,7 +65,12 @@ export class AdminAuthController {
   @Post(':id/activate')
   activate(@Param('id', ParseIntPipe) id: number) { return this.service.activate(id); }
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  // equipe_roles is an admin-only capability in the matrix (server/src/auth/capabilities.ts)
+  // — gating on it here is what actually enforces that, closing a privilege-escalation
+  // hole where any is_admin=true account (regardless of role) could otherwise call this
+  // route to promote itself (or anyone else) to 'admin'.
+  @UseGuards(JwtAuthGuard, AdminGuard, CapabilityGuard)
+  @RequireCapability('equipe_roles')
   @HttpCode(200)
   @Post(':id/role')
   updateRole(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateAdminRoleDto) {
