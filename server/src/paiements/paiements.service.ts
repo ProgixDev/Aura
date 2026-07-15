@@ -6,7 +6,7 @@ import { Client } from '../database/entities/client.entity';
 import { Praticien } from '../database/entities/praticien.entity';
 import { success } from '../common/envelope';
 import { parsePagination, paginateQb } from '../common/pagination';
-import { euro, exportTimestamp, formatDateFr, formatDateTimeFr, numberFormat } from '../common/format';
+import { csvField, euro, exportTimestamp, formatDateFr, formatDateTimeFr, numberFormat } from '../common/format';
 
 const MONTH_EXPR = "SUBSTR(CAST(p.date_paiement AS CHAR), 1, 7)";
 
@@ -236,16 +236,16 @@ export class PaiementsService {
     const rows = await this.paidRows(query);
     const header = 'Référence;Date;Client;Email Client;Praticien;Brut (€);Commission (€);Net Praticien (€);Moyen de paiement;Statut';
     const lines = rows.map((p) => [
-      p.reference,
+      csvField(p.reference),
       formatDateFr(p.date_paiement),
-      `${p.client.firstname} ${p.client.lastname}`,
-      p.client.email,
-      p.praticien ? `${p.praticien.firstname} ${p.praticien.lastname}` : 'N/A',
+      csvField(`${p.client.firstname} ${p.client.lastname}`),
+      csvField(p.client.email),
+      csvField(p.praticien ? `${p.praticien.firstname} ${p.praticien.lastname}` : 'N/A'),
       numberFormat(p.montant_brut),
       numberFormat(p.commission),
       numberFormat(p.montant_net_praticien),
-      p.moyen_paiement,
-      p.statut,
+      csvField(p.moyen_paiement),
+      csvField(p.statut),
     ].join(';'));
     return success({
       filename: `export_paiements_${exportTimestamp()}.csv`,

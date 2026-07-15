@@ -5,8 +5,9 @@ import { DataTable } from '@/components/ui/DataTable';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
-import { api } from '@/lib/api';
+import { api, errorMessage } from '@/lib/api';
 import { relativeFr, downloadCsv } from '@/lib/format';
+import { useUI } from '@/lib/store';
 
 const KIND_LABEL = {
   moderation: 'Modération', verification: 'Vérification', finance: 'Finance',
@@ -22,6 +23,7 @@ const KIND_TONE_AVATAR = {
 };
 
 export default function AuditPage() {
+  const toast = useUI((s) => s.toast);
   const { data, isError } = useQuery({
     queryKey: ['admin', 'audit-logs'],
     queryFn: () => api.get('/admin/audit-logs?per_page=100'),
@@ -38,8 +40,12 @@ export default function AuditPage() {
   const stats = data?.statistiques;
 
   const exportCsv = async () => {
-    const res = await api.get('/admin/audit-logs/export');
-    downloadCsv(res.data);
+    try {
+      const res = await api.get('/admin/audit-logs/export');
+      downloadCsv(res.data);
+    } catch (err) {
+      toast(errorMessage(err), 'danger');
+    }
   };
 
   const columns = [

@@ -5,12 +5,14 @@ import { StatCard } from '@/components/ui/StatCard';
 import { DataTable } from '@/components/ui/DataTable';
 import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
-import { api } from '@/lib/api';
+import { api, errorMessage } from '@/lib/api';
 import { euro, dateFr, downloadCsv } from '@/lib/format';
+import { useUI } from '@/lib/store';
 
 const STATUT_TONE = { paid: 'success', en_attente: 'warning', rembourse: 'info' };
 
 export default function AdminPaiementsPage() {
+  const toast = useUI((s) => s.toast);
   const { data, isError } = useQuery({
     queryKey: ['admin', 'paiements'],
     queryFn: () => api.get('/paiements?per_page=100'),
@@ -30,8 +32,12 @@ export default function AdminPaiementsPage() {
   }));
 
   const exportCsv = async () => {
-    const res = await api.get('/paiements/export/csv');
-    downloadCsv(res.data);
+    try {
+      const res = await api.get('/paiements/export/csv');
+      downloadCsv(res.data);
+    } catch (err) {
+      toast(errorMessage(err), 'danger');
+    }
   };
 
   const columns = [

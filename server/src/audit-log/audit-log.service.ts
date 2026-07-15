@@ -5,7 +5,7 @@ import { AuditCategory, AuditLog } from '../database/entities/audit-log.entity';
 import { User } from '../database/entities/user.entity';
 import { success } from '../common/envelope';
 import { parsePagination, paginateQb } from '../common/pagination';
-import { exportTimestamp, formatDateTimeFr } from '../common/format';
+import { csvField, exportTimestamp, formatDateTimeFr } from '../common/format';
 import { sanitizeUser } from '../auth/user.util';
 
 export interface AuditTarget {
@@ -88,11 +88,13 @@ export class AuditLogService {
     const header = 'Date;Auteur;Action;Cible;Type';
     const lines = rows.map((r) => [
       formatDateTimeFr(r.created_at),
-      r.actor?.name ?? 'Système',
-      r.action,
-      ((r.metadata as Record<string, unknown> | null)?.target_label as string | undefined)
-        ?? `${r.target_type} #${r.target_id ?? ''}`,
-      r.category,
+      csvField(r.actor?.name ?? 'Système'),
+      csvField(r.action),
+      csvField(
+        ((r.metadata as Record<string, unknown> | null)?.target_label as string | undefined)
+          ?? `${r.target_type} #${r.target_id ?? ''}`,
+      ),
+      csvField(r.category),
     ].join(';'));
     return success({
       filename: `export_audit_${exportTimestamp()}.csv`,

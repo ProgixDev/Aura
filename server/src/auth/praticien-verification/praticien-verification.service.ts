@@ -148,7 +148,7 @@ export class PraticienVerificationService {
       statutFinal === 'valide' ? 'a vérifié un praticien'
         : statutFinal === 'rejete' ? 'a rejeté un praticien'
         : 'a mis à jour la vérification d’un praticien',
-      { type: 'praticien', id, label: `${fresh.firstname} ${fresh.lastname}` },
+      { type: 'praticien', id, label: `${praticien.firstname} ${praticien.lastname}` },
       'verification',
       { statut_final: statutFinal },
     );
@@ -173,7 +173,7 @@ export class PraticienVerificationService {
     await this.auditLog.record(
       admin,
       'a rejeté un praticien',
-      { type: 'praticien', id, label: `${fresh.firstname} ${fresh.lastname}` },
+      { type: 'praticien', id, label: `${praticien.firstname} ${praticien.lastname}` },
       'verification',
       { motif_rejet: dto.motif_rejet },
     );

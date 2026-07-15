@@ -55,3 +55,20 @@ export function isOnOrAfterToday(dateStr: string): boolean {
   const dateOnly = dateStr.slice(0, 10);
   return dateOnly >= todayStr;
 }
+
+/**
+ * Escapes one `;`-delimited CSV field against two attacker-reachable risks:
+ * values containing `;`/`"`/newlines breaking the row structure (quoted +
+ * internal quotes doubled, standard CSV escaping), and values starting with
+ * `=`/`+`/`-`/`@` triggering formula/DDE injection when opened in Excel
+ * (neutralized with a leading `'`, the same guard spreadsheet apps use).
+ * Every admin CSV export in this codebase reads user-submitted free text
+ * (names, subjects, comments) into rows, so this must be applied everywhere
+ * such a value reaches a `.join(';')` line.
+ */
+export function csvField(value: string | number | null | undefined): string {
+  let s = value === null || value === undefined ? '' : String(value);
+  if (/^[=+\-@]/.test(s)) s = `'${s}`;
+  if (/[;"\n]/.test(s)) s = `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
