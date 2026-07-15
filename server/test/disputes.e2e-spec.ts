@@ -57,6 +57,50 @@ describe('disputes', () => {
     expect(res.body.errors.client_id).toBeDefined();
   });
 
+  it('rejects a praticien_id that does not exist', async () => {
+    const res = await http().post('/api/admin/disputes')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ client_id: clientId, praticien_id: 999999, motif: 'Séance écourtée sans explication' })
+      .expect(422);
+    expect(res.body.errors.praticien_id).toBeDefined();
+  });
+
+  it('rejects a paiement_id that does not exist', async () => {
+    const res = await http().post('/api/admin/disputes')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        client_id: clientId, praticien_id: praticienId, paiement_id: 999999,
+        motif: 'Séance écourtée sans explication',
+      })
+      .expect(422);
+    expect(res.body.errors.paiement_id).toBeDefined();
+  });
+
+  it('store/resolve require the signalements_litiges capability for non-admin roles', async () => {
+    const modToken = (await seedAdmin(app, 'disp-mod@aura.io', 'moderateur')).token;
+    const financeToken = (await seedAdmin(app, 'disp-finance@aura.io', 'comptabilite')).token;
+
+    await http().post('/api/admin/disputes')
+      .set('Authorization', `Bearer ${financeToken}`)
+      .send({ client_id: clientId, praticien_id: praticienId, motif: 'Motif suffisant pour le test' })
+      .expect(403);
+
+    const created = await http().post('/api/admin/disputes')
+      .set('Authorization', `Bearer ${modToken}`)
+      .send({ client_id: clientId, praticien_id: praticienId, motif: 'Motif suffisant pour le test' })
+      .expect(201);
+    const id = created.body.data.id;
+
+    await http().post(`/api/admin/disputes/${id}/resolve`)
+      .set('Authorization', `Bearer ${financeToken}`)
+      .send({ resolution_notes: 'Notes suffisantes.' }).expect(403);
+
+    const resolved = await http().post(`/api/admin/disputes/${id}/resolve`)
+      .set('Authorization', `Bearer ${modToken}`)
+      .send({ resolution_notes: 'Notes suffisantes.' }).expect(200);
+    expect(resolved.body.data.statut).toBe('resolu');
+  });
+
   it('creates a dispute, ouvert, priorite normale by default', async () => {
     const res = await http().post('/api/admin/disputes')
       .set('Authorization', `Bearer ${adminToken}`)

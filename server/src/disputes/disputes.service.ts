@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Dispute } from '../database/entities/dispute.entity';
 import { Client } from '../database/entities/client.entity';
 import { Praticien } from '../database/entities/praticien.entity';
+import { Paiement } from '../database/entities/paiement.entity';
 import { success } from '../common/envelope';
 import { parsePagination, paginateQb } from '../common/pagination';
 import { CreateDisputeDto } from './dto/create-dispute.dto';
@@ -15,6 +16,7 @@ export class DisputesService {
     @InjectRepository(Dispute) private readonly disputes: Repository<Dispute>,
     @InjectRepository(Client) private readonly clients: Repository<Client>,
     @InjectRepository(Praticien) private readonly praticiens: Repository<Praticien>,
+    @InjectRepository(Paiement) private readonly paiements: Repository<Paiement>,
   ) {}
 
   private notFound(message: string): never {
@@ -53,6 +55,10 @@ export class DisputesService {
     if (!client) this.validationError({ client_id: ["Ce client n'existe pas."] });
     const praticien = await this.praticiens.findOneBy({ id: dto.praticien_id });
     if (!praticien) this.validationError({ praticien_id: ["Ce praticien n'existe pas."] });
+    if (dto.paiement_id !== undefined) {
+      const paiement = await this.paiements.findOneBy({ id: dto.paiement_id });
+      if (!paiement) this.validationError({ paiement_id: ["Ce paiement n'existe pas."] });
+    }
 
     const saved = await this.disputes.save({
       client_id: dto.client_id,
