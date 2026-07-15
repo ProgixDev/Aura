@@ -117,4 +117,21 @@ describe('avis', () => {
       .set('Authorization', `Bearer ${adminToken}`).expect(200);
     expect(list.body.data.find((a: any) => a.id === id2)).toBeUndefined();
   });
+
+  it('publish/reject require the avis_moderation capability for non-admin roles', async () => {
+    const modToken = (await seedAdmin(app, 'avis-mod@aura.io', 'moderateur')).token;
+    const supportToken = (await seedAdmin(app, 'avis-support@aura.io', 'support')).token;
+
+    const created = await http().post('/api/client/avis')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ praticien_id: praticienId, note: 3, avis: 'Avis pour test de capacité' }).expect(201);
+    const id = created.body.data.id;
+
+    await http().post(`/api/admin/avis/${id}/publish`)
+      .set('Authorization', `Bearer ${supportToken}`).expect(403);
+
+    const pub = await http().post(`/api/admin/avis/${id}/publish`)
+      .set('Authorization', `Bearer ${modToken}`).expect(200);
+    expect(pub.body.data.statut).toBe('publié');
+  });
 });

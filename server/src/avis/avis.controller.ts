@@ -8,7 +8,8 @@ import { UpdateAvisDto } from './dto/update-avis.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ClientGuard } from '../auth/guards/client.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
-import { CurrentClient } from '../auth/decorators';
+import { CapabilityGuard } from '../auth/guards/capability.guard';
+import { CurrentClient, RequireCapability } from '../auth/decorators';
 import { Client } from '../database/entities/client.entity';
 
 @Controller()
@@ -54,14 +55,16 @@ export class AvisController {
     return this.service.adminIndex(query);
   }
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard, CapabilityGuard)
+  @RequireCapability('avis_moderation')
   @HttpCode(200)
   @Post('admin/avis/:id/publish')
   publish(@Param('id', ParseIntPipe) id: number) {
     return this.service.publish(id);
   }
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard, CapabilityGuard)
+  @RequireCapability('avis_moderation')
   @HttpCode(200)
   @Post('admin/avis/:id/reject')
   reject(@Param('id', ParseIntPipe) id: number) {

@@ -10,7 +10,8 @@ import { RefuseRemboursementDto } from './dto/refuse-remboursement.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ClientGuard } from '../auth/guards/client.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
-import { CurrentClient } from '../auth/decorators';
+import { CapabilityGuard } from '../auth/guards/capability.guard';
+import { CurrentClient, RequireCapability } from '../auth/decorators';
 import { Client } from '../database/entities/client.entity';
 
 @Controller('remboursements')
@@ -75,14 +76,16 @@ export class RemboursementsController {
     return this.service.adminShow(id);
   }
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard, CapabilityGuard)
+  @RequireCapability('paiements_remboursements')
   @HttpCode(200)
   @Post('admin/:id/approve')
   adminApprove(@Param('id', ParseIntPipe) id: number, @Body() dto: ApproveRemboursementDto) {
     return this.service.adminApprove(id, dto);
   }
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard, CapabilityGuard)
+  @RequireCapability('paiements_remboursements')
   @HttpCode(200)
   @Post('admin/:id/refuse')
   adminRefuse(@Param('id', ParseIntPipe) id: number, @Body() dto: RefuseRemboursementDto) {

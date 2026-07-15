@@ -116,4 +116,24 @@ describe('signalements', () => {
       .set('Authorization', `Bearer ${adminToken}`).expect(200);
     expect(filtered.body.data.find((s: any) => s.id === created.body.data.id)).toBeDefined();
   });
+
+  it('resolve/reject require the signalements_litiges capability for non-admin roles', async () => {
+    const modToken = (await seedAdmin(app, 'sig-mod@aura.io', 'moderateur')).token;
+    const financeToken = (await seedAdmin(app, 'sig-finance@aura.io', 'comptabilite')).token;
+
+    const created = await http().post('/api/signalements')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({
+        praticien_id: praticienId, type: 'overclaim',
+        sujet: 'Test capacité', motif: 'Motif suffisant pour le test',
+      }).expect(201);
+    const id = created.body.data.id;
+
+    await http().post(`/api/admin/signalements/${id}/resolve`)
+      .set('Authorization', `Bearer ${financeToken}`).expect(403);
+
+    const res = await http().post(`/api/admin/signalements/${id}/resolve`)
+      .set('Authorization', `Bearer ${modToken}`).expect(200);
+    expect(res.body.data.statut).toBe('resolved');
+  });
 });

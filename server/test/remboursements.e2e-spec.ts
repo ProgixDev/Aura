@@ -143,4 +143,25 @@ describe('remboursements', () => {
       .send({ date_remboursement: today }).expect(200);
     expect(present.body.data.statut).toBe('approuve');
   });
+
+  it('approve/refuse require the paiements_remboursements capability for non-admin roles', async () => {
+    const modToken = (await seedAdmin(app, 'remb-mod@aura.io', 'moderateur')).token;
+    const financeToken = (await seedAdmin(app, 'remb-finance@aura.io', 'comptabilite')).token;
+    const ds = app.get(DataSource);
+    const paiementId = (await ds.getRepository(Paiement).save({
+      reference: 'TX-CAP-1', client_id: clientId, montant_brut: 40, commission: 4,
+      montant_net_praticien: 36, moyen_paiement: 'Carte', statut: 'paid',
+      date_paiement: new Date(),
+    })).id;
+    const created = await asClient(http().post('/api/remboursements/client'))
+      .field('paiement_id', String(paiementId)).field('motif', 'Test capacité').expect(201);
+    const id = created.body.data.id;
+
+    await http().post(`/api/remboursements/admin/${id}/approve`)
+      .set('Authorization', `Bearer ${modToken}`).send({ commentaire_admin: 'OK' }).expect(403);
+
+    const appr = await http().post(`/api/remboursements/admin/${id}/approve`)
+      .set('Authorization', `Bearer ${financeToken}`).send({ commentaire_admin: 'OK' }).expect(200);
+    expect(appr.body.data.statut).toBe('approuve');
+  });
 });

@@ -5,7 +5,8 @@ import { SignalementsService } from './signalements.service';
 import { CreateSignalementDto } from './dto/create-signalement.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
-import { CurrentUser } from '../auth/decorators';
+import { CapabilityGuard } from '../auth/guards/capability.guard';
+import { CurrentUser, RequireCapability } from '../auth/decorators';
 import { User } from '../database/entities/user.entity';
 
 @Controller()
@@ -24,14 +25,16 @@ export class SignalementsController {
     return this.service.adminIndex(query);
   }
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard, CapabilityGuard)
+  @RequireCapability('signalements_litiges')
   @HttpCode(200)
   @Post('admin/signalements/:id/resolve')
   resolve(@Param('id', ParseIntPipe) id: number) {
     return this.service.resolve(id);
   }
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard, CapabilityGuard)
+  @RequireCapability('signalements_litiges')
   @HttpCode(200)
   @Post('admin/signalements/:id/reject')
   reject(@Param('id', ParseIntPipe) id: number) {
