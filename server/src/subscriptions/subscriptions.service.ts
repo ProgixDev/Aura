@@ -90,13 +90,13 @@ export class SubscriptionsService {
       await this.subscriptions.update(sub.id, { stripe_customer_id: customerId });
     }
 
-    // Switching between two paid plans: stop the old Stripe subscription immediately rather
-    // than juggling subscription-item ids for an in-place price swap — see this plan's
-    // Design notes for why.
-    if (sub.stripe_subscription_id && ACTIVE_STATUSES.includes(sub.statut)) {
-      await this.stripeService.cancelSubscriptionImmediately(sub.stripe_subscription_id);
-    }
-
+    // Switching between two paid plans: the old Stripe subscription is stopped once the new
+    // one is confirmed active (onCheckoutCompleted below), not here — rather than juggling
+    // subscription-item ids for an in-place price swap, see this plan's Design notes for why
+    // cancel-then-recreate was chosen. Canceling only after confirmation (instead of before
+    // creating the new Checkout Session) avoids leaving the praticien with zero active
+    // subscription if session creation fails after an immediate cancel would have already
+    // gone through.
     const session = await this.stripeService.createCheckoutSession({
       customerId,
       priceId: priceIdForPlan(dto.plan),
@@ -216,12 +216,22 @@ export class SubscriptionsService {
     const sub = await this.subscriptions.findOneBy({ praticien_id: praticienId });
     if (!sub) return; // checkout() always runs findOrCreateFor() first, so this should exist
 
+    // Capture the previous Stripe subscription id (if any) before overwriting the row, so a
+    // plan-to-plan switch can cancel it now that the new subscription is confirmed active —
+    // see the comment in checkout() for why this happens here rather than before Checkout
+    // Session creation.
+    const previousSubscriptionId = sub.stripe_subscription_id;
+
     await this.subscriptions.update(sub.id, {
       plan,
       statut: 'active',
       stripe_subscription_id: subscriptionId,
       ...(customerId ? { stripe_customer_id: customerId } : {}),
     });
+
+    if (previousSubscriptionId && previousSubscriptionId !== subscriptionId) {
+      await this.stripeService.cancelSubscriptionImmediately(previousSubscriptionId);
+    }
   }
 
   private async onSubscriptionUpdated(subscription: Stripe.Subscription) {

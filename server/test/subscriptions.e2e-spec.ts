@@ -111,7 +111,12 @@ describe('subscriptions (praticien routes)', () => {
     expect(res.body.errors.plan).toBeDefined();
   });
 
-  it('POST checkout cancels the old Stripe subscription immediately when switching between two paid plans', async () => {
+  it('POST checkout does NOT cancel the old Stripe subscription up front when switching between two paid plans', async () => {
+    // Regression test: the old subscription is only canceled once the new one is confirmed
+    // active via the checkout.session.completed webhook (see subscriptions (Stripe webhook
+    // routing) below), not synchronously inside checkout() itself — cancelling here first
+    // would leave the praticien with zero active subscription if createCheckoutSession then
+    // failed (Stripe outage, network blip).
     const { praticien, token } = await seedPraticienUser(app, 'sub-praticien-6@aura.io');
     await ds.getRepository(Subscription).save({
       praticien_id: praticien.id, plan: 'pro', statut: 'active',
@@ -120,10 +125,14 @@ describe('subscriptions (praticien routes)', () => {
     const res = await http().post('/api/praticien/subscription/checkout')
       .set('Authorization', `Bearer ${token}`).send({ plan: 'premium' }).expect(200);
     expect(res.body.data.url).toBe('https://checkout.stripe.com/test_123');
-    expect(stripeServiceMock.cancelSubscriptionImmediately).toHaveBeenCalledWith('sub_old_pro');
+    expect(stripeServiceMock.cancelSubscriptionImmediately).not.toHaveBeenCalled();
     expect(stripeServiceMock.createCheckoutSession).toHaveBeenCalledWith(
       expect.objectContaining({ customerId: 'cus_switching', priceId: 'price_test_premium' }),
     );
+
+    // Local row still shows the old plan/subscription id until the webhook confirms the new one.
+    const fresh = await ds.getRepository(Subscription).findOneByOrFail({ praticien_id: praticien.id });
+    expect(fresh).toMatchObject({ plan: 'pro', statut: 'active', stripe_subscription_id: 'sub_old_pro' });
   });
 
   it('POST cancel 404s when the praticien has no active paid subscription', async () => {
@@ -254,6 +263,49 @@ describe('subscriptions (Stripe webhook routing)', () => {
       plan: 'pro', statut: 'active',
       stripe_subscription_id: 'sub_new_123', stripe_customer_id: 'cus_new_123',
     });
+  });
+
+  it('checkout.session.completed cancels the previous Stripe subscription once the new one is confirmed, when switching between two paid plans', async () => {
+    const { praticien } = await seedPraticienUser(app, 'wh-sub-praticien-7@aura.io');
+    await ds.getRepository(Subscription).save({
+      praticien_id: praticien.id, plan: 'pro', statut: 'active',
+      stripe_subscription_id: 'sub_old_pro_wh', stripe_customer_id: 'cus_switch_wh',
+    });
+
+    const fakeEvent = {
+      id: 'evt_checkout_switch', type: 'checkout.session.completed',
+      data: { object: {
+        mode: 'subscription',
+        subscription: 'sub_new_premium_wh',
+        customer: 'cus_switch_wh',
+        metadata: { praticien_id: String(praticien.id), plan: 'premium' },
+      } },
+    };
+    webhookStripeMock.constructWebhookEvent.mockImplementationOnce(() => fakeEvent);
+    await http().post('/api/webhooks/stripe').set('stripe-signature', 'sig').send(fakeEvent).expect(200);
+
+    expect(webhookStripeMock.cancelSubscriptionImmediately).toHaveBeenCalledWith('sub_old_pro_wh');
+    const fresh = await ds.getRepository(Subscription).findOneByOrFail({ praticien_id: praticien.id });
+    expect(fresh).toMatchObject({ plan: 'premium', statut: 'active', stripe_subscription_id: 'sub_new_premium_wh' });
+  });
+
+  it('checkout.session.completed does not attempt to cancel anything for a first-time subscriber (no previous stripe_subscription_id)', async () => {
+    const { praticien } = await seedPraticienUser(app, 'wh-sub-praticien-8@aura.io');
+    await ds.getRepository(Subscription).save({ praticien_id: praticien.id, plan: 'essentiel', statut: 'active' });
+
+    const fakeEvent = {
+      id: 'evt_checkout_first_time', type: 'checkout.session.completed',
+      data: { object: {
+        mode: 'subscription',
+        subscription: 'sub_first_time',
+        customer: 'cus_first_time',
+        metadata: { praticien_id: String(praticien.id), plan: 'pro' },
+      } },
+    };
+    webhookStripeMock.constructWebhookEvent.mockImplementationOnce(() => fakeEvent);
+    await http().post('/api/webhooks/stripe').set('stripe-signature', 'sig').send(fakeEvent).expect(200);
+
+    expect(webhookStripeMock.cancelSubscriptionImmediately).not.toHaveBeenCalled();
   });
 
   it('checkout.session.completed in "payment" mode (not this plan\'s concern) is a safe no-op', async () => {

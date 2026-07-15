@@ -16,6 +16,15 @@ export class AddSubscriptionsAndPlatformSettings1700000000007 implements Migrati
       CONSTRAINT fk_sub_praticien FOREIGN KEY (praticien_id) REFERENCES praticiens(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
+    // Backfill: every praticien that existed before this table did gets an implicit
+    // essentiel/active row now, rather than waiting for a lazy SubscriptionsService.current()
+    // call on their next app visit (POST /praticien/subscription/checkout, GET .../current, or
+    // POST .../cancel). Without this, GET /admin/subscriptions and .../statistics would
+    // silently under-report — any praticien who hasn't touched one of those 3 endpoints since
+    // this migration ran would simply be invisible to admin reporting.
+    await q.query(`INSERT INTO subscriptions (praticien_id, plan, statut, created_at, updated_at)
+      SELECT id, 'essentiel', 'active', NOW(), NOW() FROM praticiens`);
+
     await q.query(`CREATE TABLE platform_settings (
       id BIGINT UNSIGNED PRIMARY KEY,
       commission_rate DECIMAL(5,4) NOT NULL DEFAULT 0.1500,
