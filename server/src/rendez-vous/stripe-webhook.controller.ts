@@ -4,6 +4,7 @@ import type { Request } from 'express';
 import Stripe from 'stripe';
 import { RendezVousService } from './rendez-vous.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { StripeConnectService } from '../stripe-connect/stripe-connect.service';
 import { StripeService } from '../common/stripe.service';
 
 // Event types this plan's SubscriptionsService owns — everything else (Plan 05's
@@ -20,6 +21,7 @@ export class StripeWebhookController {
   constructor(
     private readonly rendezVousService: RendezVousService,
     private readonly subscriptionsService: SubscriptionsService,
+    private readonly stripeConnectService: StripeConnectService,
     private readonly stripeService: StripeService,
   ) {}
 
@@ -35,6 +37,9 @@ export class StripeWebhookController {
       );
     } catch {
       throw new BadRequestException({ status: 'error', message: 'Signature Stripe invalide' });
+    }
+    if (event.type === 'account.updated') {
+      return this.stripeConnectService.handleAccountUpdated(event);
     }
     if (SUBSCRIPTION_EVENT_TYPES.has(event.type)) {
       return this.subscriptionsService.handleStripeWebhookEvent(event);

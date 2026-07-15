@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import Stripe from 'stripe';
@@ -9,11 +9,14 @@ import { Client } from '../database/entities/client.entity';
 import { success } from '../common/envelope';
 import { parsePagination, paginateQb } from '../common/pagination';
 import { StripeService } from '../common/stripe.service';
+import { getCommissionRate } from '../common/commission';
 import { PromotionsService } from '../promotions/promotions.service';
 import { CreateRendezVousDto } from './dto/create-rendez-vous.dto';
 
 @Injectable()
 export class RendezVousService {
+  private readonly logger = new Logger(RendezVousService.name);
+
   constructor(
     @InjectRepository(RendezVous) private readonly rendezVous: Repository<RendezVous>,
     @InjectRepository(Paiement) private readonly paiements: Repository<Paiement>,
@@ -57,10 +60,27 @@ export class RendezVousService {
       promotion_id: promotionId,
     });
 
-    const paymentIntent = await this.stripeService.createPaymentIntent(
-      Math.round(tarif * 100),
-      { rendez_vous_id: String(saved.id) },
-    );
+    const amountCents = Math.round(tarif * 100);
+    let paymentIntent: Stripe.PaymentIntent;
+    if (praticien.stripe_account_id && praticien.stripe_payouts_enabled) {
+      // Standard Stripe Connect "destination charges" pattern — see StripeService.createPaymentIntent.
+      paymentIntent = await this.stripeService.createPaymentIntent(
+        amountCents,
+        { rendez_vous_id: String(saved.id) },
+        {
+          applicationFeeAmount: Math.round(amountCents * getCommissionRate()),
+          destination: praticien.stripe_account_id,
+        },
+      );
+    } else {
+      // Praticien hasn't finished Connect onboarding — never block the booking over payout
+      // plumbing. The platform's own Stripe account still captures the full charge; the
+      // praticien's share needs a manual payout later.
+      this.logger.warn(
+        `rendez_vous ${saved.id}: praticien ${praticien.id} n'a pas terminé l'onboarding Stripe Connect — paiement créé sans reversement automatique, versement manuel requis.`,
+      );
+      paymentIntent = await this.stripeService.createPaymentIntent(amountCents, { rendez_vous_id: String(saved.id) });
+    }
     await this.rendezVous.update(saved.id, { stripe_payment_intent_id: paymentIntent.id });
 
     const fresh = await this.withRelations().where('rdv.id = :id', { id: saved.id }).getOne();
@@ -116,6 +136,14 @@ export class RendezVousService {
     const existing = await this.paiements.findOneBy({ rendez_vous_id: rdvId });
     if (existing) return; // idempotent: this event was already processed
 
+    // Read the commission actually attached to this PaymentIntent straight off the Stripe
+    // payload — 0 when the booking used the no-Connect fallback in create() above, so this
+    // always matches what Stripe really charged rather than being recomputed from a rate
+    // that could differ between booking creation and webhook delivery.
+    const commissionCents = intent.application_fee_amount ?? 0;
+    const commission = Math.round(commissionCents) / 100;
+    const montantNetPraticien = Math.round((rdv.tarif - commission) * 100) / 100;
+
     try {
       await this.paiements.save({
         reference: `RDV-${rdv.id}-${Date.now()}`,
@@ -123,6 +151,8 @@ export class RendezVousService {
         praticien_id: rdv.praticien_id,
         rendez_vous_id: rdv.id,
         montant_brut: rdv.tarif,
+        commission,
+        montant_net_praticien: montantNetPraticien,
         moyen_paiement: 'card',
         statut: 'paid',
         date_paiement: new Date(),
