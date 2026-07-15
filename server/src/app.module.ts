@@ -28,6 +28,7 @@ import { FavoritesModule } from './favorites/favorites.module';
 import { NotificationPreferencesModule } from './notification-preferences/notification-preferences.module';
 import { ConversationsModule } from './conversations/conversations.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
+import { DisputesModule } from './disputes/disputes.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { AuditLogModule } from './audit-log/audit-log.module';
     RendezVousModule,
     ConversationsModule,
     AuditLogModule,
+    DisputesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

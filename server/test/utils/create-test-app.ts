@@ -28,6 +28,7 @@ import { NotificationPreference } from '../../src/database/entities/notification
 import { Conversation } from '../../src/database/entities/conversation.entity';
 import { Message } from '../../src/database/entities/message.entity';
 import { AuditLog } from '../../src/database/entities/audit-log.entity';
+import { Dispute } from '../../src/database/entities/dispute.entity';
 import * as bcrypt from 'bcryptjs';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret';
@@ -43,7 +44,7 @@ const ALL_ENTITIES = [
   User, Client, Praticien, PraticienDocument, Cercle, Event, EventPraticien,
   Promotion, Discipline, Article, Notification, EmailTemplate, Echange, Paiement,
   Remboursement, RendezVous, Avis, Signalement, Favorite, NotificationPreference,
-  Conversation, Message, AuditLog,
+  Conversation, Message, AuditLog, Dispute,
 ];
 
 export async function createTestApp(
