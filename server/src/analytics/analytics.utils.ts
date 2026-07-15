@@ -54,6 +54,28 @@ export function currentWeekRange(now = new Date()): { start: Date; end: Date } {
   return { start, end };
 }
 
+/**
+ * Parses a datetime value coming back from a *raw* query result (`getRawMany`/`getRawOne`,
+ * including aggregates like `MIN(...)`) into a Date representing the correct UTC instant.
+ *
+ * Raw query results bypass TypeORM's column hydration. On the better-sqlite3 driver, a
+ * `datetime` column comes back from a raw select as a bare `"YYYY-MM-DD HH:MM:SS.mmm"` string
+ * with no timezone marker — even though the column is stored in UTC (see the driver note at the
+ * top of this file), `new Date(...)` on that bare string parses it in the process's *local*
+ * timezone, silently shifting the instant by the local UTC offset. This can flip which
+ * day/weekday bucket a timestamp lands in. TypeORM's own entity hydration path avoids this by
+ * inserting a 'T' and trailing 'Z' before parsing (AbstractSqliteDriver#prepareHydratedValue);
+ * this function applies the identical fix so raw/aggregate results behave the same way. Values
+ * the driver already parsed into a Date (e.g. mysql2 in production) pass through unchanged.
+ */
+export function parseRawDatetime(value: string | Date): Date {
+  if (value instanceof Date) return value;
+  let v = value;
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(v)) v = v.replace(' ', 'T');
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(v)) v += 'Z';
+  return new Date(v);
+}
+
 /** Buckets a list of Dates into 7 Mon..Sun counts, relative to `weekStart` (must be a Monday 00:00 UTC). */
 export function bucketByWeekday(dates: Date[], weekStart: Date): { jour: string; count: number }[] {
   const counts = new Array(7).fill(0);

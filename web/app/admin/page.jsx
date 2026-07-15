@@ -1,4 +1,6 @@
+'use client';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { StatCard } from '@/components/ui/StatCard';
 import { PageHead } from '@/components/ui/PageHead';
 import { Badge } from '@/components/ui/Badge';
@@ -6,13 +8,37 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
 import { BarChart, LineChart, Donut } from '@/components/ui/MiniChart';
 import { ModalButton } from '@/components/ui/ModalButton';
-import { bookings, transactions, reports, analytics, adminNotifications } from '@/lib/data/admin';
+import { bookings, transactions, reports, adminNotifications } from '@/lib/data/admin';
 import { practitioners } from '@/lib/data/practitioners';
+import { api } from '@/lib/api';
 import { euro, dateFr, tone } from '@/lib/format';
 
 export default function AdminDashboard() {
   const recent = bookings.slice(0, 6);
   const pendingVerif = practitioners.slice(0, 4);
+
+  const { data: dashboardData } = useQuery({
+    queryKey: ['admin', 'analytics', 'dashboard'],
+    queryFn: () => api.get('/admin/analytics/dashboard'),
+  });
+  const { data: revenueData } = useQuery({
+    queryKey: ['admin', 'analytics', 'revenue'],
+    queryFn: () => api.get('/admin/analytics/revenue'),
+  });
+  const { data: growthData } = useQuery({
+    queryKey: ['admin', 'analytics', 'growth'],
+    queryFn: () => api.get('/admin/analytics/growth'),
+  });
+  const { data: retentionData } = useQuery({
+    queryKey: ['admin', 'analytics', 'retention'],
+    queryFn: () => api.get('/admin/analytics/retention'),
+  });
+
+  const dash = dashboardData?.data;
+  const revenueMonthly = (revenueData?.data?.par_mois ?? []).map((r) => r.total);
+  const bookingsWeekly = growthData?.data?.bookings_this_week ?? [];
+  const retention90 = retentionData?.data?.overall?.retention_90j_pct;
+
   return (
     <>
       <PageHead title="Tableau de bord" subtitle="Bonjour Aïcha — voici l'activité d'Aura aujourd'hui."
@@ -22,10 +48,19 @@ export default function AdminDashboard() {
         </>} />
 
       <div className="grid grid-4" style={{ marginBottom: 24 }}>
-        <StatCard label="Revenu du mois" value={euro(64500)} delta="+8,2%" deltaDir="up" icon="euro" />
-        <StatCard label="Réservations" value="340" delta="+14%" deltaDir="up" icon="calendar" />
-        <StatCard label="Nouveaux praticiens" value="28" delta="+5" deltaDir="up" icon="sparkle" />
-        <StatCard label="Taux de litige" value="0,7%" delta="-0,2 pt" deltaDir="up" icon="shield" />
+        <StatCard label="Revenu du mois" value={euro(dash?.revenue_this_month)}
+          delta={dash?.revenue_delta_pct != null ? `${dash.revenue_delta_pct > 0 ? '+' : ''}${dash.revenue_delta_pct}%` : undefined}
+          deltaDir={dash?.revenue_delta_pct != null && dash.revenue_delta_pct < 0 ? 'down' : 'up'}
+          icon="euro" />
+        <StatCard label="Réservations" value={dash?.bookings_this_month ?? '—'}
+          delta={dash?.bookings_delta_pct != null ? `${dash.bookings_delta_pct > 0 ? '+' : ''}${dash.bookings_delta_pct}%` : undefined}
+          deltaDir={dash?.bookings_delta_pct != null && dash.bookings_delta_pct < 0 ? 'down' : 'up'}
+          icon="calendar" />
+        <StatCard label="Nouveaux praticiens" value={dash?.new_praticiens_this_month ?? '—'}
+          delta={dash?.new_praticiens_delta != null ? `${dash.new_praticiens_delta > 0 ? '+' : ''}${dash.new_praticiens_delta}` : undefined}
+          deltaDir={dash?.new_praticiens_delta != null && dash.new_praticiens_delta < 0 ? 'down' : 'up'}
+          icon="sparkle" />
+        <StatCard label="Taux de remboursement" value={dash?.refund_rate ?? '—'} icon="shield" />
       </div>
 
       <div className="grid" style={{ gridTemplateColumns: '1.6fr 1fr', gap: 20, marginBottom: 24 }}>
@@ -34,11 +69,11 @@ export default function AdminDashboard() {
             <div><div className="eyebrow">12 derniers mois</div><h3 className="h-3" style={{ marginTop: 4 }}>Revenu</h3></div>
             <Link href="/admin/analytique/revenus" className="more">Détails →</Link>
           </div>
-          <LineChart data={analytics.revenueMonthly} height={180} />
+          <LineChart data={revenueMonthly} height={180} />
         </div>
         <div className="card card-pad">
           <h3 className="h-3" style={{ marginBottom: 18 }}>Réservations / semaine</h3>
-          <BarChart data={analytics.bookingsWeekly} labels={analytics.weekLabels} height={150} color="var(--sage-2)" />
+          <BarChart data={bookingsWeekly.map((d) => d.count)} labels={bookingsWeekly.map((d) => d.jour)} height={150} color="var(--sage-2)" />
         </div>
       </div>
 
@@ -86,7 +121,9 @@ export default function AdminDashboard() {
 
           <div className="card card-pad center">
             <h3 className="h-3" style={{ marginBottom: 14 }}>Rétention 90j</h3>
-            <div className="row" style={{ justifyContent: 'center' }}><Donut value={analytics.retention} label="reviennent" /></div>
+            <div className="row" style={{ justifyContent: 'center' }}>
+              <Donut value={retention90 ?? 0} label="reviennent" />
+            </div>
           </div>
         </div>
       </div>
