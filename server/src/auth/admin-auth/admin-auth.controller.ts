@@ -63,7 +63,9 @@ export class AdminAuthController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(200)
   @Post(':id/activate')
-  activate(@Param('id', ParseIntPipe) id: number) { return this.service.activate(id); }
+  activate(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
+    return this.service.activate(user, id);
+  }
 
   // equipe_roles is an admin-only capability in the matrix (server/src/auth/capabilities.ts)
   // — gating on it here is what actually enforces that, closing a privilege-escalation

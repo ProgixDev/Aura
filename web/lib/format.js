@@ -29,3 +29,27 @@ export const statusTone = {
 };
 
 export const tone = (status) => statusTone[String(status).toLowerCase()] || 'neutral';
+
+export const relativeFr = (iso) => {
+  if (!iso) return '';
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffMin = Math.round(diffMs / 60000);
+  if (diffMin < 1) return "à l'instant";
+  if (diffMin < 60) return `il y a ${diffMin} min`;
+  const diffH = Math.round(diffMin / 60);
+  if (diffH < 24) return `il y a ${diffH}h`;
+  const diffD = Math.round(diffH / 24);
+  if (diffD === 1) return 'hier';
+  return `il y a ${diffD} jours`;
+};
+
+// Triggers a client-side download of a { filename, csv } payload as returned by
+// every admin CSV-export endpoint (paiements/export/csv, admin/audit-logs/export, …).
+export function downloadCsv({ filename, csv }) {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}

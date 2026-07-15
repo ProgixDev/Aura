@@ -6,18 +6,9 @@ import { DataTable } from '@/components/ui/DataTable';
 import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
 import { api } from '@/lib/api';
-import { euro, dateFr } from '@/lib/format';
+import { euro, dateFr, downloadCsv } from '@/lib/format';
 
 const STATUT_TONE = { paid: 'success', en_attente: 'warning', rembourse: 'info' };
-
-function downloadCsv({ filename, csv }) {
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
-}
 
 export default function AdminPaiementsPage() {
   const { data, isError } = useQuery({

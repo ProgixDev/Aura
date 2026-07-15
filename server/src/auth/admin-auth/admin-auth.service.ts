@@ -15,6 +15,7 @@ import { RegisterAdminDto } from './dto/register-admin.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateAdminRoleDto } from './dto/update-admin-role.dto';
+import { AuditLogService } from '../../audit-log/audit-log.service';
 
 @Injectable()
 export class AdminAuthService {
@@ -22,6 +23,7 @@ export class AdminAuthService {
     @InjectRepository(User) private readonly users: Repository<User>,
     private readonly hash: HashService,
     private readonly tokens: TokenService,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   private validationError(errors: Record<string, string[]>): never {
@@ -39,6 +41,13 @@ export class AdminAuthService {
       password: await this.hash.hash(dto.password), is_admin: true,
       role: dto.role ?? 'admin',
     });
+    await this.auditLog.record(
+      user,
+      'a créé un compte administrateur',
+      { type: 'user', id: user.id, label: user.name },
+      'system',
+      { self_registration: true },
+    );
     return success(
       {
         user: pickUser(user, ['id', 'name', 'email', 'is_admin', 'role', 'created_at']),
@@ -124,13 +133,25 @@ export class AdminAuthService {
     const admin = await this.users.findOneBy({ id, is_admin: true });
     if (!admin) throw new NotFoundException({ status: 'error', message: 'Administrateur non trouvé' });
     await this.users.update(id, { is_admin: false });
+    await this.auditLog.record(
+      current,
+      'a désactivé un compte administrateur',
+      { type: 'user', id: admin.id, label: admin.name },
+      'system',
+    );
     return success(undefined, 'Administrateur désactivé avec succès');
   }
 
-  async activate(id: number) {
+  async activate(current: User, id: number) {
     const user = await this.users.findOneBy({ id });
     if (!user) throw new NotFoundException({ status: 'error', message: 'Utilisateur non trouvé' });
     await this.users.update(id, { is_admin: true });
+    await this.auditLog.record(
+      current,
+      'a réactivé un compte administrateur',
+      { type: 'user', id: user.id, label: user.name },
+      'system',
+    );
     return success(undefined, 'Administrateur réactivé avec succès');
   }
 
@@ -143,6 +164,12 @@ export class AdminAuthService {
     const admin = await this.users.findOneBy({ id, is_admin: true });
     if (!admin) throw new NotFoundException({ status: 'error', message: 'Administrateur non trouvé' });
     await this.users.delete(id);
+    await this.auditLog.record(
+      current,
+      'a supprimé un compte administrateur',
+      { type: 'user', id: admin.id, label: admin.name },
+      'system',
+    );
     return success(undefined, 'Administrateur supprimé avec succès');
   }
 
