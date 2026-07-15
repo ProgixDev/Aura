@@ -1,24 +1,31 @@
+'use client';
+import { useQuery } from '@tanstack/react-query';
 import { PageHead } from '@/components/ui/PageHead';
 import { StatCard } from '@/components/ui/StatCard';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
 import { LineChart } from '@/components/ui/MiniChart';
-import { analytics, subscriptions } from '@/lib/data/admin';
+import { subscriptions } from '@/lib/data/admin';
+import { api } from '@/lib/api';
 import { euro } from '@/lib/format';
 
-const MONTHS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
 const TONE_VAR = { sky: 'var(--sky-2)', violet: 'var(--violet-2)', sage: 'var(--sage-2)', gold: 'var(--gold)' };
+const DISCIPLINE_TONES = ['sky', 'violet', 'sage', 'gold'];
 
 export default function RevenueAnalyticsPage() {
-  const rev = analytics.revenueMonthly;
-  const total = rev.reduce((s, v) => s + v, 0);
-  const commission = Math.round(total * 0.15);
-  const net = total - commission;
+  const { data: revenueData } = useQuery({
+    queryKey: ['admin', 'analytics', 'revenue'],
+    queryFn: () => api.get('/admin/analytics/revenue'),
+  });
+  const revenue = revenueData?.data;
+  const parMois = revenue?.par_mois ?? [];
+  const byDiscipline = revenue?.par_discipline ?? [];
+  const general = revenue?.general;
+
+  // MRR/ARR/subscriber counts still come from the `subscriptions` mock — the real
+  // `subscriptions` table is 08e's job and doesn't exist yet. Not part of this endpoint.
   const mrr = subscriptions.filter((s) => s.status !== 'cancelled').reduce((s, x) => s + x.price, 0);
   const arr = mrr * 12;
-
-  const byDiscipline = analytics.disciplineShare.map((d) => ({ ...d, value: Math.round((total * d.pct) / 100) }));
-  const maxRevDisc = Math.max(...byDiscipline.map((d) => d.value), 1);
 
   return (
     <>
@@ -30,20 +37,20 @@ export default function RevenueAnalyticsPage() {
       />
 
       <div className="grid grid-4" style={{ marginBottom: 24 }}>
-        <StatCard label="Chiffre d’affaires" value={euro(total)} delta="+8,2%" deltaDir="up" icon="euro" />
-        <StatCard label="Commissions (15%)" value={euro(commission)} delta="+8,2%" deltaDir="up" icon="card" />
-        <StatCard label="Reversé aux praticiens" value={euro(net)} delta="+8,1%" deltaDir="up" icon="users" />
-        <StatCard label="MRR abonnements" value={euro(mrr)} delta="+2 abonnés" deltaDir="up" icon="sparkle" />
+        <StatCard label="Chiffre d’affaires" value={euro(general?.montant_total)} icon="euro" />
+        <StatCard label="Commissions" value={euro(general?.commission_totale)} icon="card" />
+        <StatCard label="Reversé aux praticiens" value={euro(general?.net_total)} icon="users" />
+        <StatCard label="MRR abonnements" value={euro(mrr)} icon="sparkle" hint="Basé sur le mock — dépend de 08e" />
       </div>
 
       <div className="card card-pad" style={{ marginBottom: 24 }}>
         <div className="between" style={{ marginBottom: 18 }}>
-          <div><div className="eyebrow">Évolution annuelle</div><h3 className="h-3" style={{ marginTop: 4 }}>Chiffre d’affaires mensuel</h3></div>
-          <span className="price">{euro(rev[rev.length - 1])} <small>/ dernier mois</small></span>
+          <div><div className="eyebrow">12 derniers mois</div><h3 className="h-3" style={{ marginTop: 4 }}>Chiffre d’affaires mensuel</h3></div>
+          <span className="price">{euro(parMois[parMois.length - 1]?.total)} <small>/ dernier mois</small></span>
         </div>
-        <LineChart data={rev} height={220} />
+        <LineChart data={parMois.map((r) => r.total)} height={220} />
         <div className="row" style={{ gap: 8, marginTop: 8 }}>
-          {analytics.revenueLabels.map((l, i) => <div key={i} className="flex-1 tiny center">{l}</div>)}
+          {parMois.map((r) => <div key={r.mois} className="flex-1 tiny center">{r.mois.slice(5)}</div>)}
         </div>
       </div>
 
@@ -51,26 +58,24 @@ export default function RevenueAnalyticsPage() {
         <div className="card" style={{ overflow: 'hidden' }}>
           <div className="between" style={{ padding: '18px 20px' }}>
             <h3 className="h-3">Détail par mois</h3>
-            <span className="tiny">commission 15% · TVA incluse</span>
+            <span className="tiny">commission et net réels, calculés par transaction</span>
           </div>
           <table className="table">
             <thead><tr><th>Mois</th><th>Brut</th><th>Commission</th><th>Net praticiens</th></tr></thead>
             <tbody>
-              {rev.map((v, i) => {
-                const c = Math.round(v * 0.15);
-                return (
-                  <tr key={i}>
-                    <td className="table-cell-main">{MONTHS[i]}</td>
-                    <td><strong>{euro(v)}</strong></td>
-                    <td className="small">{euro(c)}</td>
-                    <td className="small">{euro(v - c)}</td>
-                  </tr>
-                );
-              })}
+              {parMois.map((r) => (
+                <tr key={r.mois}>
+                  <td className="table-cell-main">{r.mois}</td>
+                  <td><strong>{euro(r.total)}</strong></td>
+                  <td className="small">{euro(r.commission)}</td>
+                  <td className="small">{euro(r.net)}</td>
+                </tr>
+              ))}
             </tbody>
             <tfoot>
               <tr style={{ fontWeight: 600 }}>
-                <td>Total</td><td>{euro(total)}</td><td>{euro(commission)}</td><td>{euro(net)}</td>
+                <td>Total</td><td>{euro(general?.montant_total)}</td>
+                <td>{euro(general?.commission_totale)}</td><td>{euro(general?.net_total)}</td>
               </tr>
             </tfoot>
           </table>
@@ -80,14 +85,14 @@ export default function RevenueAnalyticsPage() {
           <div className="card card-pad">
             <h3 className="h-3" style={{ marginBottom: 18 }}>Revenu par discipline</h3>
             <div className="stack gap-4">
-              {byDiscipline.map((d) => (
-                <div key={d.name}>
+              {byDiscipline.map((d, i) => (
+                <div key={d.specialite}>
                   <div className="between" style={{ marginBottom: 6 }}>
-                    <span className="small">{d.name}</span>
-                    <strong className="small">{euro(d.value)}</strong>
+                    <span className="small">{d.specialite}</span>
+                    <strong className="small">{euro(d.total)}</strong>
                   </div>
                   <div style={{ height: 8, borderRadius: 999, background: 'var(--line)', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${(d.value / maxRevDisc) * 100}%`, background: TONE_VAR[d.tone] || 'var(--violet-2)', borderRadius: 999 }} />
+                    <div style={{ height: '100%', width: `${d.pct}%`, background: TONE_VAR[DISCIPLINE_TONES[i % DISCIPLINE_TONES.length]], borderRadius: 999 }} />
                   </div>
                 </div>
               ))}
@@ -96,6 +101,7 @@ export default function RevenueAnalyticsPage() {
 
           <div className="card card-pad">
             <h3 className="h-4" style={{ marginBottom: 14 }}>Revenu récurrent</h3>
+            <p className="tiny" style={{ marginBottom: 10 }}>Basé sur le mock d’abonnements — sera réel une fois 08e livré.</p>
             <dl className="dl">
               <dt>MRR</dt><dd><strong>{euro(mrr)}</strong></dd>
               <dt>ARR (projeté)</dt><dd>{euro(arr)}</dd>
