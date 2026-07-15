@@ -37,6 +37,7 @@ export default function Chat() {
   const queryClient = useQueryClient();
   const [text, setText] = useState('');
   const [pending, setPending] = useState<ChatMessage[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
 
   const { data: conv } = useQuery({
@@ -54,6 +55,7 @@ export default function Chat() {
     mutationFn: (value: string) => messageRepo.send(String(id), value),
     onSuccess: () => {
       setPending([]);
+      setError(null);
       queryClient.invalidateQueries({ queryKey: ['messages', id] });
     },
   });
@@ -61,9 +63,21 @@ export default function Chat() {
   const send = () => {
     const trimmed = text.trim();
     if (!trimmed) return;
-    setPending((prev) => appendOptimisticMessage(prev, trimmed));
+    setError(null);
+    const withOptimistic = appendOptimisticMessage(pending, trimmed);
+    const optimisticId = withOptimistic[withOptimistic.length - 1].id;
+    setPending(withOptimistic);
     setText('');
-    sendMutation.mutate(trimmed);
+    sendMutation.mutate(trimmed, {
+      onError: (err: any) => {
+        // Roll back the optimistic bubble and restore the draft so the user
+        // can see what failed and retry — a silently "sent-looking" bubble
+        // for a message the other party never received would be misleading.
+        setPending((prev) => prev.filter((m) => m.id !== optimisticId));
+        setText(trimmed);
+        setError(err?.message ?? "Échec de l'envoi, réessayez.");
+      },
+    });
   };
 
   return (
@@ -96,6 +110,8 @@ export default function Chat() {
         </ScrollView>
       </LinearGradient>
 
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+
       <ChatComposer
         value={text}
         onChangeText={setText}
@@ -121,4 +137,13 @@ const styles = StyleSheet.create({
   who: { ...typography.bodyMedium, fontSize: 15 },
   status: { fontFamily: 'Outfit_500Medium', fontSize: 11, color: colors.sage2 },
   empty: { ...typography.small, textAlign: 'center', marginTop: 40 },
+  error: {
+    ...typography.small,
+    fontSize: 12,
+    color: colors.danger,
+    textAlign: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 6,
+    backgroundColor: 'rgba(251,249,246,0.96)',
+  },
 });

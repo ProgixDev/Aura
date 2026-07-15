@@ -5,7 +5,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
-import { api } from '@/lib/api';
+import { api, errorMessage } from '@/lib/api';
+import { useUI } from '@/lib/store';
 
 // Same polling cadence as the mobile chat screen (mobile/app/chat/[id].tsx)
 // — no WebSocket infra exists in this codebase (Plan 08 design spec, P8-1).
@@ -14,6 +15,7 @@ const POLL_INTERVAL_MS = 6000;
 export default function ConversationPage({ params }) {
   const { id } = use(params);
   const queryClient = useQueryClient();
+  const toast = useUI((s) => s.toast);
   const [text, setText] = useState('');
 
   const { data: convRes, isLoading: convLoading } = useQuery({
@@ -30,14 +32,17 @@ export default function ConversationPage({ params }) {
 
   const sendMutation = useMutation({
     mutationFn: (value) => api.post(`/client/conversations/${id}/messages`, { text: value }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['client-messages', id] }),
+    onSuccess: () => {
+      setText('');
+      queryClient.invalidateQueries({ queryKey: ['client-messages', id] });
+    },
+    onError: (err) => toast(errorMessage(err), 'danger'),
   });
 
   const send = (e) => {
     e.preventDefault();
     const trimmed = text.trim();
     if (!trimmed) return;
-    setText('');
     sendMutation.mutate(trimmed);
   };
 
