@@ -1,5 +1,7 @@
 import React from 'react';
 import {
+  Alert,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,8 +19,9 @@ import { Toggle } from '@components/Toggle';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { useSession } from '@store/session';
-import { praticienMessageRepo, subscriptionRepo } from '@data/repos';
+import { praticienMessageRepo, subscriptionRepo, stripeConnectRepo } from '@data/repos';
 import { effectivePlan } from '@utils/subscriptionPlan';
+import { errorMessage } from '@data/api/client';
 import type { Subscription } from '@data/types';
 
 const PLAN_LABEL: Record<'essentiel' | 'pro' | 'premium', string> = {
@@ -94,6 +97,8 @@ export default function Dashboard() {
           <Toggle value={active} onValueChange={toggle} />
         </View>
 
+        <PaiementsSection />
+
         <View style={styles.pauseBox}>
           <View style={styles.pauseIc}>
             <Text style={{ fontSize: 16 }}>🌙</Text>
@@ -148,6 +153,62 @@ export default function Dashboard() {
         />
         <Row icon={<Icon name="shield" size={20} color={colors.ink} />} title="Charte de bienveillance" />
       </ScrollView>
+    </View>
+  );
+}
+
+function PaiementsSection() {
+  const { data: status, isLoading, refetch } = useQuery({
+    queryKey: ['stripeConnectStatus'],
+    queryFn: stripeConnectRepo.status,
+  });
+  const [submitting, setSubmitting] = React.useState(false);
+
+  const onboard = async () => {
+    setSubmitting(true);
+    try {
+      const { url } = await stripeConnectRepo.onboard();
+      await Linking.openURL(url);
+      refetch();
+    } catch (err) {
+      Alert.alert('Impossible de démarrer', errorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const payoutsEnabled = status?.stripe_payouts_enabled ?? false;
+  const hasAccount = Boolean(status?.stripe_account_id);
+
+  return (
+    <View style={styles.paiementsBox}>
+      <View style={styles.paiementsHead}>
+        <Icon name="card" size={20} color={colors.ink} />
+        <Text style={styles.paiementsTitle}>Paiements</Text>
+      </View>
+      {isLoading ? (
+        <Text style={styles.paiementsSub}>Chargement du statut…</Text>
+      ) : payoutsEnabled ? (
+        <>
+          <Text style={styles.paiementsSubOk}>Versements activés</Text>
+          <Text style={styles.paiementsSub}>
+            Vos paiements sont reversés directement sur votre compte Stripe après chaque séance.
+          </Text>
+        </>
+      ) : (
+        <>
+          <Text style={styles.paiementsSub}>
+            {hasAccount
+              ? 'Votre inscription Stripe est en cours — finalisez-la pour recevoir vos versements.'
+              : 'Configurez vos versements pour être payée directement après chaque séance.'}
+          </Text>
+          <Pressable onPress={onboard} disabled={submitting} style={styles.paiementsCta}>
+            <Text style={styles.paiementsCtaTxt}>
+              {submitting ? 'Ouverture…' : hasAccount ? "Continuer l'inscription →" : 'Configurer mes versements →'}
+            </Text>
+          </Pressable>
+        </>
+      )}
     </View>
   );
 }
@@ -237,6 +298,28 @@ const styles = StyleSheet.create({
   },
   activeTitle: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 17 },
   activeSub: { ...typography.small, fontSize: 12 },
+
+  paiementsBox: {
+    marginHorizontal: 20,
+    marginBottom: 18,
+    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  paiementsHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  paiementsTitle: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 17 },
+  paiementsSubOk: {
+    ...typography.small,
+    fontSize: 13,
+    color: colors.success,
+    marginBottom: 4,
+    fontFamily: 'Outfit_500Medium',
+  },
+  paiementsSub: { ...typography.small, fontSize: 12, lineHeight: 17 },
+  paiementsCta: { marginTop: 10, alignSelf: 'flex-start' },
+  paiementsCtaTxt: { color: colors.ink, fontFamily: 'Outfit_500Medium', fontSize: 13 },
 
   pauseBox: {
     marginHorizontal: 20,

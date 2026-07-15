@@ -28,6 +28,7 @@ import type {
   NotificationPreferences,
   FavoritePraticien,
   Subscription,
+  StripeConnectStatus,
 } from '../types';
 
 const delay = <T>(value: T, ms = 60): Promise<T> =>
@@ -402,4 +403,12 @@ export const subscriptionRepo = {
 
   cancel: (): Promise<Subscription> =>
     api.post<{ status: string; data: Subscription }>('/praticien/subscription/cancel').then((res) => res.data),
+};
+
+// ---------- Stripe Connect (praticien payouts) — real backend ----------
+export const stripeConnectRepo = {
+  status: (): Promise<StripeConnectStatus> =>
+    api.get<{ status: string; data: StripeConnectStatus }>('/praticien/stripe/connect/status').then((res) => res.data),
+  onboard: (): Promise<{ url: string }> =>
+    api.post<{ status: string; data: { url: string } }>('/praticien/stripe/connect/onboard').then((res) => res.data),
 };

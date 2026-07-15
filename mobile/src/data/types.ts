@@ -273,3 +273,8 @@ export interface Subscription {
   created_at: string;
   updated_at: string;
 }
+
+export interface StripeConnectStatus {
+  stripe_account_id: string | null;
+  stripe_payouts_enabled: boolean;
+}
