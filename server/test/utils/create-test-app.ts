@@ -78,13 +78,14 @@ export async function createTestApp(
   return app;
 }
 
-export async function seedAdmin(app: INestApplication, email = 'admin@test.io') {
+export async function seedAdmin(app: INestApplication, email = 'admin@test.io', role: string | null = 'admin') {
   const ds = app.get(DataSource);
   const user = await ds.getRepository(User).save({
     name: 'Admin Test',
     email,
     password: await bcrypt.hash('password123', 10),
     is_admin: true,
+    role,
   });
   return { user, token: signToken(app, user) };
 }
