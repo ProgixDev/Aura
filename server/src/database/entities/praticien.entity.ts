@@ -26,6 +26,8 @@ export class Praticien {
   @Column({ type: 'datetime', nullable: true }) verifie_a: Date | null;
   @Column({ type: 'int', nullable: true }) verifie_par: number | null;
   @Column({ type: 'text', nullable: true }) motif_rejet: string | null;
+  @Column({ type: 'varchar', nullable: true }) stripe_account_id: string | null;
+  @Column({ default: false }) stripe_payouts_enabled: boolean;
   @CreateDateColumn({ name: 'created_at' }) created_at: Date;
   @UpdateDateColumn({ name: 'updated_at' }) updated_at: Date;
 

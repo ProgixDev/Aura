@@ -5,6 +5,11 @@ import Stripe from 'stripe';
 // against stripe-node's own src/apiVersion.ts) rather than left to drift.
 const STRIPE_API_VERSION = '2026-06-24.dahlia';
 
+export interface PaymentIntentConnectFields {
+  applicationFeeAmount: number;
+  destination: string;
+}
+
 @Injectable()
 export class StripeService {
   private readonly stripe: Stripe;
@@ -15,7 +20,11 @@ export class StripeService {
     });
   }
 
-  createPaymentIntent(amountCents: number, metadata: Record<string, string>) {
+  createPaymentIntent(
+    amountCents: number,
+    metadata: Record<string, string>,
+    connect?: PaymentIntentConnectFields,
+  ) {
     return this.stripe.paymentIntents.create({
       amount: amountCents,
       currency: 'eur',
@@ -23,11 +32,47 @@ export class StripeService {
       // Lets PaymentElement (web) / the Payment Sheet (mobile) offer whatever payment
       // methods are enabled on the Stripe account, without hardcoding to 'card' only.
       automatic_payment_methods: { enabled: true },
+      // Standard Stripe Connect "destination charges" pattern: the platform's own Stripe
+      // account is the merchant of record, application_fee_amount is what the platform
+      // keeps, and the rest is transferred automatically to the connected account once the
+      // charge settles. Only attached when the caller resolved a Connect-eligible praticien
+      // (see RendezVousService.create()) — omitted entirely otherwise, so this stays
+      // byte-for-byte identical to the original call for every existing test/caller that
+      // doesn't pass `connect`.
+      ...(connect
+        ? {
+            application_fee_amount: connect.applicationFeeAmount,
+            transfer_data: { destination: connect.destination },
+          }
+        : {}),
     });
   }
 
   constructWebhookEvent(rawBody: Buffer, signature: string, secret: string): Stripe.Event {
     return this.stripe.webhooks.constructEvent(rawBody, signature, secret);
+  }
+
+  // ---- Connect (Plan 08f) ----
+
+  createConnectAccount(email: string) {
+    return this.stripe.accounts.create({
+      type: 'express',
+      country: 'FR',
+      email,
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+    });
+  }
+
+  createAccountLink(accountId: string, refreshUrl: string, returnUrl: string) {
+    return this.stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: refreshUrl,
+      return_url: returnUrl,
+      type: 'account_onboarding',
+    });
   }
 
   // ---- Subscriptions (Plan 08e) ----

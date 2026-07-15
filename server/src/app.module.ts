@@ -31,6 +31,7 @@ import { AuditLogModule } from './audit-log/audit-log.module';
 import { DisputesModule } from './disputes/disputes.module';
 import { PlatformSettingsModule } from './platform-settings/platform-settings.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { StripeConnectModule } from './stripe-connect/stripe-connect.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     DisputesModule,
     PlatformSettingsModule,
     SubscriptionsModule,
+    StripeConnectModule,
   ],
   controllers: [AppController],
   providers: [AppService],
