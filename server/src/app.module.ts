@@ -29,6 +29,7 @@ import { NotificationPreferencesModule } from './notification-preferences/notifi
 import { ConversationsModule } from './conversations/conversations.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { DisputesModule } from './disputes/disputes.module';
+import { PlatformSettingsModule } from './platform-settings/platform-settings.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { DisputesModule } from './disputes/disputes.module';
     ConversationsModule,
     AuditLogModule,
     DisputesModule,
+    PlatformSettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
