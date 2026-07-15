@@ -149,6 +149,8 @@ export interface Remboursement {
 export interface Conversation {
   id: string;
   name: string;
+  /** Which filter-chip group this conversation belongs to, on the Messages screen. */
+  kind: 'practitioner' | 'circle';
   avatar: readonly [string, string, ...string[]];
   photo?: import('react-native').ImageSourcePropType;
   preview: string;

@@ -14,6 +14,7 @@ import { Input } from '@components/Input';
 import { Icon } from '@components/Icon';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
+import { useSession } from '@store/session';
 
 interface Option {
   /**
@@ -106,9 +107,12 @@ export default function Quiz() {
   const insets = useSafeAreaInsets();
   const stepIndex = Math.max(0, Math.min(3, parseInt(params.step ?? '0', 10)));
   const step = steps[stepIndex];
-  const [selected, setSelected] = useState<number>(0);
+  const quizAnswers = useSession((s) => s.quizAnswers);
+  const setQuizAnswer = useSession((s) => s.setQuizAnswer);
+  const [selected, setSelected] = useState<number>(() => quizAnswers[stepIndex] ?? 0);
 
   const next = () => {
+    setQuizAnswer(stepIndex, selected);
     if (stepIndex === steps.length - 1) {
       router.replace('/(tabs)' as any);
     } else {

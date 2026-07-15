@@ -30,6 +30,8 @@ export default function Messages() {
 
   const filtered = list.filter((c) => {
     if (filter === 'unread' && !c.unread) return false;
+    if (filter === 'pra' && c.kind !== 'practitioner') return false;
+    if (filter === 'circles' && c.kind !== 'circle') return false;
     if (search.trim() && !c.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });

@@ -5,6 +5,7 @@ export const conversationsMock: Conversation[] = [
   {
     id: 'm1',
     name: 'Élodie Marceau',
+    kind: 'practitioner',
     avatar: ['#C4B0E8', '#A8C8E8'] as const,
     photo: practitionerImages.p1.avatar,
     preview: 'Bonjour Sarah, avec plaisir 🙏 je vous propose…',
@@ -15,6 +16,7 @@ export const conversationsMock: Conversation[] = [
   {
     id: 'm2',
     name: 'Mathieu Vernet',
+    kind: 'practitioner',
     avatar: ['#B8D4C2', '#C4B0E8'] as const,
     photo: practitionerImages.p2.avatar,
     preview:
@@ -26,6 +28,7 @@ export const conversationsMock: Conversation[] = [
   {
     id: 'm3',
     name: 'Camille Rossi',
+    kind: 'practitioner',
     avatar: ['#A8C8E8', '#B8D4C2'] as const,
     photo: practitionerImages.p3.avatar,
     preview:
@@ -37,6 +40,7 @@ export const conversationsMock: Conversation[] = [
   {
     id: 'm4',
     name: 'Cercle Aura — Paris',
+    kind: 'circle',
     avatar: ['#E4C896', '#C4B0E8'] as const,
     preview: 'Marie a partagé une ressource dans le cercle.',
     when: '29 mars',
