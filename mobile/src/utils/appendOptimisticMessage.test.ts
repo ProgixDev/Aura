@@ -2,7 +2,7 @@ import { appendOptimisticMessage } from './appendOptimisticMessage';
 import type { ChatMessage } from '../data/types';
 
 const existing: ChatMessage[] = [
-  { id: 'c1', fromMe: false, text: 'Bonjour', time: '10:00' },
+  { id: 'c1', fromMe: false, text: 'Bonjour', time: '10:00', createdAtIso: '2026-07-13T09:00:00.000Z' },
 ];
 
 describe('appendOptimisticMessage', () => {

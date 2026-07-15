@@ -149,8 +149,6 @@ export interface Remboursement {
 export interface Conversation {
   id: string;
   name: string;
-  /** Which filter-chip group this conversation belongs to, on the Messages screen. */
-  kind: 'practitioner' | 'circle';
   avatar: readonly [string, string, ...string[]];
   photo?: import('react-native').ImageSourcePropType;
   preview: string;
@@ -164,13 +162,9 @@ export interface ChatMessage {
   fromMe: boolean;
   text: string;
   time: string;
+  /** Real timestamp (ISO string) — `time` alone has no date, only "HH:MM". */
+  createdAtIso: string;
   dayMark?: string;
-  proposal?: {
-    when: string;
-    durationMinutes: number;
-    mode: 'présentiel' | 'visio';
-    price: number;
-  };
 }
 
 /** Real `avis` row (server/src/database/entities/avis.entity.ts) — field names verbatim, no camelCase mapping layer. */

@@ -1,14 +1,10 @@
 import type { ChatMessage } from '../data/types';
 
 /**
- * Appends a locally-composed message to the end of a message list.
- *
- * There is no messaging backend anywhere in this program (messaging was
- * folded into "Plan 08" of the Aura frontend-wiring roadmap, deferred
- * indefinitely). This cannot persist or reach the other party; it only
- * makes sending feel functional within the current app session. The
- * generated id is prefixed "local-" so a future real implementation can
- * tell these apart from server-issued messages.
+ * Appends a locally-composed message to the end of a message list, for
+ * instant UI feedback while the real send request is in flight. The chat
+ * screen clears this optimistic entry once the send mutation resolves and
+ * the thread is refetched — see mobile/app/chat/[id].tsx.
  */
 export function appendOptimisticMessage(
   messages: ChatMessage[],
@@ -26,6 +22,7 @@ export function appendOptimisticMessage(
       fromMe: true,
       text: trimmed,
       time: `${hh}:${mm}`,
+      createdAtIso: now.toISOString(),
     },
   ];
 }

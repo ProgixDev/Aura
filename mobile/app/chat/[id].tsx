@@ -6,26 +6,35 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Avatar } from '@components/Avatar';
-import { Button } from '@components/Button';
+import { ChatBubble } from '@components/ChatBubble';
+import { ChatComposer } from '@components/ChatComposer';
 import { Icon } from '@components/Icon';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { messageRepo } from '@data/repos';
 import type { ChatMessage } from '@data/types';
 import { appendOptimisticMessage } from '@utils/appendOptimisticMessage';
+import { withDayMarks } from '@utils/chatDayMarks';
+
+// While this screen is mounted, messages are polled rather than pushed —
+// there is no WebSocket infra in this codebase (Plan 08 design spec,
+// decision P8-1). 6s keeps a chat feeling reasonably live without hammering
+// the backend; it only runs while this screen is focused (React Query stops
+// polling once the query is unmounted, e.g. on navigating back).
+const POLL_INTERVAL_MS = 6000;
 
 export default function Chat() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const queryClient = useQueryClient();
   const [text, setText] = useState('');
   const [pending, setPending] = useState<ChatMessage[]>([]);
   const scrollRef = useRef<ScrollView>(null);
@@ -37,18 +46,24 @@ export default function Chat() {
   const { data: msgs = [] } = useQuery({
     queryKey: ['messages', id],
     queryFn: () => messageRepo.messages(String(id)),
+    refetchInterval: POLL_INTERVAL_MS,
   });
-  const allMsgs = useMemo(() => [...msgs, ...pending], [msgs, pending]);
+  const allMsgs = useMemo(() => withDayMarks([...msgs, ...pending]), [msgs, pending]);
+
+  const sendMutation = useMutation({
+    mutationFn: (value: string) => messageRepo.send(String(id), value),
+    onSuccess: () => {
+      setPending([]);
+      queryClient.invalidateQueries({ queryKey: ['messages', id] });
+    },
+  });
 
   const send = () => {
-    if (!text.trim()) return;
-    // Local-only optimistic append: there is no messaging backend anywhere
-    // in this program (messaging was folded into "Plan 08", deferred
-    // indefinitely — see the master roadmap). This makes sending feel
-    // functional within the current app session; it does not persist
-    // anywhere and the other party never receives it.
-    setPending((prev) => appendOptimisticMessage(prev, text));
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setPending((prev) => appendOptimisticMessage(prev, trimmed));
     setText('');
+    sendMutation.mutate(trimmed);
   };
 
   return (
@@ -62,87 +77,32 @@ export default function Chat() {
         </Pressable>
         <Avatar source={conv?.photo} gradient={conv?.avatar ?? [colors.violet, colors.sky]} size="sm" online={conv?.online} />
         <View style={{ flex: 1 }}>
-          <Text style={styles.who}>{conv?.name ?? 'Élodie Marceau'}</Text>
-          <Text style={styles.status}>● En ligne</Text>
+          <Text style={styles.who}>{conv?.name ?? 'Conversation'}</Text>
+          <Text style={styles.status}>{conv?.online ? '● En ligne' : 'Praticien'}</Text>
         </View>
-        <Pressable style={styles.iconBtn}>
-          <Icon name="video" size={20} color={colors.muted} />
-        </Pressable>
       </View>
 
-      <LinearGradient
-        colors={[colors.pearl, '#F6F1EA']}
-        style={{ flex: 1 }}
-      >
+      <LinearGradient colors={[colors.pearl, '#F6F1EA']} style={{ flex: 1 }}>
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 10 }}
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
         >
-          {allMsgs.map((m) => (
-            <Bubble key={m.id} m={m} />
-          ))}
+          {allMsgs.length === 0 ? (
+            <Text style={styles.empty}>Écrivez le premier message de cette conversation.</Text>
+          ) : (
+            allMsgs.map((m) => <ChatBubble key={m.id} message={m} />)
+          )}
         </ScrollView>
       </LinearGradient>
 
-      <View style={[styles.compose, { paddingBottom: insets.bottom + 10 }]}>
-        <Pressable style={styles.composeIcon}>
-          <Icon name="plus" size={20} color={colors.muted} />
-        </Pressable>
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          placeholder="Votre message…"
-          placeholderTextColor={colors.muted}
-          style={styles.composeInput}
-        />
-        <Pressable style={styles.sendBtn} onPress={send}>
-          <Icon name="send" size={18} color="#fff" />
-        </Pressable>
-      </View>
+      <ChatComposer
+        value={text}
+        onChangeText={setText}
+        onSend={send}
+        containerStyle={{ paddingBottom: insets.bottom + 10 }}
+      />
     </KeyboardAvoidingView>
-  );
-}
-
-function Bubble({ m }: { m: ChatMessage }) {
-  const router = useRouter();
-  if (m.proposal) {
-    return (
-      <View style={[styles.bubble, styles.them, { padding: 0, overflow: 'hidden' }]}>
-        <View style={{ padding: 14 }}>
-          <Text style={styles.proposalLabel}>CRÉNEAU PROPOSÉ</Text>
-          <Text style={styles.proposalWhen}>{m.proposal.when}</Text>
-          <Text style={styles.proposalDetail}>
-            {m.proposal.durationMinutes} min · {m.proposal.mode} · {m.proposal.price}€
-          </Text>
-          <Button
-            label="Réserver ce créneau"
-            size="sm"
-            fullWidth={false}
-            onPress={() => router.push('/booking/slot?id=p1' as any)}
-            style={{ marginTop: 10, paddingHorizontal: 18 }}
-          />
-        </View>
-      </View>
-    );
-  }
-  return (
-    <>
-      {m.dayMark ? <Text style={styles.dayMark}>{m.dayMark.toUpperCase()}</Text> : null}
-      <View style={[styles.bubble, m.fromMe ? styles.me : styles.them]}>
-        <Text style={[styles.bubbleTxt, m.fromMe && { color: '#fff' }]}>
-          {m.text}
-        </Text>
-        <Text
-          style={[
-            styles.bubbleMeta,
-            m.fromMe ? { color: 'rgba(255,255,255,0.55)' } : null,
-          ]}
-        >
-          {m.time}
-        </Text>
-      </View>
-    </>
   );
 }
 
@@ -160,77 +120,5 @@ const styles = StyleSheet.create({
   iconBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   who: { ...typography.bodyMedium, fontSize: 15 },
   status: { fontFamily: 'Outfit_500Medium', fontSize: 11, color: colors.sage2 },
-
-  bubble: {
-    maxWidth: '78%',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 18,
-  },
-  them: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderBottomLeftRadius: 6,
-  },
-  me: {
-    alignSelf: 'flex-end',
-    backgroundColor: colors.ink,
-    borderBottomRightRadius: 6,
-  },
-  bubbleTxt: { ...typography.body, fontSize: 14, lineHeight: 20 },
-  bubbleMeta: { ...typography.tiny, fontSize: 10, marginTop: 4, textAlign: 'right' },
-  dayMark: {
-    ...typography.tiny,
-    textAlign: 'center',
-    letterSpacing: 2,
-    marginVertical: 4,
-  },
-
-  proposalLabel: {
-    color: colors.violet2,
-    fontSize: 11,
-    letterSpacing: 1.2,
-    fontFamily: 'Outfit_500Medium',
-    marginBottom: 6,
-  },
-  proposalWhen: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 18 },
-  proposalDetail: { ...typography.small, fontSize: 12, marginTop: 2 },
-
-  compose: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    backgroundColor: 'rgba(251,249,246,0.96)',
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-  composeIcon: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  composeInput: {
-    flex: 1,
-    height: 44,
-    paddingHorizontal: 16,
-    borderRadius: 22,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: colors.line,
-    ...typography.body,
-    color: colors.ink,
-  },
-  sendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  empty: { ...typography.small, textAlign: 'center', marginTop: 40 },
 });

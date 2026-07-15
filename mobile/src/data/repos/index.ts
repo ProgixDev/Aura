@@ -1,15 +1,15 @@
 /**
  * Repository layer — every screen reads through these functions.
- * disciplineRepo, practitionerRepo, eventRepo, cercleRepo, and articleRepo
- * call the real backend via the api client; screens never need to change.
- * exchangeRepo, paiementRepo, and remboursementRepo also call the real
- * NestJS backend — the auth token is already attached globally by
- * `src/store/session.ts`'s `setToken`. messageRepo still reads from
- * in-memory mocks (out of scope for this plan).
+ * disciplineRepo, practitionerRepo, eventRepo, cercleRepo, articleRepo,
+ * exchangeRepo, paiementRepo, remboursementRepo, rendezVousRepo, avisRepo,
+ * signalementRepo, favoriteRepo, and notificationPreferencesRepo all call the
+ * real NestJS backend — the auth token is already attached globally by
+ * `src/store/session.ts`'s `setToken`. messageRepo (client) and
+ * praticienMessageRepo (praticien) also call the real backend now.
  */
-import { conversationsMock, sampleChat } from '../mock/messages';
 import { disciplineImageSource } from '../images';
 import { api } from '../api/client';
+import { dateFr } from '../../utils/format';
 import type {
   Practitioner,
   Discipline,
@@ -264,13 +264,85 @@ export const remboursementRepo = {
     api.post<{ data: Remboursement }>(`/remboursements/client/${id}/cancel`).then((r) => r.data),
 };
 
-// ---------- Messaging ----------
+// ---------- Messaging (real backend) ----------
+
+function conversationTimestamp(row: any): string {
+  return row.last_message?.created_at ?? row.updated_at ?? row.created_at;
+}
+
+export function mapConversationAsClient(row: any): Conversation {
+  const p = row.praticien;
+  return {
+    id: String(row.id),
+    name: p ? `${p.firstname} ${p.lastname}`.trim() : 'Praticien',
+    avatar: DEFAULT_GRADIENT,
+    photo: undefined,
+    preview: row.last_message?.text ?? 'Démarrez la conversation…',
+    when: dateFr(conversationTimestamp(row)),
+    unread: (row.unread_count ?? 0) > 0,
+    online: false,
+  };
+}
+
+export function mapConversationAsPraticien(row: any): Conversation {
+  const c = row.client;
+  return {
+    id: String(row.id),
+    name: c ? `${c.firstname} ${c.lastname}`.trim() : 'Client',
+    avatar: DEFAULT_GRADIENT,
+    photo: undefined,
+    preview: row.last_message?.text ?? 'Démarrez la conversation…',
+    when: dateFr(conversationTimestamp(row)),
+    unread: (row.unread_count ?? 0) > 0,
+    online: false,
+  };
+}
+
+export function mapMessage(row: any, viewerRole: 'client' | 'praticien'): ChatMessage {
+  const d = new Date(row.created_at);
+  const time = Number.isNaN(d.getTime())
+    ? ''
+    : `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return {
+    id: String(row.id),
+    fromMe: row.sender_role === viewerRole,
+    text: row.text,
+    time,
+    createdAtIso: row.created_at,
+  };
+}
+
 export const messageRepo = {
-  conversations: (): Promise<Conversation[]> => delay(conversationsMock),
+  conversations: (): Promise<Conversation[]> =>
+    api.get<{ data: any[] }>('/client/conversations').then((res) => res.data.map(mapConversationAsClient)),
   conversation: (id: string): Promise<Conversation | undefined> =>
-    delay(conversationsMock.find((c) => c.id === id)),
+    api.get<{ data: any }>(`/client/conversations/${id}`).then((res) => mapConversationAsClient(res.data)).catch(() => undefined),
   messages: (conversationId: string): Promise<ChatMessage[]> =>
-    delay(sampleChat(conversationId)),
+    api.get<{ data: any[] }>(`/client/conversations/${conversationId}/messages`)
+      .then((res) => res.data.map((m) => mapMessage(m, 'client'))),
+  send: (conversationId: string, text: string): Promise<ChatMessage> =>
+    api.post<{ data: any }>(`/client/conversations/${conversationId}/messages`, { text })
+      .then((res) => mapMessage(res.data, 'client')),
+  // Creates (or reuses) the conversation with a praticien. No `text` here —
+  // the caller lands on the chat screen and types the opening message there,
+  // same flow as any other conversation. Used by praticien/[id].tsx's
+  // "Contacter" button.
+  startConversation: (praticienId: number): Promise<Conversation> =>
+    api.post<{ data: { conversation: any } }>('/client/conversations', { praticien_id: praticienId })
+      .then((res) => mapConversationAsClient(res.data.conversation)),
+};
+
+export const praticienMessageRepo = {
+  conversations: (): Promise<Conversation[]> =>
+    api.get<{ data: any[] }>('/praticien/conversations').then((res) => res.data.map(mapConversationAsPraticien)),
+  conversation: (id: string): Promise<Conversation | undefined> =>
+    api.get<{ data: any }>(`/praticien/conversations/${id}`).then((res) => mapConversationAsPraticien(res.data)).catch(() => undefined),
+  messages: (conversationId: string): Promise<ChatMessage[]> =>
+    api.get<{ data: any[] }>(`/praticien/conversations/${conversationId}/messages`)
+      .then((res) => res.data.map((m) => mapMessage(m, 'praticien'))),
+  send: (conversationId: string, text: string): Promise<ChatMessage> =>
+    api.post<{ data: any }>(`/praticien/conversations/${conversationId}/messages`, { text })
+      .then((res) => mapMessage(res.data, 'praticien')),
 };
 
 // ---------- Bookings ----------

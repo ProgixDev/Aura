@@ -20,7 +20,7 @@ import { messageRepo } from '@data/repos';
 export default function Messages() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [filter, setFilter] = useState<'all' | 'unread' | 'pra' | 'circles'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [search, setSearch] = useState('');
 
   const { data: list = [] } = useQuery({
@@ -30,8 +30,6 @@ export default function Messages() {
 
   const filtered = list.filter((c) => {
     if (filter === 'unread' && !c.unread) return false;
-    if (filter === 'pra' && c.kind !== 'practitioner') return false;
-    if (filter === 'circles' && c.kind !== 'circle') return false;
     if (search.trim() && !c.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
@@ -44,7 +42,10 @@ export default function Messages() {
       >
         <View style={styles.head}>
           <Text style={styles.h1}>Messages</Text>
-          <Pressable style={styles.plusBtn}>
+          {/* Starting a conversation begins from a praticien's profile (the
+              "Contacter" button, wired in Task 7) — this "+" routes to
+              search/browse rather than duplicating a contact-picker UI. */}
+          <Pressable style={styles.plusBtn} onPress={() => router.push('/(tabs)/recherche' as any)}>
             <Icon name="plus" size={20} color={colors.ink} />
           </Pressable>
         </View>
@@ -66,43 +67,50 @@ export default function Messages() {
         >
           <Chip label="Tous" active={filter === 'all'} onPress={() => setFilter('all')} />
           <Chip label="Non lus" active={filter === 'unread'} onPress={() => setFilter('unread')} />
-          <Chip label="Praticiens" active={filter === 'pra'} onPress={() => setFilter('pra')} />
-          <Chip label="Cercles" active={filter === 'circles'} onPress={() => setFilter('circles')} />
         </ScrollView>
 
         <View style={{ marginTop: 8 }}>
-          {filtered.map((c) => (
-            <Pressable
-              key={c.id}
-              style={styles.row}
-              onPress={() => router.push(`/chat/${c.id}` as any)}
-            >
-              <Avatar source={c.photo} gradient={c.avatar} size="md" online={c.online} />
-              <View style={{ flex: 1 }}>
-                <View style={styles.rowTop}>
-                  <Text style={styles.name}>{c.name}</Text>
+          {filtered.length === 0 ? (
+            <View style={styles.emptyWrap}>
+              <Text style={styles.emptyTitle}>Aucune conversation</Text>
+              <Text style={styles.emptyBody}>
+                Contactez un praticien depuis son profil pour démarrer une conversation.
+              </Text>
+            </View>
+          ) : (
+            filtered.map((c) => (
+              <Pressable
+                key={c.id}
+                style={styles.row}
+                onPress={() => router.push(`/chat/${c.id}` as any)}
+              >
+                <Avatar source={c.photo} gradient={c.avatar} size="md" online={c.online} />
+                <View style={{ flex: 1 }}>
+                  <View style={styles.rowTop}>
+                    <Text style={styles.name}>{c.name}</Text>
+                    <Text
+                      style={[
+                        styles.when,
+                        c.unread && { color: colors.violet2, fontFamily: 'Outfit_500Medium' },
+                      ]}
+                    >
+                      {c.when}
+                    </Text>
+                  </View>
                   <Text
                     style={[
-                      styles.when,
-                      c.unread && { color: colors.violet2, fontFamily: 'Outfit_500Medium' },
+                      styles.preview,
+                      c.unread && { color: colors.ink, fontFamily: 'Outfit_500Medium' },
                     ]}
+                    numberOfLines={1}
                   >
-                    {c.when}
+                    {c.preview}
                   </Text>
                 </View>
-                <Text
-                  style={[
-                    styles.preview,
-                    c.unread && { color: colors.ink, fontFamily: 'Outfit_500Medium' },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {c.preview}
-                </Text>
-              </View>
-              {c.unread ? <View style={styles.unreadDot} /> : null}
-            </Pressable>
-          ))}
+                {c.unread ? <View style={styles.unreadDot} /> : null}
+              </Pressable>
+            ))
+          )}
         </View>
 
         <View style={styles.safetyCard}>
@@ -159,6 +167,9 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.violet2,
   },
+  emptyWrap: { alignItems: 'center', paddingTop: 40, paddingHorizontal: 32, gap: 6 },
+  emptyTitle: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 18, color: colors.ink },
+  emptyBody: { ...typography.small, fontSize: 13, textAlign: 'center' },
   safetyCard: {
     marginHorizontal: 20,
     marginTop: 24,
