@@ -17,14 +17,34 @@ import { Toggle } from '@components/Toggle';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { useSession } from '@store/session';
-import { praticienMessageRepo } from '@data/repos';
+import { praticienMessageRepo, subscriptionRepo } from '@data/repos';
+import { effectivePlan } from '@utils/subscriptionPlan';
+import type { Subscription } from '@data/types';
+
+const PLAN_LABEL: Record<'essentiel' | 'pro' | 'premium', string> = {
+  essentiel: 'Essentiel',
+  pro: 'Pro',
+  premium: 'Premium',
+};
+
+function subscriptionSubtitle(sub?: Subscription): string {
+  if (!sub) return 'Chargement…';
+  const plan = effectivePlan(sub);
+  if (plan === 'essentiel') return "Formule gratuite · jusqu'à 5 séances/mois";
+  const price = plan === 'pro' ? '29€/mois' : '59€/mois';
+  if (sub.statut === 'past_due') return `${price} · paiement en échec, vérifiez votre moyen de paiement`;
+  return `${price} · annulable à tout moment`;
+}
 
 export default function Dashboard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const active = useSession((s) => s.practitionerActive);
   const toggle = useSession((s) => s.togglePractitionerActive);
-  const trialDays = useSession((s) => s.trialDaysLeft);
+  const { data: subscription } = useQuery({
+    queryKey: ['subscription'],
+    queryFn: subscriptionRepo.current,
+  });
 
   const { data: conversations = [] } = useQuery({
     queryKey: ['praticien-conversations'],
@@ -44,11 +64,11 @@ export default function Dashboard() {
       >
         <View style={{ paddingHorizontal: 20, paddingBottom: 16 }}>
           <AuroraBackground variant="soft" rounded={22} style={styles.trial}>
-            <Text style={styles.trialEyebrow}>PÉRIODE D'ESSAI</Text>
-            <Text style={styles.trialTitle}>{trialDays} jours restants</Text>
-            <Text style={styles.trialSub}>
-              puis 9,90 €/mois · annulable à tout moment
+            <Text style={styles.trialEyebrow}>MON ABONNEMENT</Text>
+            <Text style={styles.trialTitle}>
+              {PLAN_LABEL[subscription ? effectivePlan(subscription) : 'essentiel']}
             </Text>
+            <Text style={styles.trialSub}>{subscriptionSubtitle(subscription)}</Text>
             <Pressable
               onPress={() => router.push('/subscription' as any)}
               style={styles.trialBtn}

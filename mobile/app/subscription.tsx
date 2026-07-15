@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -8,6 +9,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import * as WebBrowser from 'expo-web-browser';
 import { AuroraBackground } from '@components/AuroraBackground';
 import { Button } from '@components/Button';
 import { Icon } from '@components/Icon';
@@ -15,29 +18,63 @@ import { Lotus } from '@components/Lotus';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { shadows } from '@theme/shadows';
+import { subscriptionRepo } from '@data/repos';
+import { errorMessage } from '@data/api/client';
+import { PLANS, type PlanDef } from '@data/plans';
+import { effectivePlan } from '@utils/subscriptionPlan';
+import type { Subscription, SubscriptionPlan } from '@data/types';
 
-const features = [
-  { t: 'Profil mis en avant.', d: " Photos, gallerie, bio, jusqu'à 5 disciplines." },
-  { t: 'Agenda intelligent.', d: ' Vos créneaux, en présentiel ou en visio.' },
-  { t: 'Paiement sécurisé Stripe.', d: " Aura tient les fonds jusqu'à la séance." },
-  { t: 'Publier événements & retraites.', d: ' Pré-inscriptions et billetterie incluses.' },
-  { t: 'Échanges & dons.', d: " Donner ce que vous savez, recevoir ce qu'il vous faut." },
-  { t: 'Pause libre.', d: ' Désactivez votre profil sans rien perdre.' },
-  { t: 'Niveau "novice" assumé.', d: ' Tarif réduit, signalé honnêtement.' },
-];
+const RETURN_URL = 'aura://subscription';
 
 export default function Subscription() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
+  const { data: sub, isLoading } = useQuery({
+    queryKey: ['subscription'],
+    queryFn: subscriptionRepo.current,
+  });
+  const [busyPlan, setBusyPlan] = React.useState<string | null>(null);
 
-  const start = () => {
-    router.replace('/dashboard' as any);
+  const refetch = () => queryClient.invalidateQueries({ queryKey: ['subscription'] });
+
+  const choose = async (plan: 'pro' | 'premium') => {
+    setBusyPlan(plan);
+    try {
+      const { url } = await subscriptionRepo.checkout(plan);
+      await WebBrowser.openAuthSessionAsync(url, RETURN_URL);
+      await refetch();
+    } catch (err) {
+      Alert.alert('Impossible de démarrer le paiement', errorMessage(err));
+    } finally {
+      setBusyPlan(null);
+    }
   };
+
+  const cancel = async () => {
+    setBusyPlan('cancel');
+    try {
+      const updated = await subscriptionRepo.cancel();
+      queryClient.setQueryData(['subscription'], updated);
+      Alert.alert(
+        'Résiliation programmée',
+        updated.current_period_end
+          ? `Votre abonnement reste actif jusqu'au ${new Date(updated.current_period_end).toLocaleDateString('fr-FR')}, puis passera automatiquement en formule Essentiel.`
+          : "Votre abonnement passera en formule Essentiel à la fin de la période en cours.",
+      );
+    } catch (err) {
+      Alert.alert('Impossible de résilier', errorMessage(err));
+    } finally {
+      setBusyPlan(null);
+    }
+  };
+
+  const current: SubscriptionPlan = sub ? effectivePlan(sub) : 'essentiel';
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.pearl }}>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 140 }}
+        contentContainerStyle={{ paddingBottom: 60 }}
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.backWrap, { top: insets.top + 8 }]}>
@@ -57,46 +94,91 @@ export default function Subscription() {
           </Text>
         </AuroraBackground>
 
-        <View style={[styles.card, shadows.cardHover]}>
-          <View style={styles.offerPill}>
-            <Text style={styles.offerPillTxt}>1 MOIS OFFERT</Text>
+        {isLoading || !sub ? (
+          <Text style={styles.loading}>Chargement de votre abonnement…</Text>
+        ) : (
+          <View style={styles.cards}>
+            {PLANS.map((p) => (
+              <PlanCard
+                key={p.id}
+                plan={p}
+                isCurrent={current === p.id}
+                busy={busyPlan === p.id || (p.id !== 'essentiel' && current === p.id && busyPlan === 'cancel')}
+                statut={sub.statut}
+                onChoose={() => choose(p.id as 'pro' | 'premium')}
+                onCancel={cancel}
+              />
+            ))}
           </View>
-          <View style={styles.priceBlock}>
-            <Text style={styles.price}>
-              0€ <Text style={styles.italic}>pendant 30 jours</Text>
-            </Text>
-            <Text style={styles.priceThen}>puis 9,90 €/mois — sans engagement</Text>
-          </View>
-
-          {features.map((f) => (
-            <View key={f.t} style={styles.featRow}>
-              <View style={styles.featIc}>
-                <Icon name="check" size={14} color={colors.chipSageText} />
-              </View>
-              <Text style={styles.featTxt}>
-                <Text style={styles.featStrong}>{f.t}</Text>
-                {f.d}
-              </Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={{ padding: 24, alignItems: 'center' }}>
-          <Text style={styles.testimony}>
-            "On a longtemps cherché un endroit comme celui-ci."
-          </Text>
-          <Text style={styles.testimonyAttrib}>
-            Mathieu V. · chamane · sur Aura depuis 6 mois
-          </Text>
-        </View>
+        )}
       </ScrollView>
+    </View>
+  );
+}
 
-      <View style={[styles.dock, { paddingBottom: insets.bottom + 14 }]}>
-        <Button variant="aurora" label="Commencer mon mois offert" onPress={start} />
-        <Text style={styles.dockHelp}>
-          Annulable à tout moment depuis votre espace.
+function PlanCard({
+  plan,
+  isCurrent,
+  busy,
+  statut,
+  onChoose,
+  onCancel,
+}: {
+  plan: PlanDef;
+  isCurrent: boolean;
+  busy: boolean;
+  statut: Subscription['statut'];
+  onChoose: () => void;
+  onCancel: () => void;
+}) {
+  const showCancel = isCurrent && plan.id !== 'essentiel' && statut !== 'canceled';
+  const showChoose = !isCurrent && plan.id !== 'essentiel';
+
+  return (
+    <View style={[styles.card, shadows.cardHover, isCurrent && styles.cardCurrent]}>
+      {isCurrent ? (
+        <View style={[styles.offerPill, styles.currentPill]}>
+          <Text style={styles.offerPillTxt}>VOTRE FORMULE</Text>
+        </View>
+      ) : plan.highlight ? (
+        <View style={styles.offerPill}>
+          <Text style={styles.offerPillTxt}>LE PLUS CHOISI</Text>
+        </View>
+      ) : null}
+
+      <View style={styles.priceBlock}>
+        <Text style={styles.planName}>{plan.name}</Text>
+        <Text style={styles.price}>
+          {plan.price === 0 ? 'Gratuit' : `${plan.price}€`}
+          {plan.price > 0 ? <Text style={styles.italic}> {plan.period}</Text> : null}
         </Text>
+        <Text style={styles.tagline}>{plan.tagline}</Text>
+        {isCurrent && statut === 'past_due' ? (
+          <Text style={styles.pastDueNotice}>Paiement en échec — vérifiez votre moyen de paiement</Text>
+        ) : null}
       </View>
+
+      {plan.features.map((f) => (
+        <View key={f} style={styles.featRow}>
+          <View style={styles.featIc}>
+            <Icon name="check" size={14} color={colors.chipSageText} />
+          </View>
+          <Text style={styles.featTxt}>{f}</Text>
+        </View>
+      ))}
+
+      {showCancel ? (
+        <Pressable onPress={onCancel} disabled={busy} style={styles.cancelBtn}>
+          <Text style={styles.cancelBtnTxt}>{busy ? 'Résiliation…' : 'Résilier cette formule →'}</Text>
+        </Pressable>
+      ) : showChoose ? (
+        <Button
+          variant="aurora"
+          label={busy ? 'Ouverture…' : plan.cta}
+          onPress={onChoose}
+          disabled={busy}
+        />
+      ) : null}
     </View>
   );
 }
@@ -135,12 +217,17 @@ const styles = StyleSheet.create({
     maxWidth: 280,
   },
 
+  loading: { ...typography.small, textAlign: 'center', marginTop: 24 },
+  cards: { paddingHorizontal: 16, marginTop: -30, gap: 20 },
+
   card: {
-    marginHorizontal: 16,
-    marginTop: -30,
     backgroundColor: '#fff',
     borderRadius: 24,
     padding: 24,
+  },
+  cardCurrent: {
+    borderWidth: 2,
+    borderColor: colors.gold,
   },
   offerPill: {
     alignSelf: 'center',
@@ -148,22 +235,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 999,
+    marginBottom: 12,
   },
+  currentPill: { backgroundColor: colors.gold },
   offerPillTxt: {
     color: colors.chipSageText,
     fontSize: 11,
     fontFamily: 'Outfit_500Medium',
     letterSpacing: 1.6,
   },
-  priceBlock: { alignItems: 'center', paddingVertical: 18 },
+  priceBlock: { alignItems: 'center', paddingVertical: 10 },
+  planName: {
+    fontFamily: 'CormorantGaramond_500Medium',
+    fontSize: 20,
+    color: colors.ink,
+    marginBottom: 4,
+  },
   price: {
     fontFamily: 'CormorantGaramond_400Regular',
-    fontSize: 42,
-    lineHeight: 44,
+    fontSize: 38,
+    lineHeight: 42,
     color: colors.ink,
     textAlign: 'center',
   },
-  priceThen: { ...typography.small, fontSize: 13, marginTop: 8 },
+  tagline: { ...typography.small, fontSize: 13, marginTop: 6, textAlign: 'center' },
+  pastDueNotice: {
+    ...typography.small,
+    fontSize: 12,
+    color: colors.danger,
+    marginTop: 8,
+    textAlign: 'center',
+  },
 
   featRow: {
     flexDirection: 'row',
@@ -181,28 +283,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   featTxt: { flex: 1, ...typography.small, fontSize: 13.5, lineHeight: 20, color: colors.inkSoft },
-  featStrong: { fontFamily: 'Outfit_500Medium', color: colors.ink },
 
-  testimony: {
-    fontFamily: 'CormorantGaramond_400Regular_Italic',
-    fontSize: 18,
-    color: colors.muted,
-    lineHeight: 24,
-    textAlign: 'center',
-    marginBottom: 6,
-  },
-  testimonyAttrib: { ...typography.tiny },
-
-  dock: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    backgroundColor: 'rgba(251,249,246,0.96)',
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-  dockHelp: { ...typography.tiny, textAlign: 'center', marginTop: 8 },
+  cancelBtn: { marginTop: 16, alignSelf: 'center' },
+  cancelBtnTxt: { color: colors.muted, fontFamily: 'Outfit_500Medium', fontSize: 13 },
 });
