@@ -29,6 +29,13 @@ describe('mapPraticien', () => {
     expect(p.photo).toBeUndefined();
     expect(p.gallery).toEqual([]);
   });
+
+  it('wraps photo/hero/gallery URLs as {uri} when the backend provides them', () => {
+    const p = mapPraticien({ ...row, photo: 'https://x/photo.png', hero: 'https://x/hero.png', gallery: ['https://x/g1.png'] });
+    expect(p.photo).toEqual({ uri: 'https://x/photo.png' });
+    expect(p.hero).toEqual({ uri: 'https://x/hero.png' });
+    expect(p.gallery).toEqual([{ uri: 'https://x/g1.png' }]);
+  });
 });
 
 describe('mapDiscipline', () => {

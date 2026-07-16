@@ -87,6 +87,9 @@ create table praticiens (
   motif_rejet text,
   stripe_account_id varchar(255),
   stripe_payouts_enabled boolean not null default false,
+  photo varchar(500),
+  hero varchar(500),
+  gallery jsonb,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
   constraint fk_prat_verifie_par foreign key (verifie_par) references users(id) on delete set null

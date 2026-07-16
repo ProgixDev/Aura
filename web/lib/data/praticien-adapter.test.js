@@ -32,4 +32,11 @@ describe('mapPraticien', () => {
     expect(p.gallery).toEqual([]);
     expect(p.exchange).toBeNull();
   });
+
+  it('passes through photo/hero/gallery when the backend provides them', () => {
+    const p = mapPraticien({ ...row, photo: 'https://x/photo.png', hero: 'https://x/hero.png', gallery: ['https://x/g1.png'] });
+    expect(p.photo).toBe('https://x/photo.png');
+    expect(p.hero).toBe('https://x/hero.png');
+    expect(p.gallery).toEqual(['https://x/g1.png']);
+  });
 });

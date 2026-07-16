@@ -125,6 +125,22 @@ const DISCIPLINES: Array<{ nom: string; slug: string; tonalite: string; glyphe: 
 ];
 const DISCIPLINE_NOMS = DISCIPLINES.map((d) => d.nom);
 
+// 8 real photographed sets uploaded to the public "aura-public" Supabase Storage bucket
+// (from mobile/.image-originals) — cycled via pick() across the 36 seeded praticiens, so
+// several practitioners share a face. That's a known limit of only having 8 source sets;
+// see conversation notes for the images-populate task.
+const IMAGE_BASE = 'https://frcxvpwvlruvbncjfish.supabase.co/storage/v1/object/public/aura-public';
+const PHOTO_SETS: Array<{ photo: string; hero: string; gallery: string[] }> = [
+  { photo: `${IMAGE_BASE}/practitioners/p1-avatar.png`, hero: `${IMAGE_BASE}/practitioners/p1-hero.png`, gallery: [`${IMAGE_BASE}/practitioners/p1-g1.png`, `${IMAGE_BASE}/practitioners/p1-g2.png`, `${IMAGE_BASE}/practitioners/p1-g3.png`] },
+  { photo: `${IMAGE_BASE}/practitioners/p2-avatar.png`, hero: `${IMAGE_BASE}/practitioners/p2-hero.png`, gallery: [`${IMAGE_BASE}/practitioners/p2-g1.png`, `${IMAGE_BASE}/practitioners/p2-g2.png`] },
+  { photo: `${IMAGE_BASE}/practitioners/p3-avatar.png`, hero: `${IMAGE_BASE}/practitioners/p3-hero.png`, gallery: [] },
+  { photo: `${IMAGE_BASE}/practitioners/p4-avatar.png`, hero: `${IMAGE_BASE}/practitioners/p4-hero.png`, gallery: [] },
+  { photo: `${IMAGE_BASE}/practitioners/p5-avatar.png`, hero: `${IMAGE_BASE}/practitioners/p5-hero.png`, gallery: [] },
+  { photo: `${IMAGE_BASE}/practitioners/p6-avatar.png`, hero: `${IMAGE_BASE}/practitioners/p6-hero.png`, gallery: [] },
+  { photo: `${IMAGE_BASE}/practitioners/p7-avatar.png`, hero: `${IMAGE_BASE}/practitioners/p7-hero.png`, gallery: [] },
+  { photo: `${IMAGE_BASE}/practitioners/p8-avatar.png`, hero: `${IMAGE_BASE}/practitioners/p8-hero.png`, gallery: [] },
+];
+
 const NIVEAUX = ['Expert', 'Praticien confirmé', 'Novice'];
 const MODES = ['présentiel & visio', 'présentiel', 'visio uniquement'];
 const DOC_TYPES = ['piece_identite', 'certification', 'assurance', 'domicile', 'charte'];
@@ -337,6 +353,7 @@ async function seedPraticiens(ctx: SeedContext): Promise<Praticien[]> {
     plan.map((p, i) => {
       const isValide = p.statut_verification === 'valide';
       const isRejete = p.statut_verification === 'rejete';
+      const photoSet = pick(PHOTO_SETS, i);
       return {
         firstname: p.firstname,
         lastname: p.lastname,
@@ -355,6 +372,9 @@ async function seedPraticiens(ctx: SeedContext): Promise<Praticien[]> {
         verifie_a: isValide ? daysFromNow(0) : null,
         verifie_par: isValide && admins.length > 0 ? pick(admins, i).id : null,
         motif_rejet: isRejete ? 'Documents non conformes ou incomplets.' : null,
+        photo: photoSet.photo,
+        hero: photoSet.hero,
+        gallery: photoSet.gallery,
       };
     }),
   );

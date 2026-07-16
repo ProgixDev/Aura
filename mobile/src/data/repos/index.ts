@@ -35,9 +35,11 @@ const delay = <T>(value: T, ms = 60): Promise<T> =>
   new Promise((r) => setTimeout(() => r(value), ms));
 
 // ---------- Adapters: raw backend rows -> existing UI shapes ----------
-// Real fields map directly; fields with no backend source (photo, rating,
-// online status, per-item accent colour…) get an honest neutral default
-// instead of invented data. See the plan's Architecture notes.
+// Real fields map directly; fields with no backend source (rating, online
+// status, per-item accent colour…) get an honest neutral default instead of
+// invented data. photo/hero/gallery come from the praticiens.photo/hero/gallery
+// columns (Supabase Storage URLs), wrapped as {uri} for ImageSourcePropType.
+// See the plan's Architecture notes.
 const DEFAULT_GRADIENT = ['#C4B0E8', '#A8C8E8'] as const;
 const DEFAULT_TONE: Discipline['tone'] = 'violet';
 
@@ -61,9 +63,9 @@ export function mapPraticien(row: any): Practitioner {
     // already reads it as `p.experience?.sessions ?? 600`, so omitting it
     // here (rather than inventing a count) is safe.
     experience: { years: row.experience } as Practitioner['experience'],
-    photo: undefined,
-    hero: undefined,
-    gallery: [],
+    photo: row.photo ? { uri: row.photo } : undefined,
+    hero: row.hero ? { uri: row.hero } : undefined,
+    gallery: Array.isArray(row.gallery) ? row.gallery.map((uri: string) => ({ uri })) : [],
   };
 }
 

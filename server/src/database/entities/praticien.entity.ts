@@ -2,7 +2,7 @@ import {
   Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany,
   PrimaryGeneratedColumn, UpdateDateColumn,
 } from 'typeorm';
-import { decimalTransformer } from '../../common/transformers';
+import { decimalTransformer, jsonTransformer } from '../../common/transformers';
 import { User } from './user.entity';
 import { PraticienDocument } from './praticien-document.entity';
 
@@ -28,6 +28,9 @@ export class Praticien {
   @Column({ type: 'text', nullable: true }) motif_rejet: string | null;
   @Column({ type: 'varchar', nullable: true }) stripe_account_id: string | null;
   @Column({ default: false }) stripe_payouts_enabled: boolean;
+  @Column({ type: 'varchar', length: 500, nullable: true }) photo: string | null;
+  @Column({ type: 'varchar', length: 500, nullable: true }) hero: string | null;
+  @Column({ type: 'text', nullable: true, transformer: jsonTransformer }) gallery: string[] | null;
   @CreateDateColumn({ name: 'created_at' }) created_at: Date;
   @UpdateDateColumn({ name: 'updated_at' }) updated_at: Date;
 
