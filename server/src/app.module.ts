@@ -34,6 +34,8 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { StripeConnectModule } from './stripe-connect/stripe-connect.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { SupportModule } from './support/support.module';
+import { StatsModule } from './stats/stats.module';
+import { ClientActivityModule } from './client-activity/client-activity.module';
 
 @Module({
   imports: [
@@ -69,6 +71,8 @@ import { SupportModule } from './support/support.module';
     StripeConnectModule,
     AnalyticsModule,
     SupportModule,
+    StatsModule,
+    ClientActivityModule,
   ],
   controllers: [AppController],
   providers: [AppService],
