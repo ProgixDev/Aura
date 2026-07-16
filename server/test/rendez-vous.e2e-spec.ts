@@ -1,12 +1,14 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { createTestApp, seedClientUser } from './utils/create-test-app';
+import { createTestApp, seedAdmin, seedClientUser } from './utils/create-test-app';
 import { RendezVousModule } from '../src/rendez-vous/rendez-vous.module';
 import { StripeService } from '../src/common/stripe.service';
 import { Praticien } from '../src/database/entities/praticien.entity';
 import { Promotion } from '../src/database/entities/promotion.entity';
 import { Paiement } from '../src/database/entities/paiement.entity';
+import { RendezVous } from '../src/database/entities/rendez-vous.entity';
+import { Client } from '../src/database/entities/client.entity';
 
 const stripeServiceMock = {
   createPaymentIntent: jest.fn().mockResolvedValue({ id: 'pi_test_123', client_secret: 'pi_test_123_secret_abc' }),
@@ -22,6 +24,7 @@ describe('rendez-vous', () => {
   let app: INestApplication;
   let ds: DataSource;
   let clientToken: string;
+  let adminToken: string;
   let praticienId: number;
 
   beforeAll(async () => {
@@ -30,6 +33,7 @@ describe('rendez-vous', () => {
       [{ provide: StripeService, useValue: stripeServiceMock }],
     );
     clientToken = (await seedClientUser(app, 'rdv-client@aura.io')).token;
+    adminToken = (await seedAdmin(app, 'rdv-admin@aura.io')).token;
     ds = app.get(DataSource);
     const praticien = await ds.getRepository(Praticien).save({
       firstname: 'Elodie', lastname: 'Marceau', email: 'elodie@aura.io', telephone: '06',
@@ -297,5 +301,146 @@ describe('rendez-vous', () => {
     const shown = await http().get(`/api/rendez-vous/client/${rdv.id}`)
       .set('Authorization', `Bearer ${clientToken}`).expect(200);
     expect(shown.body.data.statut).toBe('confirme');
+  });
+
+  // ---- admin ----
+
+  const asAdmin = (r: request.Test) => r.set('Authorization', `Bearer ${adminToken}`);
+
+  it('GET /api/admin/rendez-vous requires AdminGuard (401 without a token, 403 for a non-admin user)', async () => {
+    await http().get('/api/admin/rendez-vous').expect(401);
+    await http().get('/api/admin/rendez-vous').set('Authorization', `Bearer ${clientToken}`).expect(403);
+  });
+
+  it('GET /api/admin/rendez-vous lists rendez-vous with client+praticien joined and a statistiques block', async () => {
+    const client = await ds.getRepository(Client).save({
+      firstname: 'Nadia', lastname: 'Chevalier', email: 'nadia.chevalier@example.com', city: 'Lyon',
+    });
+    const rdv = await ds.getRepository(RendezVous).save({
+      client_id: client.id, praticien_id: praticienId, date_heure: new Date('2031-01-01T10:00:00'),
+      duree_minutes: 60, mode: 'présentiel', statut: 'en_attente', tarif: 80,
+    });
+
+    const res = await asAdmin(http().get('/api/admin/rendez-vous?per_page=100')).expect(200);
+    const row = res.body.data.find((r: any) => r.id === rdv.id);
+    expect(row).toBeTruthy();
+    expect(row.client).toMatchObject({ id: client.id, firstname: 'Nadia', lastname: 'Chevalier' });
+    expect(row.praticien).toMatchObject({ id: praticienId, firstname: 'Elodie', lastname: 'Marceau' });
+    expect(res.body.pagination).toMatchObject({ current_page: 1, per_page: 100 });
+    expect(res.body.statistiques).toMatchObject({
+      total: expect.any(Number),
+      en_attente: expect.any(Number),
+      confirme: expect.any(Number),
+      termine: expect.any(Number),
+      annule: expect.any(Number),
+    });
+    expect(res.body.statistiques.total).toBeGreaterThanOrEqual(1);
+  });
+
+  it('?statut=confirme filters the admin list', async () => {
+    const client = await ds.getRepository(Client).save({
+      firstname: 'Oscar', lastname: 'Fontaine', email: 'oscar.fontaine@example.com', city: 'Nice',
+    });
+    const confirme = await ds.getRepository(RendezVous).save({
+      client_id: client.id, praticien_id: praticienId, date_heure: new Date('2031-02-01T10:00:00'),
+      duree_minutes: 60, mode: 'visio', statut: 'confirme', tarif: 80,
+    });
+    const enAttente = await ds.getRepository(RendezVous).save({
+      client_id: client.id, praticien_id: praticienId, date_heure: new Date('2031-02-02T10:00:00'),
+      duree_minutes: 60, mode: 'visio', statut: 'en_attente', tarif: 80,
+    });
+
+    const res = await asAdmin(http().get('/api/admin/rendez-vous?statut=confirme&per_page=100')).expect(200);
+    const ids = res.body.data.map((r: any) => r.id);
+    expect(ids).toContain(confirme.id);
+    expect(ids).not.toContain(enAttente.id);
+    expect(res.body.data.every((r: any) => r.statut === 'confirme')).toBe(true);
+  });
+
+  it('?praticien_id filters the admin list', async () => {
+    const client = await ds.getRepository(Client).save({
+      firstname: 'Pauline', lastname: 'Girard', email: 'pauline.girard@example.com', city: 'Marseille',
+    });
+    const otherPraticien = await ds.getRepository(Praticien).save({
+      firstname: 'Marc', lastname: 'Lemoine', email: 'marc.lemoine@aura.io', telephone: '07',
+      ville: 'Nantes', niveau: 'Confirmé', specialite: 'Reiki', mode: 'présentiel',
+      status: 'actif', tarif: 55, experience: 4, bio: 'Praticien confirmé.',
+    });
+    const forMain = await ds.getRepository(RendezVous).save({
+      client_id: client.id, praticien_id: praticienId, date_heure: new Date('2031-03-01T10:00:00'),
+      duree_minutes: 60, mode: 'présentiel', statut: 'en_attente', tarif: 80,
+    });
+    const forOther = await ds.getRepository(RendezVous).save({
+      client_id: client.id, praticien_id: otherPraticien.id, date_heure: new Date('2031-03-02T10:00:00'),
+      duree_minutes: 60, mode: 'présentiel', statut: 'en_attente', tarif: 55,
+    });
+
+    const res = await asAdmin(
+      http().get(`/api/admin/rendez-vous?praticien_id=${otherPraticien.id}&per_page=100`),
+    ).expect(200);
+    const ids = res.body.data.map((r: any) => r.id);
+    expect(ids).toContain(forOther.id);
+    expect(ids).not.toContain(forMain.id);
+    expect(res.body.data.every((r: any) => r.praticien_id === otherPraticien.id)).toBe(true);
+  });
+
+  it('?search matches client or praticien firstname/lastname/email, case-insensitively', async () => {
+    const client = await ds.getRepository(Client).save({
+      firstname: 'Zoe', lastname: 'Dupuis', email: 'zoe.dupuis@example.com', city: 'Lille',
+    });
+    const rdv = await ds.getRepository(RendezVous).save({
+      client_id: client.id, praticien_id: praticienId, date_heure: new Date('2031-04-01T10:00:00'),
+      duree_minutes: 60, mode: 'visio', statut: 'en_attente', tarif: 80,
+    });
+
+    const byClientFirstname = await asAdmin(http().get('/api/admin/rendez-vous?search=zoe&per_page=100')).expect(200);
+    expect(byClientFirstname.body.data.map((r: any) => r.id)).toContain(rdv.id);
+
+    const byPraticienFirstnameUpper = await asAdmin(
+      http().get('/api/admin/rendez-vous?search=ELODIE&per_page=100'),
+    ).expect(200);
+    expect(byPraticienFirstnameUpper.body.data.map((r: any) => r.id)).toContain(rdv.id);
+
+    const noMatch = await asAdmin(http().get('/api/admin/rendez-vous?search=zzz-no-match-zzz&per_page=100')).expect(200);
+    expect(noMatch.body.data.map((r: any) => r.id)).not.toContain(rdv.id);
+  });
+
+  it('GET /api/admin/rendez-vous/:id returns one rendez-vous with client+praticien joined and its linked paiement', async () => {
+    const client = await ds.getRepository(Client).save({
+      firstname: 'Hugo', lastname: 'Roussel', email: 'hugo.roussel@example.com', city: 'Rennes',
+    });
+    const rdv = await ds.getRepository(RendezVous).save({
+      client_id: client.id, praticien_id: praticienId, date_heure: new Date('2031-05-01T10:00:00'),
+      duree_minutes: 60, mode: 'présentiel', statut: 'termine', tarif: 80,
+    });
+    await ds.getRepository(Paiement).save({
+      reference: `RDV-ADMIN-DETAIL-${rdv.id}`, client_id: client.id, praticien_id: praticienId,
+      rendez_vous_id: rdv.id, montant_brut: 80, commission: 8, montant_net_praticien: 72,
+      moyen_paiement: 'card', statut: 'paid', date_paiement: new Date('2031-05-01T11:00:00'),
+    });
+
+    const res = await asAdmin(http().get(`/api/admin/rendez-vous/${rdv.id}`)).expect(200);
+    expect(res.body.data.id).toBe(rdv.id);
+    expect(res.body.data.client).toMatchObject({ id: client.id, firstname: 'Hugo', lastname: 'Roussel' });
+    expect(res.body.data.praticien).toMatchObject({ id: praticienId, firstname: 'Elodie' });
+    expect(res.body.data.paiement).toMatchObject({ montant_brut: 80, statut: 'paid' });
+  });
+
+  it('GET /api/admin/rendez-vous/:id returns paiement: null when no paiement is linked', async () => {
+    const client = await ds.getRepository(Client).save({
+      firstname: 'Ines', lastname: 'Moreau', email: 'ines.moreau@example.com', city: 'Toulouse',
+    });
+    const rdv = await ds.getRepository(RendezVous).save({
+      client_id: client.id, praticien_id: praticienId, date_heure: new Date('2031-06-01T10:00:00'),
+      duree_minutes: 60, mode: 'visio', statut: 'en_attente', tarif: 80,
+    });
+
+    const res = await asAdmin(http().get(`/api/admin/rendez-vous/${rdv.id}`)).expect(200);
+    expect(res.body.data.paiement).toBeNull();
+  });
+
+  it('GET /api/admin/rendez-vous/:id 404s for an unknown id', async () => {
+    const res = await asAdmin(http().get('/api/admin/rendez-vous/999999')).expect(404);
+    expect(res.body.message).toBe('Rendez-vous non trouvé');
   });
 });

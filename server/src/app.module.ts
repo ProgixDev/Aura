@@ -33,6 +33,7 @@ import { PlatformSettingsModule } from './platform-settings/platform-settings.mo
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { StripeConnectModule } from './stripe-connect/stripe-connect.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { SupportModule } from './support/support.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     SubscriptionsModule,
     StripeConnectModule,
     AnalyticsModule,
+    SupportModule,
   ],
   controllers: [AppController],
   providers: [AppService],

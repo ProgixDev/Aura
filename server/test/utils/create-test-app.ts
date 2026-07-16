@@ -31,6 +31,7 @@ import { AuditLog } from '../../src/database/entities/audit-log.entity';
 import { Dispute } from '../../src/database/entities/dispute.entity';
 import { Subscription } from '../../src/database/entities/subscription.entity';
 import { PlatformSetting } from '../../src/database/entities/platform-setting.entity';
+import { SupportTicket } from '../../src/database/entities/support-ticket.entity';
 import * as bcrypt from 'bcryptjs';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret';
@@ -51,7 +52,7 @@ const ALL_ENTITIES = [
   User, Client, Praticien, PraticienDocument, Cercle, Event, EventPraticien,
   Promotion, Discipline, Article, Notification, EmailTemplate, Echange, Paiement,
   Remboursement, RendezVous, Avis, Signalement, Favorite, NotificationPreference,
-  Conversation, Message, AuditLog, Dispute, Subscription, PlatformSetting,
+  Conversation, Message, AuditLog, Dispute, Subscription, PlatformSetting, SupportTicket,
 ];
 
 export async function createTestApp(

@@ -9,6 +9,7 @@
 -- that exists so far is the test admin, recreate it via POST /api/admin/register afterward.
 
 -- ── Drop (reverse dependency order) ──
+drop table if exists support_tickets cascade;
 drop table if exists platform_settings cascade;
 drop table if exists subscriptions cascade;
 drop table if exists disputes cascade;
@@ -442,3 +443,22 @@ create table platform_settings (
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+create table support_tickets (
+  id integer generated always as identity primary key,
+  requester_name varchar(255) not null,
+  requester_email varchar(255) not null,
+  client_id integer,
+  sujet varchar(255) not null,
+  categorie varchar(50) not null default 'autre',
+  priorite varchar(20) not null default 'normale',
+  statut varchar(20) not null default 'ouvert',
+  message text not null,
+  messages jsonb,
+  assigned_to integer,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  constraint fk_ticket_client foreign key (client_id) references clients(id) on delete set null,
+  constraint fk_ticket_assigned foreign key (assigned_to) references users(id) on delete set null
+);
+create index idx_support_tickets_statut on support_tickets (statut);

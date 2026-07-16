@@ -34,6 +34,12 @@ export class RendezVousService {
       .leftJoinAndSelect('rdv.praticien', 'praticien');
   }
 
+  private adminWithRelations() {
+    return this.rendezVous.createQueryBuilder('rdv')
+      .leftJoinAndSelect('rdv.client', 'client')
+      .leftJoinAndSelect('rdv.praticien', 'praticien');
+  }
+
   async create(client: Client, dto: CreateRendezVousDto) {
     const praticien = await this.praticiens.findOneBy({ id: dto.praticien_id });
     if (!praticien) this.notFound('Praticien introuvable');
@@ -111,6 +117,43 @@ export class RendezVousService {
     await this.rendezVous.update(id, { statut: 'annule' });
     const fresh = await this.withRelations().where('rdv.id = :id', { id }).getOne();
     return success(fresh, 'Rendez-vous annulé avec succès');
+  }
+
+  async adminIndex(query: Record<string, any>) {
+    const { page, perPage } = parsePagination(query, 15);
+    const qb = this.adminWithRelations();
+    if (query.statut !== undefined) qb.andWhere('rdv.statut = :st', { st: query.statut });
+    if (query.praticien_id !== undefined) qb.andWhere('rdv.praticien_id = :pid', { pid: query.praticien_id });
+    if (query.client_id !== undefined) qb.andWhere('rdv.client_id = :cid', { cid: query.client_id });
+    if (query.date_debut !== undefined) qb.andWhere('DATE(rdv.date_heure) >= :dd', { dd: query.date_debut });
+    if (query.date_fin !== undefined) qb.andWhere('DATE(rdv.date_heure) <= :df', { df: query.date_fin });
+    if (query.search !== undefined) {
+      qb.andWhere(
+        '(LOWER(client.firstname) LIKE LOWER(:q) OR LOWER(client.lastname) LIKE LOWER(:q) OR LOWER(client.email) LIKE LOWER(:q) '
+        + 'OR LOWER(praticien.firstname) LIKE LOWER(:q) OR LOWER(praticien.lastname) LIKE LOWER(:q) OR LOWER(praticien.email) LIKE LOWER(:q))',
+        { q: `%${query.search}%` },
+      );
+    }
+    qb.orderBy('rdv.date_heure', 'DESC');
+    const { data, pagination } = await paginateQb(qb, page, perPage);
+
+    const count = (statut?: string) => (statut ? this.rendezVous.countBy({ statut }) : this.rendezVous.count());
+    const statistiques = {
+      total: await count(),
+      en_attente: await count('en_attente'),
+      confirme: await count('confirme'),
+      termine: await count('termine'),
+      annule: await count('annule'),
+    };
+
+    return success(data, undefined, { pagination, statistiques });
+  }
+
+  async adminShow(id: number) {
+    const rdv = await this.adminWithRelations().where('rdv.id = :id', { id }).getOne();
+    if (!rdv) this.notFound('Rendez-vous non trouvé');
+    const paiement = await this.paiements.findOneBy({ rendez_vous_id: id });
+    return success({ ...rdv, paiement });
   }
 
   async handleStripeWebhookEvent(event: Stripe.Event) {
