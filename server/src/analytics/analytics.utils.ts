@@ -1,7 +1,9 @@
 // Timezone note: TypeORM's better-sqlite3 driver (the e2e test DB) always serializes
 // `datetime` columns to UTC on write (DateUtils.mixedDateToUtcDatetimeString), regardless
-// of what timezone the Date object was constructed in. The production mysql2 driver
-// instead serializes Date objects using the Node process's local timezone. To keep the
+// of what timezone the Date object was constructed in. The production `pg` driver
+// instead serializes Date objects using the Node process's local timezone (Postgres
+// `timestamp without time zone` has no zone info, so pg interprets naive components
+// against local time, same ambiguity mysql2 had). To keep the
 // month/week bucketing below internally consistent — and correct against both drivers —
 // every boundary computed here uses UTC. This is exactly correct against sqlite, and is
 // exactly correct in production as long as the server process runs with `TZ=UTC` (the
@@ -66,7 +68,7 @@ export function currentWeekRange(now = new Date()): { start: Date; end: Date } {
  * day/weekday bucket a timestamp lands in. TypeORM's own entity hydration path avoids this by
  * inserting a 'T' and trailing 'Z' before parsing (AbstractSqliteDriver#prepareHydratedValue);
  * this function applies the identical fix so raw/aggregate results behave the same way. Values
- * the driver already parsed into a Date (e.g. mysql2 in production) pass through unchanged.
+ * the driver already parsed into a Date (e.g. `pg` in production) pass through unchanged.
  */
 export function parseRawDatetime(value: string | Date): Date {
   if (value instanceof Date) return value;

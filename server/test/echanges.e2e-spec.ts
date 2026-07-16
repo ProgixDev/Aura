@@ -1,14 +1,21 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { randomUUID } from 'crypto';
 import { createTestApp, seedAdmin, seedClientUser } from './utils/create-test-app';
 import { EchangesModule } from '../src/echanges/echanges.module';
+import { StorageService } from '../src/common/storage.service';
+
+const fakeStorage = { save: jest.fn((_file, subdir) => Promise.resolve(`${subdir}/${randomUUID()}.pdf`)) };
 
 describe('echanges', () => {
   let app: INestApplication;
   let clientToken: string;
   let adminToken: string;
   beforeAll(async () => {
-    app = await createTestApp({ imports: [EchangesModule] });
+    app = await createTestApp(
+      { imports: [EchangesModule] },
+      [{ provide: StorageService, useValue: fakeStorage }],
+    );
     clientToken = (await seedClientUser(app, 'ech-client@aura.io')).token;
     adminToken = (await seedAdmin(app, 'ech-admin@aura.io')).token;
   });

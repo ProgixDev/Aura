@@ -15,7 +15,7 @@ export class Article {
   @Column({ type: 'varchar', nullable: true }) image_couverture: string | null;
   @Column({ type: 'varchar', nullable: true }) meta_description: string | null;
   @Column({ type: 'varchar', nullable: true }) mot_clef: string | null;
-  @Column({ type: 'datetime', nullable: true }) date_publication: Date | null;
+  @Column({ type: Date, nullable: true }) date_publication: Date | null;
   @CreateDateColumn({ name: 'created_at' }) created_at: Date;
   @UpdateDateColumn({ name: 'updated_at' }) updated_at: Date;
 }

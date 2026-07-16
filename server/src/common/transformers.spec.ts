@@ -31,7 +31,7 @@ describe('jsonTransformer', () => {
     expect(jsonTransformer.from('{"a":1}')).toEqual({ a: 1 });
   });
 
-  it('from({a:1}) passes through already-parsed objects (mysql2 case)', () => {
+  it('from({a:1}) passes through already-parsed objects (pg/jsonb case)', () => {
     expect(jsonTransformer.from({ a: 1 })).toEqual({ a: 1 });
   });
 });

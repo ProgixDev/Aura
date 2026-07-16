@@ -11,7 +11,7 @@ export class RendezVous {
   @PrimaryGeneratedColumn() id: number;
   @Column() client_id: number;
   @Column() praticien_id: number;
-  @Column({ type: 'datetime' }) date_heure: Date;
+  @Column({ type: Date }) date_heure: Date;
   @Column({ type: 'int' }) duree_minutes: number;
   @Column({ length: 20 }) mode: string; // 'présentiel' | 'visio'
   @Column({ type: 'varchar', length: 20, default: 'en_attente' }) statut: string; // en_attente|confirme|annule|termine

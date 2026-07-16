@@ -35,7 +35,12 @@ import * as bcrypt from 'bcryptjs';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret';
 process.env.JWT_TTL_MINUTES = '60';
-process.env.UPLOAD_DIR = process.env.UPLOAD_DIR ?? require('os').tmpdir() + '/aura-test-uploads';
+// StorageService constructs a real @supabase/supabase-js client eagerly (mirroring
+// StripeService's constructor pattern) — unlike Stripe's SDK, createClient() validates
+// the URL and throws immediately on an empty string, so every e2e suite needs a
+// syntactically valid dummy here even if it never touches storage.
+process.env.SUPABASE_URL = process.env.SUPABASE_URL ?? 'https://test.supabase.co';
+process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'test-service-role-key';
 
 // All entities are listed explicitly (in addition to autoLoadEntities: true) so that every
 // e2e test built on this factory gets the full schema, regardless of which feature module(s)

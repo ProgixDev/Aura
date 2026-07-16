@@ -8,7 +8,7 @@ import { User } from './user.entity';
 @Entity('signalements')
 export class Signalement {
   @PrimaryGeneratedColumn() id: number;
-  @Column({ type: 'datetime' }) date_signalement: Date;
+  @Column({ type: Date }) date_signalement: Date;
   @Column() type: string;
   @Column() sujet: string;
   @Column({ type: 'text' }) motif: string;

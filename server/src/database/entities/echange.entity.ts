@@ -25,13 +25,13 @@ export class Echange {
   @Column({ type: 'text', nullable: true, transformer: jsonTransformer }) pieces_jointes: PieceJointe[] | null;
   @Column({ type: 'text', nullable: true }) reponse_admin: string | null;
   @Column({ type: 'int', nullable: true }) traite_par: number | null;
-  @Column({ type: 'datetime', nullable: true }) traite_a: Date | null;
-  @Column({ type: 'datetime', nullable: true }) repondu_a: Date | null;
-  @Column({ type: 'datetime', nullable: true }) lu_a: Date | null;
+  @Column({ type: Date, nullable: true }) traite_a: Date | null;
+  @Column({ type: Date, nullable: true }) repondu_a: Date | null;
+  @Column({ type: Date, nullable: true }) lu_a: Date | null;
   @Column({ default: false }) est_masque: boolean;
   @Column({ type: 'int', nullable: true }) signale_par: number | null;
   @Column({ type: 'varchar', length: 500, nullable: true }) motif_signalement: string | null;
-  @Column({ type: 'datetime', nullable: true }) signale_a: Date | null;
+  @Column({ type: Date, nullable: true }) signale_a: Date | null;
   @CreateDateColumn({ name: 'created_at' }) created_at: Date;
   @UpdateDateColumn({ name: 'updated_at' }) updated_at: Date;
   @DeleteDateColumn({ name: 'deleted_at' }) deleted_at: Date | null;

@@ -14,7 +14,7 @@ export class Paiement {
   @Column() client_id: number;
   @Column({ type: 'int', nullable: true }) praticien_id: number | null;
   @Column({ type: 'int', nullable: true, unique: true }) rendez_vous_id: number | null;
-  @Column({ type: 'datetime', nullable: true }) date_paiement: Date | null;
+  @Column({ type: Date, nullable: true }) date_paiement: Date | null;
   @Column({ type: 'decimal', precision: 10, scale: 2, transformer: decimalTransformer }) montant_brut: number;
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0, transformer: decimalTransformer }) commission: number;
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0, transformer: decimalTransformer }) montant_net_praticien: number;
@@ -22,7 +22,7 @@ export class Paiement {
   @Column({ type: 'varchar', length: 50, nullable: true }) statut: string | null;
   @Column({ type: 'text', nullable: true, transformer: jsonTransformer }) details_paiement: unknown | null;
   @Column({ type: 'text', nullable: true, transformer: jsonTransformer }) metadata: unknown | null;
-  @Column({ type: 'datetime', nullable: true }) date_remboursement: Date | null;
+  @Column({ type: Date, nullable: true }) date_remboursement: Date | null;
   @CreateDateColumn({ name: 'created_at' }) created_at: Date;
   @UpdateDateColumn({ name: 'updated_at' }) updated_at: Date;
   @DeleteDateColumn({ name: 'deleted_at' }) deleted_at: Date | null;

@@ -1,9 +1,13 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { randomUUID } from 'crypto';
 import { createTestApp } from './utils/create-test-app';
 import { PraticienAuthModule } from '../src/auth/praticien-auth/praticien-auth.module';
 import { DataSource } from 'typeorm';
 import { Praticien } from '../src/database/entities/praticien.entity';
+import { StorageService } from '../src/common/storage.service';
+
+const fakeStorage = { save: jest.fn((_file, subdir) => Promise.resolve(`${subdir}/${randomUUID()}.pdf`)) };
 
 const DOC_FIELDS = ['piece_identite', 'certification', 'assurance', 'domicile', 'charte'];
 
@@ -26,7 +30,12 @@ const FIELDS = {
 
 describe('praticien auth', () => {
   let app: INestApplication;
-  beforeAll(async () => { app = await createTestApp({ imports: [PraticienAuthModule] }); });
+  beforeAll(async () => {
+    app = await createTestApp(
+      { imports: [PraticienAuthModule] },
+      [{ provide: StorageService, useValue: fakeStorage }],
+    );
+  });
   afterAll(async () => { await app.close(); });
   const http = () => request(app.getHttpServer());
 

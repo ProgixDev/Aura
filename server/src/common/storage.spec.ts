@@ -1,8 +1,13 @@
-import { promises as fs } from 'fs';
-import { join, resolve, sep } from 'path';
-import { tmpdir } from 'os';
 import { StorageService } from './storage.service';
 import { assertUpload } from './upload.util';
+
+const uploadMock = jest.fn().mockResolvedValue({ data: {}, error: null });
+const downloadMock = jest.fn();
+const fromMock = jest.fn(() => ({ upload: uploadMock, download: downloadMock }));
+
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => ({ storage: { from: fromMock } })),
+}));
 
 function fakeFile(overrides: Partial<Express.Multer.File>): Express.Multer.File {
   return {
@@ -21,59 +26,37 @@ function fakeFile(overrides: Partial<Express.Multer.File>): Express.Multer.File 
 }
 
 describe('StorageService.save', () => {
-  let base: string;
   let service: StorageService;
 
-  beforeEach(async () => {
-    base = await fs.mkdtemp(join(tmpdir(), 'storage-spec-'));
-    process.env.UPLOAD_DIR = base;
+  beforeEach(() => {
+    uploadMock.mockClear();
     service = new StorageService();
   });
 
-  afterEach(async () => {
-    delete process.env.UPLOAD_DIR;
-    await fs.rm(base, { recursive: true, force: true });
-  });
-
-  it('writes a normal upload strictly inside <base>/<subdir>/', async () => {
+  it('uploads under <subdir>/<random-uuid>.<ext> and returns that key', async () => {
     const file = fakeFile({ originalname: 'photo.png', mimetype: 'image/png' });
-    const relPath = await service.save(file, 'praticiens/1/documents');
+    const objectKey = await service.save(file, 'praticiens/1/documents');
 
-    expect(relPath).not.toContain('..');
-    const abs = resolve(base, relPath);
-    expect(abs.startsWith(resolve(base, 'praticiens/1/documents') + sep)).toBe(true);
-    await expect(fs.readFile(abs)).resolves.toEqual(file.buffer);
+    expect(objectKey).not.toContain('..');
+    expect(objectKey).toMatch(/^praticiens\/1\/documents\/[0-9a-f-]{36}\.png$/);
+    expect(uploadMock).toHaveBeenCalledWith(objectKey, file.buffer, { contentType: 'image/png' });
   });
 
-  it('neutralizes a path-traversal originalname and never escapes the subdir', async () => {
+  it('neutralizes a path-traversal originalname — never lets it reach the object key', async () => {
     const malicious = fakeFile({
       originalname: '../../../../etc/passed.txt',
       mimetype: 'application/pdf',
     });
-    const relPath = await service.save(malicious, 'praticiens/1/documents');
+    const objectKey = await service.save(malicious, 'praticiens/1/documents');
 
-    // Returned logical path never contains traversal sequences.
-    expect(relPath).not.toContain('..');
-
-    // The resolved absolute path stays strictly inside the intended subdir.
-    const subdirAbs = resolve(base, 'praticiens/1/documents');
-    const abs = resolve(base, relPath);
-    expect(abs.startsWith(subdirAbs + sep)).toBe(true);
-
-    // Nothing was written outside the storage base at all (e.g. no file
-    // escaped up to a simulated "/etc" sibling directory).
-    const escapedPath = resolve(base, '..', '..', '..', '..', 'etc', 'passed.txt');
-    await expect(fs.readFile(escapedPath)).rejects.toThrow();
-
-    // The file really was written, safely, inside the subdir.
-    const filesInSubdir = await fs.readdir(subdirAbs);
-    expect(filesInSubdir).toHaveLength(1);
+    expect(objectKey).not.toContain('..');
+    expect(objectKey.startsWith('praticiens/1/documents/')).toBe(true);
   });
 
-  it('derives the on-disk filename from a random id, not from originalname', async () => {
+  it('derives the object key filename from a random id, not from originalname', async () => {
     const file = fakeFile({ originalname: 'some name with spaces & stuff.pdf' });
-    const relPath = await service.save(file, 'sub');
-    const filename = relPath.split('/').pop()!;
+    const objectKey = await service.save(file, 'sub');
+    const filename = objectKey.split('/').pop()!;
     expect(filename).not.toContain('some name');
     expect(filename).toMatch(/^[0-9a-f-]{36}\.pdf$/);
   });

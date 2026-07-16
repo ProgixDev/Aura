@@ -27,8 +27,8 @@ export class Remboursement {
   @Column({ type: 'text', nullable: true }) description: string | null;
   @Column({ type: 'varchar', length: 50, default: 'en_attente' }) statut: string;
   @Column({ type: 'text', nullable: true }) commentaire_admin: string | null;
-  @Column({ type: 'datetime', nullable: true }) date_traitement: Date | null;
-  @Column({ type: 'datetime', nullable: true }) date_remboursement: Date | null;
+  @Column({ type: Date, nullable: true }) date_traitement: Date | null;
+  @Column({ type: Date, nullable: true }) date_remboursement: Date | null;
   @Column({ type: 'text', nullable: true, transformer: jsonTransformer }) documents: unknown[] | null;
   @Column({ type: 'text', nullable: true, transformer: jsonTransformer }) metadata: unknown | null;
   @CreateDateColumn({ name: 'created_at' }) created_at: Date;

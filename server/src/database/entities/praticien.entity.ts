@@ -22,8 +22,8 @@ export class Praticien {
   @Column({ type: 'int' }) experience: number;
   @Column({ type: 'text' }) bio: string;
   @Column({ type: 'varchar', length: 20, default: 'en_attente' }) statut_verification: string;
-  @Column({ type: 'datetime', nullable: true }) date_inscription: Date | null;
-  @Column({ type: 'datetime', nullable: true }) verifie_a: Date | null;
+  @Column({ type: Date, nullable: true }) date_inscription: Date | null;
+  @Column({ type: Date, nullable: true }) verifie_a: Date | null;
   @Column({ type: 'int', nullable: true }) verifie_par: number | null;
   @Column({ type: 'text', nullable: true }) motif_rejet: string | null;
   @Column({ type: 'varchar', nullable: true }) stripe_account_id: string | null;

@@ -9,7 +9,7 @@ export class Message {
   @Column() conversation_id: number;
   @Column({ type: 'varchar', length: 20 }) sender_role: 'client' | 'praticien';
   @Column({ type: 'text' }) text: string;
-  @Column({ type: 'datetime', nullable: true }) read_at: Date | null;
+  @Column({ type: Date, nullable: true }) read_at: Date | null;
   @Column({ default: false }) flagged: boolean;
   @CreateDateColumn({ name: 'created_at' }) created_at: Date;
 

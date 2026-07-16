@@ -1,9 +1,13 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import { randomUUID } from 'crypto';
 import { createTestApp, seedAdmin, seedClientUser } from './utils/create-test-app';
 import { RemboursementsModule } from '../src/remboursements/remboursements.module';
 import { Paiement } from '../src/database/entities/paiement.entity';
+import { StorageService } from '../src/common/storage.service';
+
+const fakeStorage = { save: jest.fn((_file, subdir) => Promise.resolve(`${subdir}/${randomUUID()}.pdf`)) };
 
 describe('remboursements', () => {
   let app: INestApplication;
@@ -12,7 +16,10 @@ describe('remboursements', () => {
   let paidId: number;
   let adminToken: string;
   beforeAll(async () => {
-    app = await createTestApp({ imports: [RemboursementsModule] });
+    app = await createTestApp(
+      { imports: [RemboursementsModule] },
+      [{ provide: StorageService, useValue: fakeStorage }],
+    );
     const seeded = await seedClientUser(app, 'refund@aura.io');
     clientToken = seeded.token;
     clientId = seeded.client.id;

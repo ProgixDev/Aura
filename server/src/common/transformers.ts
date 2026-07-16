@@ -5,7 +5,7 @@ export const decimalTransformer = {
 };
 
 // Entities declare json-ish columns as type 'text' + this transformer so the same
-// entity works on MySQL (real JSON column, mysql2 may return parsed objects) and SQLite.
+// entity works on Postgres (real jsonb column, pg auto-parses into objects) and SQLite.
 export const jsonTransformer = {
   to: (v: unknown) => (v == null ? null : JSON.stringify(v)),
   from: (v: unknown): unknown => {

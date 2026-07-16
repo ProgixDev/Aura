@@ -12,7 +12,7 @@ export class Subscription {
   @Column({ type: 'varchar', length: 20, default: 'active' }) statut: string; // 'active'|'past_due'|'canceled'|'trialing'
   @Column({ type: 'varchar', nullable: true }) stripe_subscription_id: string | null;
   @Column({ type: 'varchar', nullable: true }) stripe_customer_id: string | null;
-  @Column({ type: 'datetime', nullable: true }) current_period_end: Date | null;
+  @Column({ type: Date, nullable: true }) current_period_end: Date | null;
   @CreateDateColumn({ name: 'created_at' }) created_at: Date;
   @UpdateDateColumn({ name: 'updated_at' }) updated_at: Date;
 

@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { createReadStream } from 'fs';
 import type { Response } from 'express';
 import { Praticien } from '../../database/entities/praticien.entity';
 import { PraticienDocument } from '../../database/entities/praticien-document.entity';
@@ -242,6 +241,6 @@ export class PraticienVerificationService {
       'X-Content-Type-Options': 'nosniff',
       'Content-Disposition': `inline; filename="${doc.nom_fichier}"`,
     });
-    return new StreamableFile(createReadStream(this.storage.resolve(doc.chemin)));
+    return new StreamableFile(await this.storage.download(doc.chemin));
   }
 }

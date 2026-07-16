@@ -16,7 +16,7 @@ export class PraticienDocument {
   @Column({ type: 'int', nullable: true }) taille: number | null;
   @Column({ type: 'varchar', length: 20, default: 'en_attente' }) statut: string;
   @Column({ type: 'text', nullable: true }) commentaire_rejet: string | null;
-  @Column({ type: 'datetime', nullable: true }) verifie_a: Date | null;
+  @Column({ type: Date, nullable: true }) verifie_a: Date | null;
   @Column({ type: 'int', nullable: true }) verifie_par: number | null;
   @CreateDateColumn({ name: 'created_at' }) created_at: Date;
   @UpdateDateColumn({ name: 'updated_at' }) updated_at: Date;

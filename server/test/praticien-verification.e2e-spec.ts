@@ -1,12 +1,14 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { promises as fs } from 'fs';
-import { dirname, join } from 'path';
 import { createTestApp, seedAdmin } from './utils/create-test-app';
 import { PraticienVerificationModule } from '../src/auth/praticien-verification/praticien-verification.module';
 import { Praticien } from '../src/database/entities/praticien.entity';
 import { PraticienDocument } from '../src/database/entities/praticien-document.entity';
+import { StorageService } from '../src/common/storage.service';
+
+const FAKE_FILE_BYTES = Buffer.from('%PDF-1.4 fake content');
+const fakeStorage = { save: jest.fn(), download: jest.fn().mockResolvedValue(FAKE_FILE_BYTES) };
 
 async function seedPraticien(ds: DataSource, email: string, nDocs = 5) {
   const praticien = await ds.getRepository(Praticien).save({
@@ -30,7 +32,10 @@ describe('praticien verification (admin)', () => {
   let app: INestApplication;
   let token: string;
   beforeAll(async () => {
-    app = await createTestApp({ imports: [PraticienVerificationModule] });
+    app = await createTestApp(
+      { imports: [PraticienVerificationModule] },
+      [{ provide: StorageService, useValue: fakeStorage }],
+    );
     token = (await seedAdmin(app, 'verif@aura.io')).token;
   });
   afterAll(async () => { await app.close(); });
@@ -106,11 +111,9 @@ describe('praticien verification (admin)', () => {
     const { docs } = await seedPraticien(ds, 'p7@aura.io', 1);
     const doc = docs[0];
     // The document row exists (as it would after a real upload via praticien-auth's
-    // StorageService.save()) — write matching bytes at the same resolved path so the
-    // streaming route has a real file to read, without going through the upload flow.
-    const absPath = join(process.env.UPLOAD_DIR as string, doc.chemin);
-    await fs.mkdir(dirname(absPath), { recursive: true });
-    await fs.writeFile(absPath, '%PDF-1.4 fake content');
+    // StorageService.save()) — the fake StorageService override returns matching bytes
+    // for any key, so the streaming route has content to serve without a real Supabase
+    // Storage round-trip.
 
     await http().get(`/api/v1/admin/praticiens/verification/documents/${doc.id}/file`).expect(401);
 
