@@ -1,11 +1,14 @@
+'use client';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
 import { Avatar } from '@/components/ui/Avatar';
 import { Rating } from '@/components/ui/Rating';
 import { Badge } from '@/components/ui/Badge';
 import { plans } from '@/lib/data/content';
-import { practitioners } from '@/lib/data/practitioners';
+import { api } from '@/lib/api';
+import { mapPraticien } from '@/lib/data/praticien-adapter';
 import { euro } from '@/lib/format';
 
 const BENEFITS = [
@@ -31,7 +34,16 @@ const VERIFY = [
 ];
 
 export default function DevenirPraticienPage() {
-  const featured = practitioners.find((p) => p.verified) || practitioners[0];
+  const { data } = useQuery({
+    queryKey: ['praticiens', 'devenir-praticien-featured'],
+    queryFn: () => api.get('/praticiens?per_page=10'),
+  });
+  // Pick the practitioner with the most published reviews as the testimonial exemplar
+  // (mirrors the old mock's `practitioners.find(p => p.verified) || practitioners[0]`
+  // intent of surfacing a credible, established profile rather than an arbitrary row).
+  const candidates = (data?.data ?? []).map(mapPraticien);
+  const featured = candidates.reduce((best, p) => (!best || p.reviews > best.reviews ? p : best), null);
+
   return (
     <>
       {/* HERO */}
@@ -151,21 +163,23 @@ export default function DevenirPraticienPage() {
       </section>
 
       {/* TESTIMONIAL */}
-      <section className="section">
-        <div className="container-narrow center">
-          <Rating value={featured.rating} count={featured.reviews} size={18} showCount />
-          <p className="serif" style={{ fontSize: 'clamp(22px,3.2vw,34px)', lineHeight: 1.32, margin: '20px 0 28px', fontWeight: 400 }}>
-            « Aura m’a permis de remplir mon agenda sans démarchage. Les clients arrivent déjà en confiance, et je suis payée sans stress. »
-          </p>
-          <div className="row gap-3" style={{ justifyContent: 'center' }}>
-            <Avatar src={featured.photo} name={featured.name} tone={featured.tone} size={48} />
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontWeight: 500 }}>{featured.name}</div>
-              <div className="small">{featured.specialties[0]} · {featured.city}</div>
+      {featured && (
+        <section className="section">
+          <div className="container-narrow center">
+            <Rating value={featured.rating} count={featured.reviews} size={18} showCount />
+            <p className="serif" style={{ fontSize: 'clamp(22px,3.2vw,34px)', lineHeight: 1.32, margin: '20px 0 28px', fontWeight: 400 }}>
+              « Aura m’a permis de remplir mon agenda sans démarchage. Les clients arrivent déjà en confiance, et je suis payée sans stress. »
+            </p>
+            <div className="row gap-3" style={{ justifyContent: 'center' }}>
+              <Avatar src={featured.photo} name={featured.name} tone={featured.tone} size={48} />
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontWeight: 500 }}>{featured.name}</div>
+                <div className="small">{featured.specialties[0]} · {featured.city}</div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="section">
