@@ -1,6 +1,13 @@
-import { DataSource, DataSourceOptions } from 'typeorm';
+import { DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
 
+// Load .env at import time so buildDataSourceOptions() sees DB_* when app.module evaluates
+// TypeOrmModule.forRoot() at decoration time — that runs before ConfigModule.forRoot().
+dotenv.config();
+
+// Schema is managed by server/scripts/schema.sql (run in the Supabase SQL Editor), not by
+// TypeORM migrations — so no `migrations` glob and no CLI DataSource export here. This just
+// builds the runtime connection options for the app's query layer.
 export function buildDataSourceOptions(): DataSourceOptions {
   return {
     type: 'postgres',
@@ -16,10 +23,6 @@ export function buildDataSourceOptions(): DataSourceOptions {
     // connecting to a plain local/throwaway Postgres instead.
     ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false },
     entities: [__dirname + '/entities/*.entity.{ts,js}'],
-    migrations: [__dirname + '/migrations/*.{ts,js}'],
     synchronize: false,
   };
 }
-
-dotenv.config();
-export default new DataSource(buildDataSourceOptions()); // used by TypeORM CLI
