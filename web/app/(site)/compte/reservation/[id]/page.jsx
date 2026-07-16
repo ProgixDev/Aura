@@ -1,5 +1,8 @@
+'use client';
+
+import { use } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
@@ -7,29 +10,38 @@ import { Button } from '@/components/ui/Button';
 import { Rating } from '@/components/ui/Rating';
 import { ModalButton } from '@/components/ui/ModalButton';
 import { ToastButton } from '@/components/ui/ToastButton';
-import { bookings, getBooking } from '@/lib/data/admin';
-import { getPractitioner } from '@/lib/data/practitioners';
-import { dateFr, euro, tone } from '@/lib/format';
+import { api } from '@/lib/api';
+import { mapPraticien } from '@/lib/data/praticien-adapter';
+import { dateFr, euro } from '@/lib/format';
 
-const STATUS_FR = { confirmed: 'Confirmée', pending: 'En attente', completed: 'Terminée', cancelled: 'Annulée' };
+// rendez_vous.statut is French: en_attente|confirme|annule|termine.
+const STATUT_LABEL = { en_attente: 'En attente', confirme: 'Confirmée', termine: 'Terminée', annule: 'Annulée' };
+const STATUT_TONE = { en_attente: 'warning', confirme: 'success', termine: 'neutral', annule: 'danger' };
 
-export function generateStaticParams() {
-  return bookings.map((b) => ({ id: b.id }));
-}
+export default function ReservationDetail({ params }) {
+  const { id } = use(params);
 
-export async function generateMetadata({ params }) {
-  const { id } = await params;
-  const b = getBooking(id);
-  return { title: b ? `Réservation ${b.ref} — AURA` : 'Réservation — AURA' };
-}
+  const { data, isLoading } = useQuery({
+    queryKey: ['rendez-vous-client', id],
+    queryFn: () => api.get(`/rendez-vous/client/${id}`),
+  });
 
-export default async function ReservationDetail({ params }) {
-  const { id } = await params;
-  const b = getBooking(id);
-  if (!b) notFound();
-  const prat = getPractitioner(b.practitionerId);
-  const upcoming = b.status === 'confirmed' || b.status === 'pending';
-  const fee = Math.round(b.price * 0.0);
+  if (!isLoading && !data?.data) {
+    return (
+      <section className="section">
+        <div className="container-narrow center">
+          <h1 className="h-2">Réservation introuvable</h1>
+          <p className="lead mt-2">Cette réservation n’existe pas ou ne vous appartient pas.</p>
+          <Link href="/compte/reservations" className="btn btn-primary mt-4">Retour à mes réservations</Link>
+        </div>
+      </section>
+    );
+  }
+  if (!data?.data) return null;
+
+  const b = data.data;
+  const prat = mapPraticien(b.praticien);
+  const upcoming = b.statut === 'confirme' || b.statut === 'en_attente';
 
   return (
     <div className="stack gap-5">
@@ -38,15 +50,15 @@ export default async function ReservationDetail({ params }) {
         <Icon name="chevronRight" size={13} color="var(--muted)" />
         <Link href="/compte/reservations">Réservations</Link>
         <Icon name="chevronRight" size={13} color="var(--muted)" />
-        <span>{b.ref}</span>
+        <span>RDV-{b.id}</span>
       </nav>
 
       <header className="row between wrap gap-3">
         <div>
           <h1 className="h-1">Séance · {prat.specialties[0]}</h1>
-          <p className="lead" style={{ marginTop: 4 }}>Référence <span className="serif italic accent">{b.ref}</span></p>
+          <p className="lead" style={{ marginTop: 4 }}>Référence <span className="serif italic accent">RDV-{b.id}</span></p>
         </div>
-        <Badge variant={tone(b.status)}>{STATUS_FR[b.status] || b.status}</Badge>
+        <Badge variant={STATUT_TONE[b.statut] || 'neutral'}>{STATUT_LABEL[b.statut] || b.statut}</Badge>
       </header>
 
       <div className="grid grid-2" style={{ alignItems: 'start' }}>
@@ -56,10 +68,10 @@ export default async function ReservationDetail({ params }) {
             <h2 className="h-3 mb-3">Récapitulatif</h2>
             <dl className="dl">
               <dt>Discipline</dt><dd>{prat.specialties.join(' · ')}</dd>
-              <dt>Date</dt><dd>{dateFr(b.date)} · {b.slot}</dd>
-              <dt>Durée</dt><dd>{prat.duration} min</dd>
+              <dt>Date</dt><dd>{dateFr(b.date_heure)}</dd>
+              <dt>Durée</dt><dd>{b.duree_minutes} min</dd>
               <dt>Format</dt><dd className="row gap-1"><Icon name={b.mode === 'visio' ? 'video' : 'pin'} size={13} color="var(--muted)" />{b.mode}</dd>
-              <dt>Lieu</dt><dd>{b.mode === 'visio' ? 'Lien visio envoyé par message' : `${prat.city}, ${prat.region}`}</dd>
+              <dt>Lieu</dt><dd>{b.mode === 'visio' ? 'Lien visio envoyé par message' : prat.city}</dd>
             </dl>
           </section>
 
@@ -86,15 +98,13 @@ export default async function ReservationDetail({ params }) {
           <section className="card card-pad">
             <h2 className="h-3 mb-3">Paiement</h2>
             <dl className="dl">
-              <dt>Séance</dt><dd>{euro(b.price)}</dd>
-              <dt>Frais de service</dt><dd>{euro(fee)}</dd>
-              <dt>Moyen de paiement</dt><dd>Carte ···· 4242</dd>
-              <dt>Statut</dt><dd><Badge variant={b.status === 'cancelled' ? 'danger' : 'success'}>{b.status === 'cancelled' ? 'Remboursé' : 'Payé'}</Badge></dd>
+              <dt>Séance</dt><dd>{euro(b.tarif)}</dd>
+              <dt>Statut</dt><dd><Badge variant={b.statut === 'annule' ? 'danger' : 'success'}>{b.statut === 'annule' ? 'Remboursé' : 'Payé'}</Badge></dd>
             </dl>
             <div className="divider" />
             <div className="between">
               <span className="small" style={{ fontWeight: 500 }}>Total</span>
-              <span className="price" style={{ fontSize: 22 }}>{euro(b.price + fee)}</span>
+              <span className="price" style={{ fontSize: 22 }}>{euro(b.tarif)}</span>
             </div>
             <ToastButton message="Facture téléchargée (PDF)" className="btn btn-soft btn-block mt-3">
               <Icon name="download" size={15} /> Télécharger la facture
@@ -108,7 +118,7 @@ export default async function ReservationDetail({ params }) {
                 <ModalButton modal="reschedule" payload={{ name: prat.name }} className="btn btn-primary btn-block">Reprogrammer la séance</ModalButton>
                 <ModalButton modal="cancelBooking" payload={{ name: prat.name }} className="btn btn-danger-soft btn-block">Annuler la séance</ModalButton>
               </>
-            ) : b.status === 'completed' ? (
+            ) : b.statut === 'termine' ? (
               <ModalButton modal="review" payload={{ name: prat.name }} className="btn btn-primary btn-block">Laisser un avis</ModalButton>
             ) : (
               <Button href="/praticiens" variant="primary" block>Réserver à nouveau</Button>

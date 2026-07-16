@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { Avatar } from '@/components/ui/Avatar';
@@ -16,34 +17,31 @@ import { useToast } from '@/lib/store';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
-const DAYS = [
-  { key: 'd1', dow: 'Lun', dom: '02', month: 'juin', full: 'lundi 2 juin' },
-  { key: 'd2', dow: 'Mar', dom: '03', month: 'juin', full: 'mardi 3 juin' },
-  { key: 'd3', dow: 'Mer', dom: '04', month: 'juin', full: 'mercredi 4 juin' },
-  { key: 'd4', dow: 'Jeu', dom: '05', month: 'juin', full: 'jeudi 5 juin' },
-  { key: 'd5', dow: 'Ven', dom: '06', month: 'juin', full: 'vendredi 6 juin' },
-];
-
-const SLOTS = [
-  { t: '09:00', off: false }, { t: '10:30', off: true }, { t: '11:30', off: false },
-  { t: '14:00', off: false }, { t: '15:30', off: false }, { t: '16:30', off: true },
-  { t: '17:30', off: false }, { t: '18:30', off: false },
-];
-
 const STEPS = ['Créneau', 'Modalité', 'Paiement', 'Confirmation'];
 
-// DAYS/SLOTS above are UI-only mock content (R3: no calendar/availability engine in this
-// plan) — French month name, no year. This maps what's already selected into a real ISO
-// datetime for the backend, without changing the picker itself.
-const FRENCH_MONTHS = {
-  janvier: '01', février: '02', mars: '03', avril: '04', mai: '05', juin: '06',
-  juillet: '07', août: '08', septembre: '09', octobre: '10', novembre: '11', décembre: '12',
-};
+// The backend always books fixed 60-minute sessions today (see
+// rendez-vous.service.ts#create -> duree_minutes: 60) — practitioners don't carry a
+// duration field, so this mirrors the real, fixed value rather than inventing one.
+const SESSION_MINUTES = 60;
 
+// Turns a GET /praticiens/:id/availability day ({date:'YYYY-MM-DD', slots}) into the
+// display fields the day-tile UI renders. Parsed as local midnight (no 'Z' suffix) so
+// the tile's day-of-month never shifts by a day under a negative UTC offset.
+function dayMeta(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00`);
+  const dow = new Intl.DateTimeFormat('fr-FR', { weekday: 'short' }).format(d).replace('.', '');
+  return {
+    dow: dow.charAt(0).toUpperCase() + dow.slice(1),
+    dom: new Intl.DateTimeFormat('fr-FR', { day: '2-digit' }).format(d),
+    month: new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(d),
+    full: new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).format(d),
+  };
+}
+
+// day.date is already a real 'YYYY-MM-DD' from the availability endpoint, so building the
+// ISO datetime the backend expects is a straight concat — no French month-name parsing needed.
 function buildDateHeureIso(day, slotTime) {
-  const year = new Date().getFullYear();
-  const month = FRENCH_MONTHS[day.month] ?? '01';
-  return `${year}-${month}-${day.dom}T${slotTime}:00`;
+  return `${day.date}T${slotTime}:00`;
 }
 
 function PaymentForm({ booking, total, onBack, onSuccess }) {
@@ -127,7 +125,13 @@ export function BookingFlow({ p }) {
   const canPresentiel = !/visio uniquement/i.test(p.mode || '');
   const canVisio = /visio/i.test(p.mode || '');
 
-  const selectedDay = DAYS.find((d) => d.key === day);
+  const { data: availabilityRes, isLoading: loadingAvailability } = useQuery({
+    queryKey: ['praticien-availability', p.id],
+    queryFn: () => api.get(`/praticiens/${p.id}/availability`),
+  });
+  const days = (availabilityRes?.data ?? []).map((d) => ({ key: d.date, date: d.date, slots: d.slots, ...dayMeta(d.date) }));
+
+  const selectedDay = days.find((d) => d.key === day);
 
   const discountedPrice = computeDiscountedTarif(
     p.price,
@@ -244,54 +248,60 @@ export function BookingFlow({ p }) {
                 </h1>
                 <p className="body mb-4">Sélectionnez une date puis un créneau disponible.</p>
 
-                <div className="row gap-3 wrap" style={{ marginBottom: 28 }}>
-                  {DAYS.map((d) => {
-                    const active = day === d.key;
-                    return (
-                      <button
-                        key={d.key}
-                        type="button"
-                        onClick={() => { setDay(d.key); setSlot(''); }}
-                        className="card-hover"
-                        style={{
-                          flex: '1 1 96px', minWidth: 88, padding: '16px 8px', borderRadius: 20,
-                          textAlign: 'center', cursor: 'pointer',
-                          border: `1.5px solid ${active ? 'var(--violet-2)' : 'var(--line)'}`,
-                          background: active ? 'rgba(164,139,216,0.10)' : 'var(--card)',
-                        }}
-                      >
-                        <div className="tiny" style={{ color: active ? 'var(--violet-2)' : 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.05em' }}>{d.dow}</div>
-                        <div className="serif" style={{ fontSize: 28, lineHeight: 1.1, color: active ? 'var(--violet-2)' : 'var(--ink)' }}>{d.dom}</div>
-                        <div className="tiny muted">{d.month}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <h3 className="h-4 mb-3">Créneaux {selectedDay ? `— ${selectedDay.full}` : ''}</h3>
-                {!day && <p className="note">Choisissez d’abord un jour pour voir les créneaux.</p>}
-                {day && (
-                  <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(110px,1fr))', gap: 12 }}>
-                    {SLOTS.map((s) => {
-                      const active = slot === s.t;
+                {loadingAvailability && <p className="note">Chargement des disponibilités…</p>}
+                {!loadingAvailability && days.length === 0 && (
+                  <p className="note">Aucun créneau disponible pour le moment.</p>
+                )}
+                {!loadingAvailability && days.length > 0 && (
+                  <div className="row gap-3 wrap" style={{ marginBottom: 28 }}>
+                    {days.map((d) => {
+                      const active = day === d.key;
                       return (
                         <button
-                          key={s.t}
+                          key={d.key}
                           type="button"
-                          disabled={s.off}
-                          onClick={() => setSlot(s.t)}
+                          onClick={() => { setDay(d.key); setSlot(''); }}
+                          className="card-hover"
+                          style={{
+                            flex: '1 1 96px', minWidth: 88, padding: '16px 8px', borderRadius: 20,
+                            textAlign: 'center', cursor: 'pointer',
+                            border: `1.5px solid ${active ? 'var(--violet-2)' : 'var(--line)'}`,
+                            background: active ? 'rgba(164,139,216,0.10)' : 'var(--card)',
+                          }}
+                        >
+                          <div className="tiny" style={{ color: active ? 'var(--violet-2)' : 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.05em' }}>{d.dow}</div>
+                          <div className="serif" style={{ fontSize: 28, lineHeight: 1.1, color: active ? 'var(--violet-2)' : 'var(--ink)' }}>{d.dom}</div>
+                          <div className="tiny muted">{d.month}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <h3 className="h-4 mb-3">Créneaux {selectedDay ? `— ${selectedDay.full}` : ''}</h3>
+                {!day && days.length > 0 && <p className="note">Choisissez d’abord un jour pour voir les créneaux.</p>}
+                {day && selectedDay && (
+                  <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(110px,1fr))', gap: 12 }}>
+                    {selectedDay.slots.map((s) => {
+                      const active = slot === s.time;
+                      return (
+                        <button
+                          key={s.time}
+                          type="button"
+                          disabled={!s.available}
+                          onClick={() => setSlot(s.time)}
                           className="chip"
                           style={{
                             justifyContent: 'center', padding: '12px 0', borderRadius: 14,
-                            cursor: s.off ? 'not-allowed' : 'pointer',
-                            opacity: s.off ? 0.4 : 1,
-                            textDecoration: s.off ? 'line-through' : 'none',
+                            cursor: s.available ? 'pointer' : 'not-allowed',
+                            opacity: s.available ? 1 : 0.4,
+                            textDecoration: s.available ? 'none' : 'line-through',
                             border: `1.5px solid ${active ? 'var(--violet-2)' : 'var(--line)'}`,
                             background: active ? 'var(--violet-2)' : 'var(--card)',
                             color: active ? '#fff' : 'var(--ink)',
                           }}
                         >
-                          {s.t}
+                          {s.time}
                         </button>
                       );
                     })}
@@ -376,7 +386,7 @@ export function BookingFlow({ p }) {
                     <dt>Discipline</dt><dd>{p.specialties.join(' · ')}</dd>
                     <dt>Date</dt><dd>{selectedDay?.full} à {slot}</dd>
                     <dt>Modalité</dt><dd style={{ textTransform: 'capitalize' }}>{mode}</dd>
-                    <dt>Durée</dt><dd>{p.duration} min</dd>
+                    <dt>Durée</dt><dd>{SESSION_MINUTES} min</dd>
                   </dl>
                 </div>
 
@@ -498,7 +508,7 @@ export function BookingFlow({ p }) {
               </dl>
               <div className="divider" />
               <div className="between" style={{ marginTop: 6 }}>
-                <span className="small muted">Séance ({p.duration} min)</span>
+                <span className="small muted">Séance ({SESSION_MINUTES} min)</span>
                 <span className="small">{euro(p.price)}</span>
               </div>
               {promoState.status === 'valid' && (

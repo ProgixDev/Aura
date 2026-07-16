@@ -1,4 +1,3 @@
-import { bookings } from '@/lib/data/admin';
 import ReservationsBody from './ReservationsBody';
 
 export const metadata = { title: 'Mes réservations — AURA' };
@@ -11,7 +10,7 @@ export default function ReservationsPage() {
         <p className="lead" style={{ marginTop: 4 }}>Vos séances <span className="serif italic accent">à venir</span> et votre historique.</p>
       </header>
 
-      <ReservationsBody bookings={bookings} />
+      <ReservationsBody />
     </div>
   );
 }

@@ -1,16 +1,21 @@
+'use client';
+
+import { use } from 'react';
 import Link from 'next/link';
-import { practitioners, getPractitioner } from '@/lib/data/practitioners';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { mapPraticien } from '@/lib/data/praticien-adapter';
 import { BookingFlow } from './BookingFlow';
 
-export function generateStaticParams() {
-  return practitioners.map((p) => ({ id: p.id }));
-}
+export default function ReserverPage({ params }) {
+  const { id } = use(params);
 
-export default async function ReserverPage({ params }) {
-  const { id } = await params;
-  const p = getPractitioner(id);
+  const { data, isLoading } = useQuery({
+    queryKey: ['praticien', id],
+    queryFn: () => api.get(`/praticiens/${id}`),
+  });
 
-  if (!p) {
+  if (!isLoading && !data?.data) {
     return (
       <section className="section">
         <div className="container-narrow center">
@@ -21,6 +26,7 @@ export default async function ReserverPage({ params }) {
       </section>
     );
   }
+  if (!data?.data) return null;
 
-  return <BookingFlow p={p} />;
+  return <BookingFlow p={mapPraticien(data.data)} />;
 }

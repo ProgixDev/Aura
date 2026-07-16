@@ -1,7 +1,11 @@
+'use client';
+
 import Link from 'next/link';
-import { practitioners } from '@/lib/data/practitioners';
-import { disciplines } from '@/lib/data/disciplines';
-import { events } from '@/lib/data/events';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { mapPraticien } from '@/lib/data/praticien-adapter';
+import { mapEvent } from '@/lib/data/event-adapter';
+import { num } from '@/lib/format';
 import { PractitionerCard } from '@/components/cards/PractitionerCard';
 import { DisciplineTile } from '@/components/cards/DisciplineTile';
 import { EventCard } from '@/components/cards/EventCard';
@@ -21,8 +25,43 @@ const VALUES = [
   { i: 'heart', t: 'Sans jugement', d: 'Un espace doux, respectueux, pour celles et ceux qui cherchent.' },
 ];
 
+// Discipline rows come back with French field names (nom/tonalite/glyphe) and no
+// praticien-count aggregate — map to what DisciplineTile renders, leaving count
+// absent (DisciplineTile hides that line rather than showing an invented number).
+function mapDiscipline(row) {
+  return { slug: row.slug, name: row.nom, tone: row.tonalite, glyph: row.glyphe };
+}
+
 export default function HomePage() {
-  const featured = practitioners.slice(0, 3);
+  const { data: praticiensRes } = useQuery({
+    queryKey: ['praticiens', 'home-featured'],
+    queryFn: () => api.get('/praticiens?per_page=3'),
+  });
+  const featured = (praticiensRes?.data ?? []).map(mapPraticien);
+
+  const { data: disciplinesRes } = useQuery({
+    queryKey: ['disciplines'],
+    queryFn: () => api.get('/disciplines'),
+  });
+  const disciplineTiles = (disciplinesRes?.data ?? []).slice(0, 8).map(mapDiscipline);
+
+  const { data: eventsRes } = useQuery({
+    queryKey: ['events', 'home-featured'],
+    queryFn: () => api.get('/events?status=publié&per_page=3'),
+  });
+  const featuredEvents = (eventsRes?.data ?? []).map(mapEvent);
+
+  const { data: statsRes } = useQuery({
+    queryKey: ['stats'],
+    queryFn: () => api.get('/stats'),
+  });
+  const stats = statsRes?.data ?? { praticiens_verifies: 0, seances: 0, satisfaction: 0, villes: 0 };
+  const heroStats = [
+    [`${num(stats.praticiens_verifies)}+`, 'praticiens vérifiés'],
+    [num(stats.seances), 'séances réservées'],
+    [`${num(stats.satisfaction)} / 5`, 'satisfaction'],
+  ];
+
   return (
     <>
       {/* HERO */}
@@ -40,7 +79,7 @@ export default function HomePage() {
             <Link href="/devenir-praticien" className="btn btn-soft btn-lg" style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)' }}>Je suis praticien</Link>
           </div>
           <div className="row gap-6" style={{ justifyContent: 'center', marginTop: 44, color: 'rgba(255,255,255,0.75)', flexWrap: 'wrap' }}>
-            {[['2 400+', 'praticiens vérifiés'], ['48 000', 'séances réservées'], ['4,9 / 5', 'satisfaction']].map(([v, l]) => (
+            {heroStats.map(([v, l]) => (
               <div key={l} className="center"><div className="serif" style={{ fontSize: 30, color: '#fff' }}>{v}</div><div className="tiny" style={{ color: 'rgba(255,255,255,0.6)' }}>{l}</div></div>
             ))}
           </div>
@@ -70,7 +109,7 @@ export default function HomePage() {
             <Link href="/disciplines" className="more">Toutes les disciplines →</Link>
           </div>
           <div className="grid grid-4">
-            {disciplines.slice(0, 8).map((d) => <DisciplineTile key={d.slug} d={d} />)}
+            {disciplineTiles.map((d) => <DisciplineTile key={d.slug} d={d} />)}
           </div>
         </div>
       </section>
@@ -133,7 +172,7 @@ export default function HomePage() {
             <Link href="/evenements" className="more">Tout l’agenda →</Link>
           </div>
           <div className="grid grid-3">
-            {events.slice(0, 3).map((e) => <EventCard key={e.id} e={e} />)}
+            {featuredEvents.map((e) => <EventCard key={e.id} e={e} />)}
           </div>
         </div>
       </section>

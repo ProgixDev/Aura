@@ -6,7 +6,7 @@ export function DisciplineTile({ d }) {
       <span className={`tile-icon glyph-${d.tone}`} style={{ fontSize: 20 }}>{d.glyph}</span>
       <div className="flex-1">
         <div style={{ fontWeight: 500, fontSize: 15 }}>{d.name}</div>
-        <div className="tiny">{d.count} praticiens</div>
+        {d.count != null && <div className="tiny">{d.count} praticiens</div>}
       </div>
     </Link>
   );

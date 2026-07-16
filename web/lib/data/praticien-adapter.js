@@ -1,7 +1,9 @@
 // Adapter: backend Praticien rows -> the shape PractitionerCard / ProfileBody
-// already render. Real fields map directly; fields with no backend source
-// (photo, rating, online, experience.sessions, exchange…) are left absent
-// rather than invented — see plan Architecture notes.
+// already render. Real fields map directly; rating/reviews come from the
+// praticiens endpoints' attached rating + reviews_count (avg/count of
+// published avis). Fields with no backend source (photo, online,
+// experience.sessions, exchange…) are left absent rather than invented —
+// see plan Architecture notes.
 const DEFAULT_TONE = 'violet';
 
 export function mapPraticien(row) {
@@ -15,8 +17,8 @@ export function mapPraticien(row) {
     mode: row.mode,
     price: Number(row.tarif),
     duration: null,
-    rating: 0,
-    reviews: 0,
+    rating: row.rating ?? 0,
+    reviews: row.reviews_count ?? 0,
     level: row.niveau,
     verified: row.statut_verification === 'valide',
     online: false,
