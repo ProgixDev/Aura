@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Grain } from './Grain';
@@ -13,21 +13,26 @@ export function CircleCard({ circle }: { circle: Circle }) {
   const router = useRouter();
   const accent = circle.color ?? colors.violet;
   const gradient = [accent, colors.ink] as const;
+  const Hero: React.ComponentType<any> = circle.image ? ImageBackground : LinearGradient;
+  const heroProps = circle.image
+    ? { source: { uri: circle.image } }
+    : { colors: gradient, start: { x: 0, y: 0 }, end: { x: 1, y: 1 } };
 
   return (
     <Pressable
       onPress={() => router.push(`/cercles/${circle.id}` as any)}
       style={[styles.card, shadows.card]}
     >
-      <LinearGradient
-        colors={gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.img}
-      >
+      <Hero {...(heroProps as any)} style={styles.img}>
+        {circle.image && (
+          <LinearGradient
+            colors={['rgba(20,12,35,0.15)', 'rgba(10,6,20,0.55)']}
+            style={StyleSheet.absoluteFillObject}
+          />
+        )}
         <Grain opacity={0.18} />
         <Text style={styles.name}>{circle.nom}</Text>
-      </LinearGradient>
+      </Hero>
       <View style={styles.body}>
         {circle.animateur ? (
           <View style={styles.animateurRow}>

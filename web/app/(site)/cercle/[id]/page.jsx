@@ -34,7 +34,10 @@ export default function CerclePage({ params }) {
       {/* HERO */}
       <section
         className="aurora-dark grain"
-        style={{ '--orb-x': '70%', '--orb-y': '20%', '--orb-1': c.color || '#C4B0E8', '--orb-2': '#7B5FCF', padding: '96px 0 100px' }}
+        style={{
+          '--orb-x': '70%', '--orb-y': '20%', '--orb-1': c.color || '#C4B0E8', '--orb-2': '#7B5FCF', padding: '96px 0 100px',
+          ...(c.image ? { backgroundImage: `linear-gradient(rgba(20,12,35,0.35), rgba(10,6,20,0.65)), url(${c.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}),
+        }}
       >
         <div className="container reveal">
           <div className="row gap-2 small" style={{ color: 'rgba(255,255,255,0.6)', marginBottom: 22 }}>

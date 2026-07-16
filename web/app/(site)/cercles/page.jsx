@@ -67,7 +67,10 @@ export default function CerclesPage() {
                 <Link
                   href={`/cercle/${c.id}`}
                   className="aurora-dark grain"
-                  style={{ height: 120, padding: 18, display: 'flex', alignItems: 'flex-end', '--orb-1': c.color || '#C4B0E8', '--orb-2': '#7B5FCF' }}
+                  style={{
+                    height: 120, padding: 18, display: 'flex', alignItems: 'flex-end', '--orb-1': c.color || '#C4B0E8', '--orb-2': '#7B5FCF',
+                    ...(c.image ? { backgroundImage: `linear-gradient(rgba(20,12,35,0.25), rgba(10,6,20,0.55)), url(${c.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}),
+                  }}
                 >
                   <span className="serif" style={{ color: '#fff', fontSize: 21, fontWeight: 500, lineHeight: 1.15 }}>{c.nom}</span>
                 </Link>

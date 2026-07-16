@@ -273,14 +273,14 @@ async function seedPromotions(ctx: SeedContext): Promise<void> {
 
 async function seedCercles(ctx: SeedContext): Promise<void> {
   const rows = await ctx.ds.getRepository(Cercle).save([
-    { nom: 'Cercle Aura — Paris', animateur: 'Camille Fontaine', color: pick(CERCLE_PALETTE, 0), description: 'Un rendez-vous mensuel pour se recentrer en groupe, au cœur de Paris.' },
-    { nom: 'Cercle de femmes — Lyon', animateur: 'Nora El Amrani', color: pick(CERCLE_PALETTE, 1), description: 'Un cercle de parole et de partage entre femmes, une fois par mois.' },
-    { nom: 'Méditation du matin — Bordeaux', animateur: 'Julien Sabatier', color: pick(CERCLE_PALETTE, 2), description: 'Une séance de méditation guidée pour bien démarrer la journée.' },
-    { nom: 'Cercle de pleine lune — Marseille', animateur: 'Inès Castellano', color: pick(CERCLE_PALETTE, 3), description: 'Rituel collectif à chaque pleine lune, en bord de mer.' },
-    { nom: 'Cercle Aura — Toulouse', animateur: 'Hugo Delmas', color: pick(CERCLE_PALETTE, 4), description: 'Le rendez-vous Aura toulousain pour échanger et se ressourcer.' },
-    { nom: 'Sagesse et Partage — Nantes', animateur: 'Léa Guillou', color: pick(CERCLE_PALETTE, 5), description: 'Un cercle de discussion autour du développement personnel.' },
-    { nom: 'Cercle de respiration — Strasbourg', animateur: 'Antoine Weber', color: pick(CERCLE_PALETTE, 0), description: 'Ateliers de respiration consciente ouverts à tous les niveaux.' },
-    { nom: 'Rondes du cœur — Nice', animateur: 'Manon Rey', color: pick(CERCLE_PALETTE, 1), description: 'Un espace bienveillant pour cultiver la gratitude ensemble.' },
+    { nom: 'Cercle Aura — Paris', animateur: 'Camille Fontaine', color: pick(CERCLE_PALETTE, 0), description: 'Un rendez-vous mensuel pour se recentrer en groupe, au cœur de Paris.', image: `${IMAGE_BASE}/cercles/cercle-01.jpg` },
+    { nom: 'Cercle de femmes — Lyon', animateur: 'Nora El Amrani', color: pick(CERCLE_PALETTE, 1), description: 'Un cercle de parole et de partage entre femmes, une fois par mois.', image: `${IMAGE_BASE}/cercles/cercle-02.jpg` },
+    { nom: 'Méditation du matin — Bordeaux', animateur: 'Julien Sabatier', color: pick(CERCLE_PALETTE, 2), description: 'Une séance de méditation guidée pour bien démarrer la journée.', image: `${IMAGE_BASE}/cercles/cercle-03.jpg` },
+    { nom: 'Cercle de pleine lune — Marseille', animateur: 'Inès Castellano', color: pick(CERCLE_PALETTE, 3), description: 'Rituel collectif à chaque pleine lune, en bord de mer.', image: `${IMAGE_BASE}/cercles/cercle-04.jpg` },
+    { nom: 'Cercle Aura — Toulouse', animateur: 'Hugo Delmas', color: pick(CERCLE_PALETTE, 4), description: 'Le rendez-vous Aura toulousain pour échanger et se ressourcer.', image: `${IMAGE_BASE}/cercles/cercle-05.jpg` },
+    { nom: 'Sagesse et Partage — Nantes', animateur: 'Léa Guillou', color: pick(CERCLE_PALETTE, 5), description: 'Un cercle de discussion autour du développement personnel.', image: `${IMAGE_BASE}/cercles/cercle-06.jpg` },
+    { nom: 'Cercle de respiration — Strasbourg', animateur: 'Antoine Weber', color: pick(CERCLE_PALETTE, 0), description: 'Ateliers de respiration consciente ouverts à tous les niveaux.', image: `${IMAGE_BASE}/cercles/cercle-07.jpg` },
+    { nom: 'Rondes du cœur — Nice', animateur: 'Manon Rey', color: pick(CERCLE_PALETTE, 1), description: 'Un espace bienveillant pour cultiver la gratitude ensemble.', image: `${IMAGE_BASE}/cercles/cercle-08.jpg` },
   ]);
   console.log(`  cercles: ${rows.length} rows`);
 }
@@ -552,17 +552,20 @@ const ARTICLES: Array<{ titre: string; categorie: string; tonalite: string; temp
   { titre: 'Nos praticiens partagent leurs rituels', categorie: 'Communauté', tonalite: 'gold', temps: 4 },
 ];
 const EVENT_TYPES = ['Retraite', 'Formation', 'Atelier', 'Cercle', 'Sortie', 'Événement'];
-const EVENTS: Array<{ titre: string; type: string; lieu: string; prix: number; places: number }> = [
-  { titre: 'Retraite de ressourcement en Provence', type: 'Retraite', lieu: 'Marseille', prix: 180, places: 20 },
-  { titre: 'Atelier initiation au reiki', type: 'Atelier', lieu: 'Lyon', prix: 45, places: 15 },
-  { titre: 'Cercle de méditation en pleine nature', type: 'Cercle', lieu: 'Annecy', prix: 0, places: 30 },
-  { titre: 'Formation praticien magnétisme niveau 1', type: 'Formation', lieu: 'Paris', prix: 120, places: 12 },
-  { titre: 'Bain sonore collectif', type: 'Atelier', lieu: 'Bordeaux', prix: 25, places: 25 },
-  { titre: 'Sortie forêt & sylvothérapie', type: 'Sortie', lieu: 'Strasbourg', prix: 15, places: 18 },
-  { titre: 'Soirée pleine lune', type: 'Événement', lieu: 'Nice', prix: 0, places: 40 },
-  { titre: 'Atelier respiration consciente', type: 'Atelier', lieu: 'Toulouse', prix: 30, places: 20 },
-  { titre: 'Retraite silence & méditation', type: 'Retraite', lieu: 'Nantes', prix: 160, places: 16 },
-  { titre: 'Cercle de femmes — équinoxe', type: 'Cercle', lieu: 'Lille', prix: 10, places: 22 },
+// Pexels photos (free license), downloaded to mobile/assets/images/events/ and
+// re-uploaded to the public "aura-public" Supabase Storage bucket — see
+// conversation notes for the images-populate task.
+const EVENTS: Array<{ titre: string; type: string; lieu: string; prix: number; places: number; image: string }> = [
+  { titre: 'Retraite de ressourcement en Provence', type: 'Retraite', lieu: 'Marseille', prix: 180, places: 20, image: `${IMAGE_BASE}/events/event-01.jpg` },
+  { titre: 'Atelier initiation au reiki', type: 'Atelier', lieu: 'Lyon', prix: 45, places: 15, image: `${IMAGE_BASE}/events/event-02.jpg` },
+  { titre: 'Cercle de méditation en pleine nature', type: 'Cercle', lieu: 'Annecy', prix: 0, places: 30, image: `${IMAGE_BASE}/events/event-03.jpg` },
+  { titre: 'Formation praticien magnétisme niveau 1', type: 'Formation', lieu: 'Paris', prix: 120, places: 12, image: `${IMAGE_BASE}/events/event-04.jpg` },
+  { titre: 'Bain sonore collectif', type: 'Atelier', lieu: 'Bordeaux', prix: 25, places: 25, image: `${IMAGE_BASE}/events/event-05.jpg` },
+  { titre: 'Sortie forêt & sylvothérapie', type: 'Sortie', lieu: 'Strasbourg', prix: 15, places: 18, image: `${IMAGE_BASE}/events/event-06.jpg` },
+  { titre: 'Soirée pleine lune', type: 'Événement', lieu: 'Nice', prix: 0, places: 40, image: `${IMAGE_BASE}/events/event-07.jpg` },
+  { titre: 'Atelier respiration consciente', type: 'Atelier', lieu: 'Toulouse', prix: 30, places: 20, image: `${IMAGE_BASE}/events/event-08.jpg` },
+  { titre: 'Retraite silence & méditation', type: 'Retraite', lieu: 'Nantes', prix: 160, places: 16, image: `${IMAGE_BASE}/events/event-09.jpg` },
+  { titre: 'Cercle de femmes — équinoxe', type: 'Cercle', lieu: 'Lille', prix: 10, places: 22, image: `${IMAGE_BASE}/events/event-10.jpg` },
 ];
 const PROGRAMME_SLOTS = ['09:00', '10:30', '14:00', '16:00'];
 const NOTIF_AUDIENCES = ['clients', 'praticiens', 'tous'];
@@ -910,6 +913,7 @@ async function seedEvents(ctx: SeedContext, prats: Praticien[]): Promise<void> {
       nombre_places: e.places,
       description: `${e.titre} — un moment à vivre ensemble, encadré par des praticiens Aura. Places limitées.`,
       status,
+      image: e.image,
     };
   });
   const createdEvents = await eventRepo.save(eventRows);

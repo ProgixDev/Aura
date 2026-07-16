@@ -1,6 +1,7 @@
 // Adapter: backend Event rows -> the shape EventCard / event pages already
-// render. Fields with no backend source (tone, program, seatsLeft) get an
-// honest neutral value instead of invented data — see plan Architecture notes.
+// render. image comes from the events.image column (Supabase Storage URL).
+// Fields with no backend source (tone, program, seatsLeft) get an honest
+// neutral value instead of invented data — see plan Architecture notes.
 const DEFAULT_TONE = 'violet';
 
 export function formatEventDates(dates) {
@@ -15,6 +16,7 @@ export function mapEvent(row) {
   return {
     id: row.id,
     tone: DEFAULT_TONE,
+    image: row.image ?? null,
     kind: (row.type || '').toUpperCase(),
     title: row.titre,
     when,

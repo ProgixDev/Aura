@@ -101,6 +101,7 @@ export function mapEvent(row: any): Event {
     price: `${Math.round(Number(row.prix))} €`,
     priceFrom: Number(row.prix),
     gradient: DEFAULT_GRADIENT,
+    image: row.image ?? undefined,
     description: row.description,
     hosts: (row.animateurs ?? []).map((a: any) => ({
       name: `${a.firstname} ${a.lastname}`.trim(),
@@ -119,6 +120,7 @@ export function mapCircle(row: any): Circle {
     description: row.description,
     color: row.color,
     animateur: row.animateur,
+    image: row.image ?? null,
   };
 }
 

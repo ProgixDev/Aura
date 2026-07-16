@@ -53,7 +53,10 @@ export default function EvenementPage({ params }) {
       {/* HERO */}
       <section
         className="aurora-dark grain"
-        style={{ '--orb-x': '70%', '--orb-y': '18%', '--orb-1': orb1, '--orb-2': orb2, padding: '100px 0 110px' }}
+        style={{
+          '--orb-x': '70%', '--orb-y': '18%', '--orb-1': orb1, '--orb-2': orb2, padding: '100px 0 110px',
+          ...(e.image ? { backgroundImage: `linear-gradient(rgba(20,12,35,0.35), rgba(10,6,20,0.65)), url(${e.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}),
+        }}
       >
         <div className="container reveal">
           <div className="row gap-2 small" style={{ color: 'rgba(255,255,255,0.6)', marginBottom: 22 }}>

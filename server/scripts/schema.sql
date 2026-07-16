@@ -119,6 +119,7 @@ create table cercles (
   description text,
   color varchar(50),
   animateur varchar(255),
+  image varchar(500),
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -133,6 +134,7 @@ create table events (
   nombre_places int not null,
   description text not null,
   status varchar(20) not null default 'brouillon',
+  image varchar(500),
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

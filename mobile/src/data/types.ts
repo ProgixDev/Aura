@@ -43,6 +43,7 @@ export interface Circle {
   description: string | null;
   color: string | null;
   animateur: string | null;
+  image: string | null;
 }
 
 export interface Article {
@@ -71,6 +72,7 @@ export interface Event {
   price: string;
   priceFrom: number;
   gradient: readonly [string, string, ...string[]];
+  image?: string;
   description?: string;
   hosts?: Array<{ name: string; spec: string; gradient: readonly [string, string, ...string[]] }>;
   program?: Array<{ time: string; title: string; detail?: string }>;

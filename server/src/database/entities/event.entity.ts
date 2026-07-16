@@ -13,6 +13,7 @@ export class Event {
   @Column({ type: 'int' }) nombre_places: number;
   @Column({ type: 'text' }) description: string;
   @Column({ type: 'varchar', length: 20, default: 'brouillon' }) status: string;
+  @Column({ type: 'varchar', length: 500, nullable: true }) image: string | null;
   @CreateDateColumn({ name: 'created_at' }) created_at: Date;
   @UpdateDateColumn({ name: 'updated_at' }) updated_at: Date;
 

@@ -36,4 +36,9 @@ describe('mapEvent', () => {
   it('never triggers the low-availability badge (no bookings backend yet)', () => {
     expect(mapEvent(row).seatsLeft <= 5).toBe(false);
   });
+
+  it('leaves image null with no backend source, passes it through when present', () => {
+    expect(mapEvent(row).image).toBeNull();
+    expect(mapEvent({ ...row, image: 'https://x/cover.jpg' }).image).toBe('https://x/cover.jpg');
+  });
 });

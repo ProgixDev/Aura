@@ -78,19 +78,24 @@ describe('mapEvent', () => {
     expect(withHosts.hosts).toEqual([{ name: 'A B', spec: 'yoga', gradient: ['#C4B0E8', '#A8C8E8'] }]);
     expect(mapEvent(row).hosts).toEqual([]);
   });
+
+  it('leaves image undefined with no backend source, passes it through when present', () => {
+    expect(mapEvent(row).image).toBeUndefined();
+    expect(mapEvent({ ...row, image: 'https://x/cover.jpg' }).image).toBe('https://x/cover.jpg');
+  });
 });
 
 describe('mapCircle', () => {
   it('maps real fields verbatim and stringifies the numeric id', () => {
-    const row = { id: 3, nom: 'Cercle Aura — Paris', description: 'Un espace de partage.', color: '#7B5FCF', animateur: 'Camille Rossi' };
+    const row = { id: 3, nom: 'Cercle Aura — Paris', description: 'Un espace de partage.', color: '#7B5FCF', animateur: 'Camille Rossi', image: 'https://x/cercle.jpg' };
     expect(mapCircle(row)).toEqual({
-      id: '3', nom: 'Cercle Aura — Paris', description: 'Un espace de partage.', color: '#7B5FCF', animateur: 'Camille Rossi',
+      id: '3', nom: 'Cercle Aura — Paris', description: 'Un espace de partage.', color: '#7B5FCF', animateur: 'Camille Rossi', image: 'https://x/cercle.jpg',
     });
   });
 
   it('passes through null fields as-is', () => {
-    const row = { id: 5, nom: 'Cercle sans détails', description: null, color: null, animateur: null };
-    expect(mapCircle(row)).toEqual({ id: '5', nom: 'Cercle sans détails', description: null, color: null, animateur: null });
+    const row = { id: 5, nom: 'Cercle sans détails', description: null, color: null, animateur: null, image: null };
+    expect(mapCircle(row)).toEqual({ id: '5', nom: 'Cercle sans détails', description: null, color: null, animateur: null, image: null });
   });
 });
 

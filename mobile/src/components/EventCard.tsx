@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Grain } from './Grain';
@@ -12,17 +12,22 @@ import type { Event } from '@data/types';
 
 export function EventCard({ event }: { event: Event }) {
   const router = useRouter();
+  const Hero: React.ComponentType<any> = event.image ? ImageBackground : LinearGradient;
+  const heroProps = event.image
+    ? { source: { uri: event.image } }
+    : { colors: event.gradient, start: { x: 0, y: 0 }, end: { x: 1, y: 1 } };
   return (
     <Pressable
       onPress={() => router.push(`/event/${event.id}` as any)}
       style={[styles.card, shadows.card]}
     >
-      <LinearGradient
-        colors={event.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.img}
-      >
+      <Hero {...(heroProps as any)} style={styles.img}>
+        {event.image && (
+          <LinearGradient
+            colors={['rgba(20,12,35,0.15)', 'rgba(10,6,20,0.55)']}
+            style={StyleSheet.absoluteFillObject}
+          />
+        )}
         <Grain opacity={0.18} />
         <View style={styles.pill}>
           <Text style={styles.pillTxt}>{event.kind.split('·')[0].trim()}</Text>
@@ -30,7 +35,7 @@ export function EventCard({ event }: { event: Event }) {
         <View style={styles.when}>
           <Text style={styles.whenTxt}>{event.when}</Text>
         </View>
-      </LinearGradient>
+      </Hero>
       <View style={styles.body}>
         <Text style={styles.title}>{event.title}</Text>
         <View style={styles.placeRow}>

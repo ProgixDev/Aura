@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  ImageBackground,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -31,13 +32,24 @@ export default function EventDetail() {
 
   if (!e) return <View style={{ flex: 1, backgroundColor: colors.pearl }} />;
 
+  const Hero: React.ComponentType<any> = e.image ? ImageBackground : LinearGradient;
+  const heroProps = e.image
+    ? { source: { uri: e.image } }
+    : { colors: e.gradient as any, start: { x: 0, y: 0 }, end: { x: 1, y: 1 } };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.pearl }}>
       <ScrollView
         contentContainerStyle={{ paddingBottom: 140 }}
         showsVerticalScrollIndicator={false}
       >
-        <LinearGradient colors={e.gradient as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+        <Hero {...(heroProps as any)} style={styles.hero}>
+          {e.image && (
+            <LinearGradient
+              colors={['rgba(20,12,35,0.2)', 'rgba(10,6,20,0.6)']}
+              style={StyleSheet.absoluteFillObject}
+            />
+          )}
           <Grain opacity={0.18} />
           <View style={[styles.heroActions, { top: insets.top + 8 }]}>
             <Pressable style={styles.iconCircle} onPress={() => router.back()}>
@@ -60,7 +72,7 @@ export default function EventDetail() {
               <Text style={styles.italic}>{e.title.split('—')[1] ?? ''}</Text>
             </Text>
           </View>
-        </LinearGradient>
+        </Hero>
 
         <View style={styles.metaRow}>
           <MetaItem icon="cal" value={e.meta?.dates ?? e.when} />
