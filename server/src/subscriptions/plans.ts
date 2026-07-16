@@ -7,14 +7,9 @@ export const PLAN_PRICES: Record<'essentiel' | 'pro' | 'premium', number> = {
   premium: 59,
 };
 
-export function priceIdForPlan(plan: 'pro' | 'premium'): string {
-  const envVar = plan === 'pro' ? 'STRIPE_PRICE_ID_PRO' : 'STRIPE_PRICE_ID_PREMIUM';
-  const id = process.env[envVar];
-  if (!id) {
-    throw new Error(
-      `Missing ${envVar} — set it in server/.env to a real Stripe test-mode Price id ` +
-      `before creating a Checkout Session for the "${plan}" plan (see this plan's Prerequisites section).`,
-    );
-  }
-  return id;
-}
+// Stable identifiers StripeService.findOrCreatePrice() looks up (or provisions on first
+// use) against the Stripe account — no dashboard setup or env-configured price id needed.
+export const PLAN_STRIPE_INFO: Record<'pro' | 'premium', { lookupKey: string; productName: string }> = {
+  pro: { lookupKey: 'aura_plan_pro_monthly', productName: 'Aura — Formule Pro' },
+  premium: { lookupKey: 'aura_plan_premium_monthly', productName: 'Aura — Formule Premium' },
+};

@@ -1,6 +1,3 @@
-process.env.STRIPE_PRICE_ID_PRO = 'price_test_pro';
-process.env.STRIPE_PRICE_ID_PREMIUM = 'price_test_premium';
-
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
@@ -14,6 +11,8 @@ const stripeServiceMock = {
   createPaymentIntent: jest.fn(),
   constructWebhookEvent: jest.fn(),
   createCustomer: jest.fn().mockResolvedValue({ id: 'cus_test_123' }),
+  findOrCreatePrice: jest.fn().mockImplementation((params: { lookupKey: string }) =>
+    Promise.resolve(params.lookupKey.includes('premium') ? 'price_test_premium' : 'price_test_pro')),
   createCheckoutSession: jest.fn().mockResolvedValue({ id: 'cs_test_123', url: 'https://checkout.stripe.com/test_123' }),
   updateSubscriptionCancelAtPeriodEnd: jest.fn().mockResolvedValue({ id: 'sub_test', cancel_at_period_end: true }),
   cancelSubscriptionImmediately: jest.fn().mockResolvedValue({ id: 'sub_old', status: 'canceled' }),

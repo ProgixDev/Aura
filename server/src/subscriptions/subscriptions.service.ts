@@ -7,7 +7,7 @@ import { Praticien } from '../database/entities/praticien.entity';
 import { success } from '../common/envelope';
 import { StripeService } from '../common/stripe.service';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
-import { priceIdForPlan, PLAN_PRICES } from './plans';
+import { PLAN_PRICES, PLAN_STRIPE_INFO } from './plans';
 import { parsePagination, paginateQb } from '../common/pagination';
 
 // Stripe-hosted Checkout is a browser flow; there is no praticien-facing web surface to
@@ -97,9 +97,13 @@ export class SubscriptionsService {
     // creating the new Checkout Session) avoids leaving the praticien with zero active
     // subscription if session creation fails after an immediate cancel would have already
     // gone through.
+    const { lookupKey, productName } = PLAN_STRIPE_INFO[dto.plan];
+    const priceId = await this.stripeService.findOrCreatePrice({
+      lookupKey, productName, unitAmountCents: PLAN_PRICES[dto.plan] * 100,
+    });
     const session = await this.stripeService.createCheckoutSession({
       customerId,
-      priceId: priceIdForPlan(dto.plan),
+      priceId,
       successUrl: SUCCESS_URL,
       cancelUrl: CANCEL_URL,
       metadata: { praticien_id: String(praticien.id), plan: dto.plan },

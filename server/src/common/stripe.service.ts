@@ -81,6 +81,30 @@ export class StripeService {
     return this.stripe.customers.create({ email, metadata });
   }
 
+  /** Looks up a monthly recurring Price by its stable `lookupKey`, creating the backing
+   * Product + Price on first call if none exists yet. Removes the need to hand-create
+   * subscription tiers in the Stripe dashboard and paste price ids into env — this is the
+   * one-time provisioning step instead, self-healing across environments/dashboard resets
+   * since it's driven by Stripe's own state, not a local cache. */
+  async findOrCreatePrice(params: {
+    lookupKey: string;
+    productName: string;
+    unitAmountCents: number;
+  }): Promise<string> {
+    const existing = await this.stripe.prices.list({ lookup_keys: [params.lookupKey], active: true, limit: 1 });
+    if (existing.data[0]) return existing.data[0].id;
+
+    const product = await this.stripe.products.create({ name: params.productName });
+    const price = await this.stripe.prices.create({
+      product: product.id,
+      unit_amount: params.unitAmountCents,
+      currency: 'eur',
+      recurring: { interval: 'month' },
+      lookup_key: params.lookupKey,
+    });
+    return price.id;
+  }
+
   createCheckoutSession(params: {
     customerId: string;
     priceId: string;
