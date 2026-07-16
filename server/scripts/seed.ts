@@ -535,21 +535,24 @@ const SIGNALEMENT_MOTIFS = [
   'Non-respect de la charte praticien.',
   'Contenu inapproprié dans la description.',
 ];
-const ARTICLES: Array<{ titre: string; categorie: string; tonalite: string; temps: number }> = [
-  { titre: 'Comprendre le magnétisme et ses bienfaits', categorie: 'Discipline', tonalite: 'sky', temps: 6 },
-  { titre: '5 rituels de pleine lune pour se recentrer', categorie: 'Conseils', tonalite: 'gold', temps: 5 },
-  { titre: 'Débuter la méditation en 7 jours', categorie: 'Guide', tonalite: 'sage', temps: 8 },
-  { titre: 'Reiki : origines et principes', categorie: 'Discipline', tonalite: 'violet', temps: 7 },
-  { titre: 'Bien choisir son praticien en énergétique', categorie: 'Guide', tonalite: 'sky', temps: 4 },
-  { titre: 'Le bain sonore, voyage intérieur', categorie: 'Discipline', tonalite: 'sky', temps: 5 },
-  { titre: 'Gérer son stress au quotidien', categorie: 'Bien-être', tonalite: 'sage', temps: 6 },
-  { titre: 'La communauté Aura fête ses 1 an', categorie: 'Communauté', tonalite: 'gold', temps: 3 },
-  { titre: 'Hypnose : mythes et réalités', categorie: 'Discipline', tonalite: 'violet', temps: 7 },
-  { titre: 'Préparer une retraite de ressourcement', categorie: 'Conseils', tonalite: 'gold', temps: 6 },
-  { titre: 'Le sommeil réparateur par la sophrologie', categorie: 'Bien-être', tonalite: 'sage', temps: 5 },
-  { titre: 'Purifier son intérieur : le guide complet', categorie: 'Guide', tonalite: 'sky', temps: 9 },
-  { titre: 'Coaching de vie : par où commencer', categorie: 'Conseils', tonalite: 'violet', temps: 6 },
-  { titre: 'Nos praticiens partagent leurs rituels', categorie: 'Communauté', tonalite: 'gold', temps: 4 },
+// Pexels photos (free license), downloaded to mobile/assets/images/articles/ and
+// re-uploaded to the public "aura-public" Supabase Storage bucket — see
+// conversation notes for the images-populate task.
+const ARTICLES: Array<{ titre: string; categorie: string; tonalite: string; temps: number; image: string }> = [
+  { titre: 'Comprendre le magnétisme et ses bienfaits', categorie: 'Discipline', tonalite: 'sky', temps: 6, image: `${IMAGE_BASE}/articles/article-01.jpg` },
+  { titre: '5 rituels de pleine lune pour se recentrer', categorie: 'Conseils', tonalite: 'gold', temps: 5, image: `${IMAGE_BASE}/articles/article-02.jpg` },
+  { titre: 'Débuter la méditation en 7 jours', categorie: 'Guide', tonalite: 'sage', temps: 8, image: `${IMAGE_BASE}/articles/article-03.jpg` },
+  { titre: 'Reiki : origines et principes', categorie: 'Discipline', tonalite: 'violet', temps: 7, image: `${IMAGE_BASE}/articles/article-04.jpg` },
+  { titre: 'Bien choisir son praticien en énergétique', categorie: 'Guide', tonalite: 'sky', temps: 4, image: `${IMAGE_BASE}/articles/article-05.jpg` },
+  { titre: 'Le bain sonore, voyage intérieur', categorie: 'Discipline', tonalite: 'sky', temps: 5, image: `${IMAGE_BASE}/articles/article-06.jpg` },
+  { titre: 'Gérer son stress au quotidien', categorie: 'Bien-être', tonalite: 'sage', temps: 6, image: `${IMAGE_BASE}/articles/article-07.jpg` },
+  { titre: 'La communauté Aura fête ses 1 an', categorie: 'Communauté', tonalite: 'gold', temps: 3, image: `${IMAGE_BASE}/articles/article-08.jpg` },
+  { titre: 'Hypnose : mythes et réalités', categorie: 'Discipline', tonalite: 'violet', temps: 7, image: `${IMAGE_BASE}/articles/article-09.jpg` },
+  { titre: 'Préparer une retraite de ressourcement', categorie: 'Conseils', tonalite: 'gold', temps: 6, image: `${IMAGE_BASE}/articles/article-10.jpg` },
+  { titre: 'Le sommeil réparateur par la sophrologie', categorie: 'Bien-être', tonalite: 'sage', temps: 5, image: `${IMAGE_BASE}/articles/article-11.jpg` },
+  { titre: 'Purifier son intérieur : le guide complet', categorie: 'Guide', tonalite: 'sky', temps: 9, image: `${IMAGE_BASE}/articles/article-12.jpg` },
+  { titre: 'Coaching de vie : par où commencer', categorie: 'Conseils', tonalite: 'violet', temps: 6, image: `${IMAGE_BASE}/articles/article-13.jpg` },
+  { titre: 'Nos praticiens partagent leurs rituels', categorie: 'Communauté', tonalite: 'gold', temps: 4, image: `${IMAGE_BASE}/articles/article-14.jpg` },
 ];
 const EVENT_TYPES = ['Retraite', 'Formation', 'Atelier', 'Cercle', 'Sortie', 'Événement'];
 // Pexels photos (free license), downloaded to mobile/assets/images/events/ and
@@ -886,6 +889,7 @@ async function seedArticles(ctx: SeedContext): Promise<void> {
       status,
       auteur: 'L’équipe Aura',
       temps_lecture: a.temps,
+      image_couverture: a.image,
       date_publication: status === 'publié' ? daysFromNow(-between(3, 120, i)) : null,
     };
   });

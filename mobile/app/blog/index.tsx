@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
@@ -38,14 +38,19 @@ export default function BlogList() {
               onPress={() => router.push(`/blog/${a.slug}` as any)}
               style={[styles.card, shadows.card]}
             >
-              <Text style={styles.category}>{a.categorie}</Text>
-              <Text style={styles.title}>{a.titre}</Text>
-              <Text style={styles.excerpt} numberOfLines={2}>
-                {a.extrait}
-              </Text>
-              <Text style={styles.meta}>
-                {a.auteur} · {a.temps_lecture} min
-              </Text>
+              {a.image_couverture && (
+                <Image source={{ uri: a.image_couverture }} style={styles.thumb} />
+              )}
+              <View style={styles.body}>
+                <Text style={styles.category}>{a.categorie}</Text>
+                <Text style={styles.title}>{a.titre}</Text>
+                <Text style={styles.excerpt} numberOfLines={2}>
+                  {a.extrait}
+                </Text>
+                <Text style={styles.meta}>
+                  {a.auteur} · {a.temps_lecture} min
+                </Text>
+              </View>
             </Pressable>
           ))}
         </View>
@@ -68,9 +73,11 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.white,
     borderRadius: 20,
-    padding: 18,
     marginBottom: 14,
+    overflow: 'hidden',
   },
+  thumb: { width: '100%', height: 140 },
+  body: { padding: 18 },
   category: { ...typography.eyebrow, marginBottom: 8 },
   title: {
     fontFamily: 'CormorantGaramond_500Medium',

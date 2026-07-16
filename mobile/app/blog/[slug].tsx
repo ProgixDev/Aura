@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
@@ -28,6 +28,10 @@ export default function BlogDetail() {
         contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 48 }}
         showsVerticalScrollIndicator={false}
       >
+        {a.image_couverture && (
+          <Image source={{ uri: a.image_couverture }} style={styles.hero} />
+        )}
+
         <View style={styles.topRow}>
           <Pressable style={styles.iconCircle} onPress={() => router.back()}>
             <Icon name="back" size={20} color={colors.ink} />
@@ -66,6 +70,7 @@ export default function BlogDetail() {
 }
 
 const styles = StyleSheet.create({
+  hero: { width: '100%', height: 220, marginBottom: 14 },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

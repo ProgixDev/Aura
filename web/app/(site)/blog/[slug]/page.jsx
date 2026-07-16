@@ -87,7 +87,13 @@ export default function BlogArticlePage({ params }) {
       {/* HERO BAND */}
       <section className="section-sm">
         <div className="container-narrow">
-          <div className="aurora-dark grain reveal r-1" style={{ '--orb-x': '70%', '--orb-y': '25%', ...orb, borderRadius: 20, minHeight: 280, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 40 }}>
+          <div
+            className="aurora-dark grain reveal r-1"
+            style={{
+              '--orb-x': '70%', '--orb-y': '25%', ...orb, borderRadius: 20, minHeight: 280, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 40,
+              ...(post.image_couverture ? { backgroundImage: `linear-gradient(rgba(20,12,35,0.3), rgba(10,6,20,0.6)), url(${post.image_couverture})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}),
+            }}
+          >
             <Lotus size={24} color="rgba(255,255,255,0.9)" />
             <p className="serif italic" style={{ color: '#fff', fontSize: 24, marginTop: 16, maxWidth: 520 }}>
               {post.extrait}
@@ -157,7 +163,13 @@ export default function BlogArticlePage({ params }) {
             <div className="grid grid-3">
               {related.map((p, i) => (
                 <Link key={p.slug} href={`/blog/${p.slug}`} className={`card card-hover reveal r-${i + 1}`} style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                  <div className="aurora-dark grain" style={{ '--orb-x': '65%', '--orb-y': '25%', ...(ORBS[p.tonalite] || ORBS.violet), height: 130, display: 'flex', alignItems: 'flex-end', padding: 18 }}>
+                  <div
+                    className="aurora-dark grain"
+                    style={{
+                      '--orb-x': '65%', '--orb-y': '25%', ...(ORBS[p.tonalite] || ORBS.violet), height: 130, display: 'flex', alignItems: 'flex-end', padding: 18,
+                      ...(p.image_couverture ? { backgroundImage: `linear-gradient(rgba(20,12,35,0.25), rgba(10,6,20,0.55)), url(${p.image_couverture})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}),
+                    }}
+                  >
                     <Badge variant="neutral" dot>{p.categorie}</Badge>
                   </div>
                   <div className="card-pad" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>

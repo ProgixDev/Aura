@@ -51,7 +51,13 @@ export default function BlogIndexPage() {
         <div className="container">
           <Link href={`/blog/${featured.slug}`} className="card card-hover reveal r-1" style={{ overflow: 'hidden', display: 'block' }}>
             <div className="grid grid-2" style={{ gap: 0, alignItems: 'stretch' }}>
-              <div className="aurora-dark grain" style={{ '--orb-x': '70%', '--orb-y': '20%', ...orb, minHeight: 320, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 36 }}>
+              <div
+                className="aurora-dark grain"
+                style={{
+                  '--orb-x': '70%', '--orb-y': '20%', ...orb, minHeight: 320, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 36,
+                  ...(featured.image_couverture ? { backgroundImage: `linear-gradient(rgba(20,12,35,0.3), rgba(10,6,20,0.6)), url(${featured.image_couverture})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}),
+                }}
+              >
                 <Badge variant="featured">À la une</Badge>
                 <div className="row gap-2" style={{ marginTop: 'auto', paddingTop: 24, color: 'rgba(255,255,255,0.7)' }}>
                   <Lotus size={16} color="rgba(255,255,255,0.9)" />
@@ -87,7 +93,13 @@ export default function BlogIndexPage() {
           <div className="grid grid-3">
             {rest.map((post, i) => (
               <Link key={post.slug} href={`/blog/${post.slug}`} className={`card card-hover reveal r-${(i % 5) + 2}`} style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <div className="aurora-dark grain" style={{ '--orb-x': '65%', '--orb-y': '25%', ...(ORBS[post.tonalite] || ORBS.violet), height: 140, display: 'flex', alignItems: 'flex-end', padding: 18 }}>
+                <div
+                  className="aurora-dark grain"
+                  style={{
+                    '--orb-x': '65%', '--orb-y': '25%', ...(ORBS[post.tonalite] || ORBS.violet), height: 140, display: 'flex', alignItems: 'flex-end', padding: 18,
+                    ...(post.image_couverture ? { backgroundImage: `linear-gradient(rgba(20,12,35,0.25), rgba(10,6,20,0.55)), url(${post.image_couverture})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}),
+                  }}
+                >
                   <Badge variant="neutral" dot>{post.categorie}</Badge>
                 </div>
                 <div className="card-pad" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
