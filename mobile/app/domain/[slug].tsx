@@ -3,6 +3,7 @@ import {
   Image,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -12,7 +13,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { AuroraBackground } from '@components/AuroraBackground';
-import { Chip } from '@components/Chip';
 import { EscrowNotice } from '@components/EscrowNotice';
 import { Icon } from '@components/Icon';
 import { PractitionerCard } from '@components/PractitionerCard';
@@ -56,19 +56,17 @@ export default function DomainDetail() {
             <Pressable style={styles.iconCircle} onPress={() => router.back()}>
               <Icon name="back" size={20} color={colors.ink} />
             </Pressable>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Pressable style={styles.iconCircle}>
-                <Icon name="heart" size={18} color={colors.ink} />
-              </Pressable>
-              <Pressable style={styles.iconCircle}>
-                <Icon name="share" size={18} color={colors.ink} />
-              </Pressable>
-            </View>
+            <Pressable
+              style={styles.iconCircle}
+              onPress={() => d && Share.share({ message: `${d.name} sur Aura — https://aura.fr/discipline/${slug}` })}
+            >
+              <Icon name="share" size={18} color={colors.ink} />
+            </Pressable>
           </View>
           <View style={styles.heroFoot}>
-            <Text style={styles.heroLabel}>PRATIQUE MILLÉNAIRE · JAPON</Text>
+            <Text style={styles.heroLabel}>DÉCOUVRIR</Text>
             <Text style={styles.heroTitle}>
-              Qu'est-ce que{'\n'}le <Text style={styles.heroItalic}>{d?.name ?? 'Reiki'}</Text> ?
+              Qu'est-ce que{'\n'}le <Text style={styles.heroItalic}>{d?.name ?? '…'}</Text> ?
             </Text>
           </View>
         </View>
@@ -88,24 +86,7 @@ export default function DomainDetail() {
             </View>
           ) : null}
 
-          <Text style={styles.h3}>À quoi s'attendre</Text>
-          <View style={styles.expectGrid}>
-            <ExpectCell h="60 à 90 min" d="d'une séance type, allongé·e habillé·e" />
-            <ExpectCell h="3 séances" d="pour ressentir un changement durable" />
-            <ExpectCell h="50 à 90€" d="fourchette habituelle en France" />
-            <ExpectCell h="Sans contact" d="les mains ne touchent pas le corps" />
-          </View>
-
-          <Text style={styles.h3}>Indications fréquentes</Text>
-          <View style={styles.chipsRow}>
-            <Chip label="Stress et anxiété" tone="violet" />
-            <Chip label="Insomnies" tone="sky" />
-            <Chip label="Convalescence" tone="sage" />
-            <Chip label="Émotions bloquées" tone="violet" />
-            <Chip label="Préparation médicale" tone="gold" />
-          </View>
-
-          <View style={{ height: 18 }} />
+          <View style={{ height: 4 }} />
           <EscrowNotice
             tone="violet"
             title="Une parole prudente."
@@ -120,15 +101,6 @@ export default function DomainDetail() {
           ))}
         </View>
       </ScrollView>
-    </View>
-  );
-}
-
-function ExpectCell({ h, d }: { h: string; d: string }) {
-  return (
-    <View style={styles.expectCell}>
-      <Text style={styles.expectH}>{h}</Text>
-      <Text style={styles.expectD}>{d}</Text>
     </View>
   );
 }
@@ -187,21 +159,4 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   h3: { ...typography.h3, marginTop: 4, marginBottom: 12 },
-  expectGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
-  expectCell: {
-    width: '48%',
-    padding: 14,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  expectH: {
-    fontFamily: 'CormorantGaramond_500Medium',
-    fontSize: 18,
-    marginBottom: 4,
-  },
-  expectD: { ...typography.small, fontSize: 12, lineHeight: 17 },
-
-  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
 });

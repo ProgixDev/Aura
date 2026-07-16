@@ -3,6 +3,7 @@ import {
   Image,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -23,7 +24,7 @@ import { typography } from '@theme/typography';
 import { shadows } from '@theme/shadows';
 import { practitionerRepo, favoriteRepo, messageRepo } from '@data/repos';
 
-type Tab = 'about' | 'reviews' | 'exchanges';
+type Tab = 'about' | 'reviews';
 
 // No shared date-formatting utility exists yet on mobile that this plan can
 // safely depend on (mobile/src/utils/format.ts is a Plan 04 addition, and
@@ -147,7 +148,10 @@ export default function PractitionerProfile() {
               >
                 <Icon name="flag" size={16} color={colors.ink} />
               </Pressable>
-              <Pressable style={styles.iconCircle}>
+              <Pressable
+                style={styles.iconCircle}
+                onPress={() => Share.share({ message: `${p.name} sur Aura — https://aura.fr/praticien/${id}` })}
+              >
                 <Icon name="share" size={18} color={colors.ink} />
               </Pressable>
             </View>
@@ -183,7 +187,6 @@ export default function PractitionerProfile() {
                 tone={i === 0 ? 'violet' : 'sky'}
               />
             ))}
-            <Chip label="+ Nettoyage karmique" />
           </View>
 
           <View style={styles.fcStrip}>
@@ -203,7 +206,6 @@ export default function PractitionerProfile() {
             active={tab === 'reviews'}
             onPress={() => setTab('reviews')}
           />
-          <TabButton label="Échanges (2)" active={tab === 'exchanges'} onPress={() => setTab('exchanges')} />
         </View>
 
         {tab === 'about' ? (
@@ -218,12 +220,12 @@ export default function PractitionerProfile() {
             </Text>
             <View style={styles.statsRow}>
               <View style={styles.statCard}>
-                <Text style={styles.statV}>{p.experience?.years ?? 8} ans</Text>
+                <Text style={styles.statV}>{p.experience?.years ?? '—'} ans</Text>
                 <Text style={styles.statL}>d'expérience</Text>
               </View>
               <View style={styles.statCard}>
-                <Text style={styles.statV}>{p.experience?.sessions ?? 600}+</Text>
-                <Text style={styles.statL}>séances données</Text>
+                <Text style={styles.statV}>{p.level}</Text>
+                <Text style={styles.statL}>niveau</Text>
               </View>
             </View>
 
@@ -260,27 +262,8 @@ export default function PractitionerProfile() {
                   />
                 ))}
             </View>
-
-            <Text style={[typography.eyebrow, { marginTop: 24, marginBottom: 10 }]}>
-              ÉCHANGES PROPOSÉS
-            </Text>
-            <View style={[styles.exchangeBox, shadows.card]}>
-              <View style={styles.exchangeFlow}>
-                <View style={styles.exchangeSide}>
-                  <Text style={styles.exchangeL}>Elle propose</Text>
-                  <Text style={styles.exchangeV}>1 soin énergétique</Text>
-                </View>
-                <View style={styles.exchangeArrow}>
-                  <Icon name="chevron" size={14} color="#fff" />
-                </View>
-                <View style={styles.exchangeSide}>
-                  <Text style={styles.exchangeL}>Elle cherche</Text>
-                  <Text style={styles.exchangeV}>1h yoga privé</Text>
-                </View>
-              </View>
-            </View>
           </View>
-        ) : tab === 'reviews' ? (
+        ) : (
           <View style={{ padding: 24 }}>
             <Button
               label="Laisser un avis"
@@ -305,13 +288,6 @@ export default function PractitionerProfile() {
                 </View>
               ))
             )}
-          </View>
-        ) : (
-          <View style={{ padding: 24 }}>
-            <Text style={typography.body}>
-              {p.name.split(' ')[0]} propose actuellement 2 échanges. Touchez « Proposer un
-              échange » pour démarrer.
-            </Text>
           </View>
         )}
       </ScrollView>
@@ -424,30 +400,6 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: 12,
     overflow: 'hidden',
-  },
-
-  exchangeBox: {
-    backgroundColor: '#fff',
-    borderRadius: 22,
-    padding: 14,
-  },
-  exchangeFlow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  exchangeSide: { flex: 1, padding: 12, backgroundColor: colors.mist, borderRadius: 14 },
-  exchangeL: {
-    ...typography.tiny,
-    fontSize: 10,
-    letterSpacing: 1.6,
-    textTransform: 'uppercase',
-    marginBottom: 4,
-  },
-  exchangeV: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 15 },
-  exchangeArrow: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
   review: {

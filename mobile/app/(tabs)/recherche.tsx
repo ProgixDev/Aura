@@ -11,14 +11,25 @@ import { typography } from '@theme/typography';
 import { practitionerRepo } from '@data/repos';
 import { filterPractitioners } from '@utils/filterPractitioners';
 
+const DISCIPLINE_SHORTCUTS = [
+  { label: 'Reiki', tone: 'violet' as const },
+  { label: 'Magnétisme', tone: 'sky' as const },
+  { label: 'Soin énergétique', tone: 'sage' as const },
+  { label: 'Hypnose', tone: 'gold' as const },
+];
+
 export default function Recherche() {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
+  const [visioOnly, setVisioOnly] = useState(false);
   const { data: results = [] } = useQuery({
     queryKey: ['practitioners'],
     queryFn: practitionerRepo.list,
   });
-  const filtered = useMemo(() => filterPractitioners(results, query), [results, query]);
+  const filtered = useMemo(() => {
+    const byQuery = filterPractitioners(results, query);
+    return visioOnly ? byQuery.filter((p) => p.mode.toLowerCase().includes('visio')) : byQuery;
+  }, [results, query, visioOnly]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.pearl }}>
@@ -44,11 +55,12 @@ export default function Recherche() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 20, gap: 8, marginTop: 12, paddingBottom: 6 }}
         >
-          <Chip label="Près de moi · 25 km" active />
-          <Chip label="Filtres" leftIcon={<Icon name="filter" size={14} color={colors.ink} />} />
-          <Chip label="Visio" />
-          <Chip label="Niveau" />
-          <Chip label="Tarif" />
+          <Chip
+            label="Visio"
+            leftIcon={<Icon name="video" size={14} color={visioOnly ? '#fff' : colors.ink} />}
+            active={visioOnly}
+            onPress={() => setVisioOnly((v) => !v)}
+          />
         </ScrollView>
 
         <ScrollView
@@ -56,11 +68,15 @@ export default function Recherche() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
         >
-          <Chip label="Reiki" tone="violet" />
-          <Chip label="Magnétisme" tone="sky" />
-          <Chip label="Soin énergétique" tone="sage" />
-          <Chip label="Hypnose" tone="gold" />
-          <Chip label="+ 11 autres" />
+          {DISCIPLINE_SHORTCUTS.map((d) => (
+            <Chip
+              key={d.label}
+              label={d.label}
+              tone={d.tone}
+              active={query.toLowerCase() === d.label.toLowerCase()}
+              onPress={() => setQuery((q) => (q.toLowerCase() === d.label.toLowerCase() ? '' : d.label))}
+            />
+          ))}
         </ScrollView>
 
         <View style={styles.metaRow}>

@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQuery } from '@tanstack/react-query';
 import { Avatar } from '@components/Avatar';
 import { AuroraBackground } from '@components/AuroraBackground';
 import { Icon } from '@components/Icon';
@@ -16,12 +17,20 @@ import { MenuRow } from '@components/MenuRow';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { useSession } from '@store/session';
+import { favoriteRepo, rendezVousRepo, exchangeRepo } from '@data/repos';
 
 export default function Profil() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const firstName = useSession((s) => s.firstName);
+  const lastName = useSession((s) => s.lastName);
   const signOut = useSession((s) => s.signOut);
+
+  const { data: favorites = [] } = useQuery({ queryKey: ['favorites'], queryFn: favoriteRepo.list });
+  const { data: rendezVous = [] } = useQuery({ queryKey: ['rendez-vous', 'client'], queryFn: rendezVousRepo.list });
+  const { data: exchanges = [] } = useQuery({ queryKey: ['exchanges'], queryFn: exchangeRepo.list });
+  const activeExchanges = exchanges.filter((e) => ['en_attente', 'lu', 'en_cours'].includes(e.statut)).length;
+  const distinctPraticiens = new Set(rendezVous.map((r) => r.praticien_id)).size;
 
   const handleSignOut = () => {
     signOut();
@@ -38,21 +47,19 @@ export default function Profil() {
       >
         <View style={styles.head}>
           <Avatar size="xl" gradient={[colors.violet, colors.sky]} />
-          <Text style={styles.name}>{firstName ?? 'Sarah'} Lemaire</Text>
-          <Text style={styles.sub}>Chercheuse · Annecy</Text>
+          <Text style={styles.name}>{[firstName, lastName].filter(Boolean).join(' ')}</Text>
         </View>
 
         <View style={styles.stats}>
-          <Stat label="SÉANCES" value="7" />
-          <Stat label="PRATICIENS" value="3" />
-          <Stat label="FAVORIS" value="12" />
+          <Stat label="SÉANCES" value={String(rendezVous.length)} />
+          <Stat label="PRATICIENS" value={String(distinctPraticiens)} />
+          <Stat label="FAVORIS" value={String(favorites.length)} />
         </View>
 
         <Section title="Mon parcours">
           <MenuRow
             icon={<Lotus size={16} color={colors.violet2} />}
             label="Laisser un avis"
-            value="1 en attente"
             onPress={() => router.push('/review' as any)}
           />
           <MenuRow
@@ -61,13 +68,9 @@ export default function Profil() {
             onPress={() => router.push('/favorites' as any)}
           />
           <MenuRow
-            icon={<Icon name="cal" size={18} color={colors.ink} />}
-            label="Mes séances & événements"
-          />
-          <MenuRow
             icon={<Icon name="exchange" size={18} color={colors.ink} />}
             label="Mes échanges"
-            value="2 actifs"
+            value={activeExchanges > 0 ? `${activeExchanges} actif${activeExchanges > 1 ? 's' : ''}` : undefined}
             onPress={() => router.push('/exchange' as any)}
           />
         </Section>
@@ -92,7 +95,7 @@ export default function Profil() {
 
         <Section title="Praticien ?">
           <Pressable
-            onPress={() => router.push('/dashboard' as any)}
+            onPress={() => router.push('/onboarding/role' as any)}
             style={styles.becomeRow}
           >
             <AuroraBackground variant="soft" rounded={10} style={styles.becomeIc}>

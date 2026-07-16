@@ -417,6 +417,9 @@ export const rendezVousRepo = {
       .post<{ status: string; data: { rendez_vous: RendezVous; client_secret: string } }>('/rendez-vous', params)
       .then((res) => res.data),
 
+  list: (): Promise<RendezVous[]> =>
+    api.get<{ data: RendezVous[] }>('/rendez-vous/client?per_page=100').then((res) => res.data),
+
   byId: (id: number): Promise<RendezVous> =>
     api.get<{ status: string; data: RendezVous }>(`/rendez-vous/client/${id}`).then((res) => res.data),
 
