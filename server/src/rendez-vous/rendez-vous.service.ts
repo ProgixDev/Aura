@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import Stripe from 'stripe';
@@ -43,6 +43,16 @@ export class RendezVousService {
   async create(client: Client, dto: CreateRendezVousDto) {
     const praticien = await this.praticiens.findOneBy({ id: dto.praticien_id });
     if (!praticien) this.notFound('Praticien introuvable');
+
+    // Belt-and-suspenders: the client only ever offers slots from GET
+    // /praticiens/:id/availability's forward-looking window, but nothing
+    // stops a direct API call from sending a stale/past date_heure.
+    if (new Date(dto.date_heure).getTime() <= Date.now()) {
+      throw new BadRequestException({
+        status: 'error',
+        message: 'La date du rendez-vous doit être dans le futur.',
+      });
+    }
 
     let tarif = praticien.tarif;
     let promotionId: number | null = null;

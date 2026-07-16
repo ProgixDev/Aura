@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -11,38 +11,24 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { Avatar } from '@components/Avatar';
 import { Button } from '@components/Button';
-import { Icon } from '@components/Icon';
 import { ScreenHeader } from '@components/ScreenHeader';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { practitionerRepo } from '@data/repos';
 import { useBooking } from '@store/booking';
 
-const days = [
-  { name: 'Mar.', d: 25, off: false },
-  { name: 'Mer.', d: 26, off: false },
-  { name: 'Jeu.', d: 27, off: true },
-  { name: 'Ven.', d: 28, off: false },
-  { name: 'Sam.', d: 29, off: false },
-];
-
-const slots = {
-  matin: [
-    { time: '9h00', off: true },
-    { time: '10h30', off: false },
-    { time: '11h45', off: false },
-  ],
-  aprem: [
-    { time: '14h00', off: false },
-    { time: '15h30', off: false },
-    { time: '17h00', off: true },
-  ],
-  soir: [
-    { time: '18h30', off: false },
-    { time: '20h00', off: false },
-    { time: '21h15', off: true },
-  ],
-};
+// Parsed as local midnight (no 'Z' suffix) so the tile's day-of-month never
+// shifts by a day under a negative UTC offset — same approach as
+// web/app/(site)/reserver/[id]/BookingFlow.jsx's dayMeta().
+function dayMeta(dateStr: string) {
+  const d = new Date(`${dateStr}T00:00:00`);
+  const dow = new Intl.DateTimeFormat('fr-FR', { weekday: 'short' }).format(d).replace('.', '');
+  return {
+    dow: dow.charAt(0).toUpperCase() + dow.slice(1),
+    dom: new Intl.DateTimeFormat('fr-FR', { day: '2-digit' }).format(d),
+    full: new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).format(d),
+  };
+}
 
 export default function BookSlot() {
   const router = useRouter();
@@ -50,21 +36,34 @@ export default function BookSlot() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const setDraft = useBooking((s) => s.setDraft);
 
-  const [selectedDay, setSelectedDay] = useState(1);
-  const [selectedSlot, setSelectedSlot] = useState('14h00');
+  const [selectedDayIdx, setSelectedDayIdx] = useState(0);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
 
   const { data: p } = useQuery({
     queryKey: ['practitioner', id],
     queryFn: () => practitionerRepo.byId(String(id)),
   });
+  const { data: availability = [], isLoading: loadingAvailability } = useQuery({
+    queryKey: ['availability', id],
+    queryFn: () => practitionerRepo.availability(String(id)),
+  });
+
+  const days = availability.map((d) => ({ ...d, ...dayMeta(d.date) }));
+  const selectedDay = days[selectedDayIdx];
+
+  // Availability loads async; once it does, land on the first day that
+  // actually has a free slot instead of defaulting to a fully-booked one.
+  useEffect(() => {
+    if (days.length === 0) return;
+    const firstOpen = days.findIndex((d) => d.slots.some((s) => s.available));
+    setSelectedDayIdx(firstOpen >= 0 ? firstOpen : 0);
+  }, [availability.length]);
 
   const proceed = () => {
+    if (!selectedDay || !selectedSlot) return;
     setDraft({
       practitionerId: String(id),
-      day: {
-        label: `${days[selectedDay].name} ${days[selectedDay].d} mars`,
-        date: `2025-03-${days[selectedDay].d}`,
-      },
+      day: { label: selectedDay.full, date: selectedDay.date },
       slot: selectedSlot,
     });
     router.push('/booking/payment' as any);
@@ -95,77 +94,59 @@ export default function BookSlot() {
           </View>
 
           <Text style={styles.section}>Choisir un jour</Text>
-          <View style={styles.monthRow}>
-            <Text style={styles.monthLabel}>Mars 2025</Text>
-            <View style={{ flexDirection: 'row', gap: 6 }}>
-              <Pressable style={styles.monthBtn}>
-                <Icon name="back" size={16} color={colors.ink} />
-              </Pressable>
-              <Pressable style={[styles.monthBtn, { transform: [{ rotate: '180deg' }] }]}>
-                <Icon name="back" size={16} color={colors.ink} />
-              </Pressable>
-            </View>
-          </View>
-          <View style={styles.calRow}>
-            {days.map((d, i) => {
-              const active = selectedDay === i;
-              return (
-                <Pressable
-                  key={i}
-                  disabled={d.off}
-                  onPress={() => setSelectedDay(i)}
-                  style={[
-                    styles.calDay,
-                    active && styles.calDaySelected,
-                    d.off && { opacity: 0.3 },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.dName,
-                      active && { color: 'rgba(255,255,255,0.7)' },
-                    ]}
-                  >
-                    {d.name}
-                  </Text>
-                  <Text
-                    style={[styles.dNum, active && { color: '#fff' }]}
-                  >
-                    {d.d}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          {loadingAvailability ? (
+            <Text style={styles.note}>Chargement des disponibilités…</Text>
+          ) : days.length === 0 ? (
+            <Text style={styles.note}>Aucun créneau disponible pour le moment.</Text>
+          ) : (
+            <>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.calRow}
+              >
+                {days.map((d, i) => {
+                  const active = selectedDayIdx === i;
+                  const dayOff = d.slots.every((s) => !s.available);
+                  return (
+                    <Pressable
+                      key={d.date}
+                      onPress={() => { setSelectedDayIdx(i); setSelectedSlot(null); }}
+                      style={[
+                        styles.calDay,
+                        active && styles.calDaySelected,
+                        dayOff && { opacity: 0.35 },
+                      ]}
+                    >
+                      <Text style={[styles.dName, active && { color: 'rgba(255,255,255,0.7)' }]}>{d.dow}</Text>
+                      <Text style={[styles.dNum, active && { color: '#fff' }]}>{d.dom}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
 
-          <Text style={styles.section}>
-            Créneaux disponibles · {days[selectedDay].name} {days[selectedDay].d} mars
-          </Text>
-
-          {(['matin', 'aprem', 'soir'] as const).map((bucket) => (
-            <View key={bucket} style={{ marginBottom: 14 }}>
-              <Text style={styles.bucketLabel}>
-                {bucket === 'matin' ? 'MATIN' : bucket === 'aprem' ? 'APRÈS-MIDI' : 'SOIRÉE'}
+              <Text style={styles.section}>
+                Créneaux disponibles · {selectedDay?.full}
               </Text>
               <View style={styles.slotsRow}>
-                {slots[bucket].map((s) => {
+                {selectedDay?.slots.map((s) => {
                   const active = selectedSlot === s.time;
                   return (
                     <Pressable
                       key={s.time}
-                      disabled={s.off}
+                      disabled={!s.available}
                       onPress={() => setSelectedSlot(s.time)}
                       style={[
                         styles.slot,
                         active && styles.slotActive,
-                        s.off && styles.slotOff,
+                        !s.available && styles.slotOff,
                       ]}
                     >
                       <Text
                         style={[
                           styles.slotTxt,
                           active && { color: '#fff' },
-                          s.off && { textDecorationLine: 'line-through' },
+                          !s.available && { textDecorationLine: 'line-through' },
                         ]}
                       >
                         {s.time}
@@ -174,8 +155,8 @@ export default function BookSlot() {
                   );
                 })}
               </View>
-            </View>
-          ))}
+            </>
+          )}
         </View>
       </ScrollView>
 
@@ -183,10 +164,10 @@ export default function BookSlot() {
         <View style={styles.dockMeta}>
           <Text style={styles.dockMetaLabel}>Créneau choisi</Text>
           <Text style={styles.dockMetaValue}>
-            {days[selectedDay].name} {days[selectedDay].d} mars · {selectedSlot}
+            {selectedDay && selectedSlot ? `${selectedDay.dow} ${selectedDay.dom} · ${selectedSlot}` : 'Choisissez un créneau'}
           </Text>
         </View>
-        <Button label="Continuer" onPress={proceed} />
+        <Button label="Continuer" onPress={proceed} disabled={!selectedDay || !selectedSlot} />
       </View>
     </View>
   );
@@ -213,25 +194,11 @@ const styles = StyleSheet.create({
     color: colors.ink,
     marginBottom: 12,
   },
-  monthRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  monthLabel: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 18 },
-  monthBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.mist,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  calRow: { flexDirection: 'row', gap: 8, marginBottom: 24 },
+  note: { ...typography.small, marginBottom: 20 },
+  calRow: { flexDirection: 'row', gap: 8, marginBottom: 24, paddingRight: 4 },
   calDay: {
-    flex: 1,
-    aspectRatio: 1,
+    width: 56,
+    height: 56,
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: colors.line,
@@ -255,12 +222,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginTop: 2,
   },
-  bucketLabel: {
-    ...typography.eyebrow,
-    fontSize: 11,
-    marginBottom: 8,
-  },
-  slotsRow: { flexDirection: 'row', gap: 8 },
+  slotsRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   slot: {
     flex: 1,
     paddingVertical: 10,

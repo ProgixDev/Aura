@@ -12,14 +12,11 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { AuroraBackground } from '@components/AuroraBackground';
-import { Button } from '@components/Button';
 import { Icon } from '@components/Icon';
 import { ScreenHeader } from '@components/ScreenHeader';
-import { Toggle } from '@components/Toggle';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
-import { useSession } from '@store/session';
-import { praticienMessageRepo, subscriptionRepo, stripeConnectRepo } from '@data/repos';
+import { praticienMessageRepo, praticienProfileRepo, subscriptionRepo, stripeConnectRepo } from '@data/repos';
 import { effectivePlan } from '@utils/subscriptionPlan';
 import { errorMessage } from '@data/api/client';
 import type { Subscription } from '@data/types';
@@ -28,6 +25,12 @@ const PLAN_LABEL: Record<'essentiel' | 'pro' | 'premium', string> = {
   essentiel: 'Essentiel',
   pro: 'Pro',
   premium: 'Premium',
+};
+
+const VERIF_LABEL: Record<string, string> = {
+  en_attente: 'Votre profil est en attente de vérification par notre équipe.',
+  en_cours: 'Votre profil est en cours de vérification.',
+  rejete: 'Votre profil a été rejeté.',
 };
 
 function subscriptionSubtitle(sub?: Subscription): string {
@@ -42,8 +45,10 @@ function subscriptionSubtitle(sub?: Subscription): string {
 export default function Dashboard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const active = useSession((s) => s.practitionerActive);
-  const toggle = useSession((s) => s.togglePractitionerActive);
+  const { data: profile } = useQuery({
+    queryKey: ['praticien-profile'],
+    queryFn: praticienProfileRepo.me,
+  });
   const { data: subscription } = useQuery({
     queryKey: ['subscription'],
     queryFn: subscriptionRepo.current,
@@ -55,6 +60,8 @@ export default function Dashboard() {
   });
   const unreadCount = conversations.filter((c) => c.unread).length;
 
+  const verifMessage = profile ? VERIF_LABEL[profile.statut_verification] : undefined;
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.pearl }}>
       <ScreenHeader
@@ -65,6 +72,16 @@ export default function Dashboard() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
         showsVerticalScrollIndicator={false}
       >
+        {verifMessage && (
+          <View style={[styles.verifBanner, profile?.statut_verification === 'rejete' && styles.verifBannerDanger]}>
+            <Icon name={profile?.statut_verification === 'rejete' ? 'close' : 'shield'} size={16} color={profile?.statut_verification === 'rejete' ? colors.danger : colors.ink} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.verifTxt, profile?.statut_verification === 'rejete' && { color: colors.danger }]}>{verifMessage}</Text>
+              {profile?.motif_rejet && <Text style={styles.verifMotif}>{profile.motif_rejet}</Text>}
+            </View>
+          </View>
+        )}
+
         <View style={{ paddingHorizontal: 20, paddingBottom: 16 }}>
           <AuroraBackground variant="soft" rounded={22} style={styles.trial}>
             <Text style={styles.trialEyebrow}>MON ABONNEMENT</Text>
@@ -82,62 +99,14 @@ export default function Dashboard() {
         </View>
 
         <View style={styles.statsRow}>
-          <Stat v="4" l="à venir" />
-          <Stat v="12" l="ce mois" />
-          <Stat v="4.9" l="note moy." />
-        </View>
-
-        <View style={styles.activeRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.activeTitle}>Profil actif</Text>
-            <Text style={styles.activeSub}>
-              Vous apparaissez dans les recherches
-            </Text>
-          </View>
-          <Toggle value={active} onValueChange={toggle} />
+          <Stat v={profile ? `${profile.documents_stats.valide}/${profile.documents_stats.total}` : '—'} l="documents validés" />
         </View>
 
         <PaiementsSection />
 
-        <View style={styles.pauseBox}>
-          <View style={styles.pauseIc}>
-            <Text style={{ fontSize: 16 }}>🌙</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.pauseTitle}>Besoin de souffler ?</Text>
-            <Text style={styles.pauseBody}>
-              Mettez votre profil en pause sans perdre vos avis ni votre abonnement.
-            </Text>
-            <Pressable>
-              <Text style={styles.pauseCta}>Mettre en pause →</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        <Row
-          icon={<Icon name="cal" size={20} color={colors.ink} />}
-          title="Mes prochaines séances"
-          sub="4 réservations à confirmer"
-        />
-        <Row
-          icon={<Icon name="inperson" size={20} color={colors.ink} />}
-          title="Ma fiche praticien"
-          sub="Bio, photos, disciplines, tarifs"
-        />
-        <Row
-          icon={<Icon name="star" size={20} color={colors.ink} />}
-          title="Mon niveau & mes tarifs"
-          sub="Expert · 75–95€/séance"
-        />
-        <Row
-          icon={<Icon name="cal" size={20} color={colors.ink} />}
-          title="Mes événements"
-          sub="2 publiés · Retraite équinoxe"
-        />
         <Row
           icon={<Icon name="exchange" size={20} color={colors.ink} />}
           title="Mes échanges"
-          sub="1 en cours"
           onPress={() => router.push('/exchange' as any)}
         />
         <Row
@@ -146,12 +115,6 @@ export default function Dashboard() {
           sub={unreadCount > 0 ? `${unreadCount} non lu${unreadCount > 1 ? 's' : ''}` : 'Aucun nouveau message'}
           onPress={() => router.push('/praticien-messages' as any)}
         />
-        <Row
-          icon={<Icon name="card" size={20} color={colors.ink} />}
-          title="Revenus & virements"
-          sub="1 247 € ce mois"
-        />
-        <Row icon={<Icon name="shield" size={20} color={colors.ink} />} title="Charte de bienveillance" />
       </ScrollView>
     </View>
   );
@@ -284,20 +247,19 @@ const styles = StyleSheet.create({
   statV: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 26, lineHeight: 28 },
   statL: { ...typography.tiny, fontSize: 10, letterSpacing: 0.5, marginTop: 4 },
 
-  activeRow: {
+  verifBanner: {
     marginHorizontal: 20,
-    marginBottom: 18,
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.line,
+    marginBottom: 16,
+    padding: 14,
+    backgroundColor: colors.mist,
+    borderRadius: 16,
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
+    gap: 10,
+    alignItems: 'flex-start',
   },
-  activeTitle: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 17 },
-  activeSub: { ...typography.small, fontSize: 12 },
+  verifBannerDanger: { backgroundColor: '#FBE9E7' },
+  verifTxt: { ...typography.small, fontSize: 13, fontFamily: 'Outfit_500Medium', lineHeight: 18 },
+  verifMotif: { ...typography.small, fontSize: 12, marginTop: 4, lineHeight: 17 },
 
   paiementsBox: {
     marginHorizontal: 20,
@@ -320,27 +282,6 @@ const styles = StyleSheet.create({
   paiementsSub: { ...typography.small, fontSize: 12, lineHeight: 17 },
   paiementsCta: { marginTop: 10, alignSelf: 'flex-start' },
   paiementsCtaTxt: { color: colors.ink, fontFamily: 'Outfit_500Medium', fontSize: 13 },
-
-  pauseBox: {
-    marginHorizontal: 20,
-    marginBottom: 16,
-    padding: 14,
-    backgroundColor: '#F4ECD9',
-    borderRadius: 16,
-    flexDirection: 'row',
-    gap: 12,
-  },
-  pauseIc: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pauseTitle: { fontFamily: 'Outfit_500Medium', color: '#5D4F2E', fontSize: 13, marginBottom: 2 },
-  pauseBody: { color: '#8A6A36', fontSize: 12, lineHeight: 17 },
-  pauseCta: { color: '#5D4F2E', fontFamily: 'Outfit_500Medium', fontSize: 13, marginTop: 8 },
 
   row: {
     flexDirection: 'row',

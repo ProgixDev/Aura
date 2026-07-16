@@ -14,18 +14,43 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Grain } from '@components/Grain';
 import { colors } from '@theme/colors';
 import { useSession } from '@store/session';
+import { api } from '@data/api/client';
+
+const MIN_SPLASH_MS = 1400;
+
+// A stale/expired token must never fall through to `/(tabs)` just because
+// `hasSeenOnboarding` is still true from a past session — that was the
+// original bug (app "logged in directly" with no real check). This always
+// re-verifies the persisted token against the backend before deciding.
+async function resolveDestination(): Promise<string> {
+  const { token, userType, hasSeenOnboarding, signOut } = useSession.getState();
+  if (!token || !userType) {
+    return hasSeenOnboarding ? '/onboarding/auth?mode=login' : '/onboarding';
+  }
+  const path = userType === 'praticien' ? '/praticien/check-token' : '/client/check-token';
+  const valid = await api.get(path).then(() => true).catch(() => false);
+  if (valid) return '/(tabs)';
+  signOut();
+  return '/onboarding/auth?mode=login';
+}
 
 const { width } = Dimensions.get('window');
 
 /**
  * Splash — single huge "Aura" wordmark over a deep-violet → ink gradient with
  * subtle film grain. The mark breathes (opacity + 1px scale) and a hair-thin
- * underline draws in once on mount. Tap anywhere to advance, otherwise the
- * splash auto-dismisses after ~2.6s.
+ * underline draws in once on mount. Tap anywhere to advance; otherwise it
+ * navigates once resolveDestination() (a real token check) resolves, no
+ * sooner than MIN_SPLASH_MS so the animation never flashes by instantly.
  */
 export default function SplashRoute() {
   const router = useRouter();
-  const seen = useSession((s) => s.hasSeenOnboarding);
+  const navigated = useRef(false);
+  const advance = () => {
+    if (navigated.current) return;
+    navigated.current = true;
+    resolveDestination().then((dest) => router.replace(dest as any));
+  };
 
   // Mount-in: opacity + slight y-rise for the wordmark.
   const enter = useRef(new Animated.Value(0)).current;
@@ -70,11 +95,10 @@ export default function SplashRoute() {
       ])
     ).start();
 
-    const t = setTimeout(() => {
-      router.replace(seen ? ('/(tabs)' as any) : ('/onboarding' as any));
-    }, 2600);
+    const t = setTimeout(advance, MIN_SPLASH_MS);
     return () => clearTimeout(t);
-  }, [router, seen, enter, breath, underline]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enter, breath, underline]);
 
   const enterTransform = enter.interpolate({ inputRange: [0, 1], outputRange: [12, 0] });
   const breathScale = breath.interpolate({ inputRange: [0, 1], outputRange: [1, 1.015] });
@@ -82,12 +106,7 @@ export default function SplashRoute() {
   const underlineW = underline.interpolate({ inputRange: [0, 1], outputRange: [0, width * 0.42] });
 
   return (
-    <Pressable
-      style={{ flex: 1 }}
-      onPress={() =>
-        router.replace(seen ? ('/(tabs)' as any) : ('/onboarding' as any))
-      }
-    >
+    <Pressable style={{ flex: 1 }} onPress={advance}>
       <StatusBar style="light" />
       {/* Deep violet → ink, diagonal. */}
       <LinearGradient

@@ -236,6 +236,26 @@ export interface BookingDraft {
   total?: number;
 }
 
+// Built up across onboarding/auth.tsx -> onboarding/praticien-profil.tsx ->
+// onboarding/praticien-documents.tsx, then submitted as one multipart
+// POST /praticien/register — the backend validates all fields + all 5
+// documents in a single request, there is no partial/staged registration.
+export interface PraticienRegistrationDraft {
+  firstname?: string;
+  lastname?: string;
+  email?: string;
+  password?: string;
+  telephone?: string;
+  ville?: string;
+  niveau?: string;
+  specialite?: string;
+  mode?: string;
+  tarif?: number;
+  experience?: number;
+  bio?: string;
+  documents?: Partial<Record<'piece_identite' | 'certification' | 'assurance' | 'domicile' | 'charte', { uri: string; name: string; mimeType: string }>>;
+}
+
 export interface RendezVousPraticien {
   id: number;
   firstname: string;

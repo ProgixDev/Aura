@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
@@ -10,7 +10,8 @@ import { Button } from '@components/Button';
 import { Input } from '@components/Input';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
-import { useSession } from '@store/session';
+import { useSession, type Role } from '@store/session';
+import { usePraticienRegistration } from '@store/praticienRegistration';
 import { api, ApiError } from '@data/api/client';
 
 const schema = z.object({
@@ -22,10 +23,14 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-interface AuthResponse {
+interface ClientAuthResponse {
+  data: { token: string; client: { firstname: string; lastname: string } };
+}
+interface PraticienAuthResponse {
   data: {
     token: string;
-    client: { firstname: string };
+    praticien: { firstname: string; lastname: string };
+    verification_status: string;
   };
 }
 
@@ -35,8 +40,12 @@ export default function Auth() {
   const params = useLocalSearchParams<{ mode?: string }>();
   const [mode, setMode] = useState<'signup' | 'login'>(params.mode === 'login' ? 'login' : 'signup');
   const [submitting, setSubmitting] = useState(false);
-  const setFirstName = useSession((s) => s.setFirstName);
+  const sessionRole = useSession((s) => s.role);
+  const [authRole, setAuthRole] = useState<Role>(sessionRole ?? 'seeker');
+  const setRole = useSession((s) => s.setRole);
+  const setAuthenticated = useSession((s) => s.setAuthenticated);
   const setOnboardingSeen = useSession((s) => s.setOnboardingSeen);
+  const patchRegistrationDraft = usePraticienRegistration((s) => s.patchDraft);
 
   const { control, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -45,14 +54,33 @@ export default function Auth() {
 
   const submit = async (data: FormValues) => {
     setSubmitting(true);
+    setRole(authRole);
     try {
       if (mode === 'login') {
-        const res = await api.post<AuthResponse>('/client/login', {
-          email: data.email,
-          password: data.password,
-        });
-        useSession.getState().setToken(res.data.token);
-        setFirstName(res.data.client.firstname);
+        if (authRole === 'practitioner') {
+          const res = await api.post<PraticienAuthResponse>('/praticien/login', {
+            email: data.email,
+            password: data.password,
+          });
+          setAuthenticated({
+            token: res.data.token,
+            userType: 'praticien',
+            firstName: res.data.praticien.firstname,
+            lastName: res.data.praticien.lastname,
+            verificationStatus: res.data.verification_status,
+          });
+        } else {
+          const res = await api.post<ClientAuthResponse>('/client/login', {
+            email: data.email,
+            password: data.password,
+          });
+          setAuthenticated({
+            token: res.data.token,
+            userType: 'client',
+            firstName: res.data.client.firstname,
+            lastName: res.data.client.lastname,
+          });
+        }
         setOnboardingSeen();
         router.replace('/(tabs)' as any);
         return;
@@ -62,7 +90,24 @@ export default function Auth() {
         Alert.alert('Champs requis', 'Merci de renseigner votre prénom, nom et ville.');
         return;
       }
-      const res = await api.post<AuthResponse>('/client/register', {
+
+      if (authRole === 'practitioner') {
+        // Praticien registration needs 7 more fields (téléphone, niveau,
+        // spécialité, mode, tarif, expérience, bio) plus 5 required document
+        // uploads — collected over the next two screens, then submitted as
+        // one multipart POST. Nothing is sent to the backend yet.
+        patchRegistrationDraft({
+          firstname: data.firstName,
+          lastname: data.lastName,
+          email: data.email,
+          password: data.password,
+          ville: data.city,
+        });
+        router.push('/onboarding/praticien-profil' as any);
+        return;
+      }
+
+      const res = await api.post<ClientAuthResponse>('/client/register', {
         firstname: data.firstName,
         lastname: data.lastName,
         email: data.email,
@@ -70,8 +115,12 @@ export default function Auth() {
         password: data.password,
         password_confirmation: data.password,
       });
-      useSession.getState().setToken(res.data.token);
-      setFirstName(res.data.client.firstname);
+      setAuthenticated({
+        token: res.data.token,
+        userType: 'client',
+        firstName: res.data.client.firstname,
+        lastName: res.data.client.lastname,
+      });
       setOnboardingSeen();
       router.push('/onboarding/quiz?step=0' as any);
     } catch (err) {
@@ -104,7 +153,28 @@ export default function Auth() {
           {mode === 'login' ? 'Ravie de vous revoir.' : 'Quelques informations, en toute discrétion.'}
         </Text>
 
-        <View style={{ height: 24 }} />
+        <View style={{ height: 20 }} />
+
+        <View style={styles.roleToggle}>
+          <Pressable
+            style={[styles.roleOption, authRole === 'seeker' && styles.roleOptionActive]}
+            onPress={() => setAuthRole('seeker')}
+          >
+            <Text style={[styles.roleOptionTxt, authRole === 'seeker' && styles.roleOptionTxtActive]}>
+              Je cherche un soin
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.roleOption, authRole === 'practitioner' && styles.roleOptionActive]}
+            onPress={() => setAuthRole('practitioner')}
+          >
+            <Text style={[styles.roleOptionTxt, authRole === 'practitioner' && styles.roleOptionTxtActive]}>
+              Je suis praticien
+            </Text>
+          </Pressable>
+        </View>
+
+        <View style={{ height: 20 }} />
 
         {mode === 'signup' && (
           <>
@@ -197,6 +267,22 @@ const styles = StyleSheet.create({
     color: colors.violet2,
   },
   small: { ...typography.small },
+  roleToggle: {
+    flexDirection: 'row',
+    backgroundColor: colors.mist,
+    borderRadius: 14,
+    padding: 4,
+    gap: 4,
+  },
+  roleOption: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  roleOptionActive: { backgroundColor: '#fff' },
+  roleOptionTxt: { ...typography.small, fontSize: 13, color: colors.muted },
+  roleOptionTxtActive: { color: colors.ink, fontFamily: 'Outfit_500Medium' },
   legal: { ...typography.small, fontSize: 12, marginVertical: 12, lineHeight: 18 },
   link: { color: colors.violet2 },
   switchMode: {

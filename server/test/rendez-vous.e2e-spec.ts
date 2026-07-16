@@ -63,6 +63,14 @@ describe('rendez-vous', () => {
     expect(res.body.message).toBe('Praticien introuvable');
   });
 
+  it('POST /api/rendez-vous rejects a date_heure in the past', async () => {
+    const res = await http().post('/api/rendez-vous')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ praticien_id: praticienId, date_heure: '2020-01-01T14:00:00', mode: 'présentiel' })
+      .expect(400);
+    expect(res.body.message).toBe('La date du rendez-vous doit être dans le futur.');
+  });
+
   it('POST /api/rendez-vous creates an en_attente rendez_vous and a PaymentIntent', async () => {
     const res = await http().post('/api/rendez-vous')
       .set('Authorization', `Bearer ${clientToken}`)

@@ -75,6 +75,8 @@ export default function RootLayout() {
               <Stack.Screen name="onboarding/index" options={{ animation: 'fade' }} />
               <Stack.Screen name="onboarding/role" />
               <Stack.Screen name="onboarding/auth" />
+              <Stack.Screen name="onboarding/praticien-profil" />
+              <Stack.Screen name="onboarding/praticien-documents" />
               <Stack.Screen name="onboarding/quiz" />
               <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
               <Stack.Screen

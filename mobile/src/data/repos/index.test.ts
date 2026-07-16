@@ -24,6 +24,12 @@ describe('mapPraticien', () => {
     expect(mapPraticien(row).reviews).toBe(0);
   });
 
+  it('passes through real rating/reviews_count when the backend provides them', () => {
+    const p = mapPraticien({ ...row, rating: 4.7, reviews_count: 12 });
+    expect(p.rating).toBe(4.7);
+    expect(p.reviews).toBe(12);
+  });
+
   it('leaves photo/hero/gallery empty rather than borrowing a stock photo', () => {
     const p = mapPraticien(row);
     expect(p.photo).toBeUndefined();

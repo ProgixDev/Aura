@@ -4,7 +4,7 @@
  * exchangeRepo, paiementRepo, remboursementRepo, rendezVousRepo, avisRepo,
  * signalementRepo, favoriteRepo, and notificationPreferencesRepo all call the
  * real NestJS backend — the auth token is already attached globally by
- * `src/store/session.ts`'s `setToken`. messageRepo (client) and
+ * `src/store/session.ts`'s `setAuthenticated`. messageRepo (client) and
  * praticienMessageRepo (praticien) also call the real backend now.
  */
 import { disciplineImageSource } from '../images';
@@ -29,17 +29,17 @@ import type {
   FavoritePraticien,
   Subscription,
   StripeConnectStatus,
+  PraticienRegistrationDraft,
 } from '../types';
 
-const delay = <T>(value: T, ms = 60): Promise<T> =>
-  new Promise((r) => setTimeout(() => r(value), ms));
-
 // ---------- Adapters: raw backend rows -> existing UI shapes ----------
-// Real fields map directly; fields with no backend source (rating, online
-// status, per-item accent colour…) get an honest neutral default instead of
-// invented data. photo/hero/gallery come from the praticiens.photo/hero/gallery
-// columns (Supabase Storage URLs), wrapped as {uri} for ImageSourcePropType.
-// See the plan's Architecture notes.
+// Real fields map directly; rating/reviews come from the praticiens
+// endpoints' attached rating + reviews_count (avg/count of published avis —
+// see PraticiensService.attachRatings server-side). Fields with no backend
+// source (online status, per-item accent colour…) get an honest neutral
+// default instead of invented data. photo/hero/gallery come from the
+// praticiens.photo/hero/gallery columns (Supabase Storage URLs), wrapped as
+// {uri} for ImageSourcePropType.
 const DEFAULT_GRADIENT = ['#C4B0E8', '#A8C8E8'] as const;
 const DEFAULT_TONE: Discipline['tone'] = 'violet';
 
@@ -51,8 +51,8 @@ export function mapPraticien(row: any): Practitioner {
     city: row.ville,
     mode: row.mode,
     price: Number(row.tarif),
-    rating: 0,
-    reviews: 0,
+    rating: row.rating ?? 0,
+    reviews: row.reviews_count ?? 0,
     level: row.niveau,
     verified: row.statut_verification === 'valide',
     online: false,
@@ -156,6 +156,12 @@ export const practitionerRepo = {
   // Real reviews now — delegates to avisRepo (defined below) rather than
   // duplicating the fetch here.
   reviewsFor: (practitionerId: string): Promise<Avis[]> => avisRepo.forPraticien(practitionerId),
+  // Real 14-day rolling availability grid (excludes Sundays, blocks slots
+  // already held by an en_attente/confirme rendez-vous) — mirrors what
+  // web/app/(site)/reserver/[id]/BookingFlow.jsx already calls.
+  availability: (id: string): Promise<Array<{ date: string; slots: Array<{ time: string; available: boolean }> }>> =>
+    api.get<{ data: Array<{ date: string; slots: Array<{ time: string; available: boolean }> }> }>(`/praticiens/${id}/availability`)
+      .then((res) => res.data),
 };
 
 // ---------- Avis (reviews) ----------
@@ -351,27 +357,50 @@ export const praticienMessageRepo = {
       .then((res) => mapMessage(res.data, 'praticien')),
 };
 
-// ---------- Bookings ----------
-/**
- * Frontend stub: pretends to "hold" the funds and returns a fake reference.
- * Replace with a real call (e.g. /api/bookings/hold) when a backend exists.
- */
-export const bookingRepo = {
-  hold: async (params: {
-    practitionerId: string;
-    when: string;
-    mode: 'présentiel' | 'visio';
-    total: number;
-  }) =>
-    delay({
-      id: `AURA-${Date.now()}-${params.practitionerId.toUpperCase()}`,
-      status: 'held' as const,
-      ...params,
-    }),
-  release: async (bookingId: string) =>
-    delay({ bookingId, status: 'released' as const }),
-  refund: async (bookingId: string) =>
-    delay({ bookingId, status: 'refunded' as const }),
+// ---------- Praticien self-profile (real backend, GET /praticien/profile) ----------
+interface PraticienProfile {
+  id: number;
+  firstname: string;
+  lastname: string;
+  statut_verification: 'en_attente' | 'en_cours' | 'valide' | 'rejete';
+  motif_rejet: string | null;
+  documents_stats: { total: number; en_attente: number; valide: number; rejete: number };
+}
+
+export const praticienProfileRepo = {
+  me: (): Promise<PraticienProfile> =>
+    api.get<{ data: { praticien: PraticienProfile; documents_stats: PraticienProfile['documents_stats'] } }>('/praticien/profile')
+      .then((res) => ({ ...res.data.praticien, documents_stats: res.data.documents_stats })),
+};
+
+// ---------- Praticien registration (real backend, multipart POST /praticien/register) ----------
+// DOC_TYPES must match server/src/auth/praticien-auth/praticien-auth.service.ts's DOC_TYPES
+// exactly — the backend rejects the request if any `documents[type]` field is missing.
+const DOC_TYPES = ['piece_identite', 'certification', 'assurance', 'domicile', 'charte'] as const;
+
+export const praticienAuthRepo = {
+  register: (draft: PraticienRegistrationDraft): Promise<{ token: string }> => {
+    const fd = new FormData();
+    const fields: Array<[string, string | number | undefined]> = [
+      ['firstname', draft.firstname], ['lastname', draft.lastname], ['email', draft.email],
+      ['password', draft.password], ['password_confirmation', draft.password],
+      ['telephone', draft.telephone], ['ville', draft.ville], ['niveau', draft.niveau],
+      ['specialite', draft.specialite], ['mode', draft.mode], ['tarif', draft.tarif],
+      ['experience', draft.experience], ['bio', draft.bio],
+    ];
+    for (const [key, value] of fields) {
+      if (value !== undefined) fd.append(key, String(value));
+    }
+    for (const type of DOC_TYPES) {
+      const doc = draft.documents?.[type];
+      if (doc) {
+        // React Native's fetch polyfill accepts this {uri, name, type} shape for a
+        // FormData file entry — there is no real Blob/File available on-device.
+        fd.append(`documents[${type}]`, { uri: doc.uri, name: doc.name, type: doc.mimeType } as any);
+      }
+    }
+    return api.post<{ data: { token: string } }>('/praticien/register', fd).then((res) => res.data);
+  },
 };
 
 // ---------- Rendez-vous (real backend) ----------
