@@ -1,13 +1,21 @@
 'use client';
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Modal } from './Modal';
 import { useUI } from '@/lib/store';
-import { disciplines } from '@/lib/data/disciplines';
+import { api } from '@/lib/api';
 
 /** Search filters modal for the practitioner directory. */
 export function FiltersModal({ id, onApply }) {
   const close = useUI((s) => s.closeModal);
   const toast = useUI((s) => s.toast);
+  // Same query key + shape as web/app/(site)/praticiens/page.jsx's discipline chips —
+  // one shared react-query cache entry, `nom`/`slug`/`tonalite` straight off the API.
+  const { data: disciplinesRes } = useQuery({
+    queryKey: ['disciplines'],
+    queryFn: () => api.get('/disciplines'),
+  });
+  const disciplines = disciplinesRes?.data ?? [];
   const [mode, setMode] = useState('all');
   const [price, setPrice] = useState(120);
   const [level, setLevel] = useState('all');
@@ -42,7 +50,7 @@ export function FiltersModal({ id, onApply }) {
       <div className="field"><label>Disciplines</label>
         <div className="row gap-2 wrap">
           {disciplines.map((d) => (
-            <button key={d.slug} className={`chip tone-${d.tone} ${discs.includes(d.slug) ? 'active' : ''}`} onClick={() => toggle(d.slug)}>{d.name}</button>
+            <button key={d.slug} className={`chip tone-${d.tonalite} ${discs.includes(d.slug) ? 'active' : ''}`} onClick={() => toggle(d.slug)}>{d.nom}</button>
           ))}
         </div>
       </div>

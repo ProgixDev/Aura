@@ -5,7 +5,6 @@ import { StatCard } from '@/components/ui/StatCard';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
 import { LineChart } from '@/components/ui/MiniChart';
-import { subscriptions } from '@/lib/data/admin';
 import { api } from '@/lib/api';
 import { euro } from '@/lib/format';
 
@@ -22,9 +21,14 @@ export default function RevenueAnalyticsPage() {
   const byDiscipline = revenue?.par_discipline ?? [];
   const general = revenue?.general;
 
-  // MRR/ARR/subscriber counts still come from the `subscriptions` mock — the real
-  // `subscriptions` table is 08e's job and doesn't exist yet. Not part of this endpoint.
-  const mrr = subscriptions.filter((s) => s.status !== 'cancelled').reduce((s, x) => s + x.price, 0);
+  // Same admin/subscriptions/statistics endpoint admin/abonnements/page.jsx already
+  // uses — real MRR/subscriber counts, not the old subscriptions mock.
+  const { data: subsStatsData } = useQuery({
+    queryKey: ['admin', 'subscriptions', 'statistics'],
+    queryFn: () => api.get('/admin/subscriptions/statistics'),
+  });
+  const subsStats = subsStatsData?.data?.general;
+  const mrr = subsStats?.mrr ?? 0;
   const arr = mrr * 12;
 
   return (
@@ -44,7 +48,7 @@ export default function RevenueAnalyticsPage() {
             <StatCard label="Chiffre d’affaires" value={euro(general?.montant_total)} icon="euro" />
             <StatCard label="Commissions" value={euro(general?.commission_totale)} icon="card" />
             <StatCard label="Reversé aux praticiens" value={euro(general?.net_total)} icon="users" />
-            <StatCard label="MRR abonnements" value={euro(mrr)} icon="sparkle" hint="Basé sur le mock — dépend de 08e" />
+            <StatCard label="MRR abonnements" value={euro(mrr)} icon="sparkle" />
           </div>
 
           <div className="card card-pad" style={{ marginBottom: 24 }}>
@@ -105,12 +109,11 @@ export default function RevenueAnalyticsPage() {
 
               <div className="card card-pad">
                 <h3 className="h-4" style={{ marginBottom: 14 }}>Revenu récurrent</h3>
-                <p className="tiny" style={{ marginBottom: 10 }}>Basé sur le mock d’abonnements — sera réel une fois 08e livré.</p>
                 <dl className="dl">
                   <dt>MRR</dt><dd><strong>{euro(mrr)}</strong></dd>
                   <dt>ARR (projeté)</dt><dd>{euro(arr)}</dd>
-                  <dt>Abonnés actifs</dt><dd>{subscriptions.filter((s) => s.status === 'active').length}</dd>
-                  <dt>En impayé</dt><dd>{subscriptions.filter((s) => s.status === 'past_due').length}</dd>
+                  <dt>Abonnés actifs</dt><dd>{subsStats?.active_count ?? 0}</dd>
+                  <dt>En impayé</dt><dd>{subsStats?.past_due_count ?? 0}</dd>
                 </dl>
               </div>
             </div>
