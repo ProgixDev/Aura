@@ -22,6 +22,10 @@ import { shadows } from '@theme/shadows';
 import { practitionerRepo, disciplineRepo, eventRepo } from '@data/repos';
 import { useSession } from '@store/session';
 
+const TODAY_LABEL = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+  .format(new Date())
+  .toUpperCase();
+
 export default function Accueil() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -48,9 +52,9 @@ export default function Accueil() {
       >
         {/* Hero greeting */}
         <View style={styles.hero}>
-          <Text style={styles.eyebrow}>LUNDI 24 MARS</Text>
+          <Text style={styles.eyebrow}>{TODAY_LABEL}</Text>
           <Text style={styles.greet}>
-            Bonjour {firstName ?? 'Sarah'},{'\n'}
+            Bonjour {firstName ?? ''},{'\n'}
             <Text style={styles.greetItalic}>
               qu'est-ce qui vous appelle ?
             </Text>
@@ -60,24 +64,23 @@ export default function Accueil() {
           </Text>
         </View>
 
-        {/* Featured retreat */}
-        <Pressable
-          onPress={() => router.push('/event/e1' as any)}
-          style={{ marginHorizontal: 20, marginVertical: 16 }}
-        >
-          <AuroraBackground variant="soft" rounded={28} style={styles.featured}>
-            <View style={styles.featuredBadge}>
-              <Text style={styles.featuredBadgeTxt}>À l'AFFICHE</Text>
-            </View>
-            <View style={styles.featuredFoot}>
-              <Text style={styles.featuredTitle}>
-                Retraite équinoxe{'\n'}
-                <Text style={styles.featuredItalic}>Massif du Vercors</Text>
-              </Text>
-              <Text style={styles.featuredMeta}>21–23 mars · 8 places restantes</Text>
-            </View>
-          </AuroraBackground>
-        </Pressable>
+        {/* Featured retreat — first upcoming real event, not shown if none */}
+        {featured.data?.[0] && (
+          <Pressable
+            onPress={() => router.push(`/event/${featured.data![0].id}` as any)}
+            style={{ marginHorizontal: 20, marginVertical: 16 }}
+          >
+            <AuroraBackground variant="soft" rounded={28} style={styles.featured}>
+              <View style={styles.featuredBadge}>
+                <Text style={styles.featuredBadgeTxt}>À l'AFFICHE</Text>
+              </View>
+              <View style={styles.featuredFoot}>
+                <Text style={styles.featuredTitle}>{featured.data[0].title}</Text>
+                <Text style={styles.featuredMeta}>{featured.data[0].when} · {featured.data[0].where}</Text>
+              </View>
+            </AuroraBackground>
+          </Pressable>
+        )}
 
         {/* Recommended practitioners */}
         <SectionHead title="Recommandés pour vous" action="Tout voir" />

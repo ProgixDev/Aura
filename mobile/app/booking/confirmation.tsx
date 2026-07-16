@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   Easing,
   Pressable,
@@ -18,7 +19,8 @@ import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { shadows } from '@theme/shadows';
 import { useBooking } from '@store/booking';
-import { rendezVousRepo } from '@data/repos';
+import { rendezVousRepo, messageRepo } from '@data/repos';
+import { errorMessage } from '@data/api/client';
 
 export default function Confirmation() {
   const router = useRouter();
@@ -26,6 +28,7 @@ export default function Confirmation() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const draft = useBooking((s) => s.draft);
   const clear = useBooking((s) => s.clearDraft);
+  const [messaging, setMessaging] = useState(false);
 
   const { data: rdv } = useQuery({
     queryKey: ['rendezVous', id],
@@ -83,10 +86,19 @@ export default function Confirmation() {
         </Card>
 
         <Button
-          label={firstName ? `Envoyer un message à ${firstName}` : 'Envoyer un message'}
-          onPress={() => {
-            clear();
-            router.replace('/chat/m1' as any);
+          label={messaging ? 'Un instant…' : firstName ? `Envoyer un message à ${firstName}` : 'Envoyer un message'}
+          disabled={messaging || !rdv?.praticien_id}
+          onPress={async () => {
+            if (!rdv?.praticien_id) return;
+            setMessaging(true);
+            try {
+              const conversation = await messageRepo.startConversation(rdv.praticien_id);
+              clear();
+              router.replace(`/chat/${conversation.id}` as any);
+            } catch (err) {
+              Alert.alert('Impossible d’ouvrir la conversation', errorMessage(err));
+              setMessaging(false);
+            }
           }}
         />
         <Pressable onPress={() => { clear(); router.replace('/(tabs)' as any); }}>

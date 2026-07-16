@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
+  Alert,
   ImageBackground,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,15 +18,60 @@ import { Badge } from '@components/Badge';
 import { Button } from '@components/Button';
 import { Grain } from '@components/Grain';
 import { Icon } from '@components/Icon';
+import { Input } from '@components/Input';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { shadows } from '@theme/shadows';
 import { eventRepo } from '@data/repos';
 
+// No event booking/registration backend exists yet (see event-adapter's own
+// comment) — mirrors web/app/(site)/evenement/[id]/page.jsx's "Réserver"
+// button exactly: a lightweight interest form with no real API call behind
+// it, not a fake payment flow pretending to charge a card.
+function PreRegisterModal({ visible, eventTitle, onClose }: { visible: boolean; eventTitle: string; onClose: () => void }) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [places, setPlaces] = useState('1');
+
+  const submit = () => {
+    if (!name.trim() || !email.trim()) {
+      Alert.alert('Champs requis', 'Merci de renseigner votre nom et votre email.');
+      return;
+    }
+    onClose();
+    setName(''); setEmail(''); setPlaces('1');
+    Alert.alert('Demande envoyée', 'Vous recevrez une confirmation par email.');
+  };
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <View style={modalStyles.backdrop}>
+        <View style={modalStyles.sheet}>
+          <Text style={modalStyles.title}>Pré-inscription — {eventTitle}</Text>
+          <Input label="Votre nom" value={name} onChangeText={setName} />
+          <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+          <Input label="Nombre de places" value={places} onChangeText={setPlaces} keyboardType="number-pad" />
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+            <Button label="Annuler" variant="soft" onPress={onClose} style={{ flex: 1 }} />
+            <Button label="Envoyer" onPress={submit} style={{ flex: 1 }} />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const modalStyles = StyleSheet.create({
+  backdrop: { flex: 1, backgroundColor: 'rgba(20,12,35,0.5)', justifyContent: 'flex-end' },
+  sheet: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
+  title: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 20, marginBottom: 16 },
+});
+
 export default function EventDetail() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const [preRegisterOpen, setPreRegisterOpen] = useState(false);
   const { data: e } = useQuery({
     queryKey: ['event', id],
     queryFn: () => eventRepo.byId(String(id)),
@@ -129,10 +176,16 @@ export default function EventDetail() {
         <Button
           label="Pré-inscription"
           fullWidth={false}
-          onPress={() => router.push(`/booking/payment?event=${e.id}` as any)}
+          onPress={() => setPreRegisterOpen(true)}
           style={{ flex: 1.2 }}
         />
       </View>
+
+      <PreRegisterModal
+        visible={preRegisterOpen}
+        eventTitle={e.title}
+        onClose={() => setPreRegisterOpen(false)}
+      />
     </View>
   );
 }
