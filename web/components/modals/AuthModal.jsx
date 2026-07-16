@@ -6,7 +6,19 @@ import { useUI } from '@/lib/store';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
 
-/** Login / signup / forgot, switchable. Calls the real client-auth endpoints. */
+/**
+ * Login / signup / forgot, switchable. Calls the real CLIENT-auth endpoints only —
+ * its signup branch always does POST /client/register and signs the visitor in as a
+ * client. There is no practitioner branch: practitioner registration is a separate,
+ * multipart endpoint (POST /v1/praticien/register — see
+ * server/src/auth/praticien-auth/praticien-auth.controller.ts) with fields
+ * (niveau, specialite, mode, tarif, experience, bio, documents…) this modal cannot
+ * carry, and no web UI builds that form yet. Never open this modal in signup mode
+ * from a practitioner-recruitment CTA — that used to silently create a client
+ * account for a visitor trying to become a practitioner. See
+ * app/(site)/devenir-praticien/page.jsx, which routes its "become a practitioner"
+ * CTAs to /contact instead of this modal.
+ */
 export function AuthModal({ id, mode: initial = 'login' }) {
   const [mode, setMode] = useState(initial);
   const close = useUI((s) => s.closeModal);
@@ -35,6 +47,8 @@ export function AuthModal({ id, mode: initial = 'login' }) {
         return;
       }
       if (mode === 'signup') {
+        // CLIENT registration only — see the file-level comment above. Do not repurpose
+        // this branch for a "become a practitioner" flow.
         const res = await api.post('/client/register', {
           firstname, lastname, email, city, password, password_confirmation: passwordConfirmation,
         });

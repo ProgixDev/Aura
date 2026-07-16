@@ -2,7 +2,6 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Icon } from '@/components/ui/Icon';
-import { ModalButton } from '@/components/ui/ModalButton';
 import { Avatar } from '@/components/ui/Avatar';
 import { Rating } from '@/components/ui/Rating';
 import { Badge } from '@/components/ui/Badge';
@@ -58,7 +57,17 @@ export default function DevenirPraticienPage() {
               Aura met en lumière les praticiens du bien-être énergétique sérieux. Vous exercez, nous nous occupons de la visibilité, des paiements et de la confiance.
             </p>
             <div className="row gap-3" style={{ flexWrap: 'wrap' }}>
-              <ModalButton modal="signup" className="btn btn-aurora btn-lg">Créer mon profil</ModalButton>
+              {/* This used to open the client signup modal (ModalButton modal="signup"),
+                  which unconditionally POSTs /client/register — silently creating a CLIENT
+                  account for someone trying to become a PRACTITIONER. There is no
+                  practitioner registration form in the web app yet (the real endpoint,
+                  POST /v1/praticien/register, is multipart with fields — niveau,
+                  specialite, tarif, bio, verification documents — this page can't collect);
+                  building it is a separate piece of work. Routing to /contact is the
+                  honest option until that form exists: a human takes it from there instead
+                  of the visitor ending up with the wrong account type. Same fix applies to
+                  the two other "signup" CTAs below. */}
+              <Link href="/contact" className="btn btn-aurora btn-lg">Nous contacter</Link>
               <Link href="/tarifs" className="btn btn-soft btn-lg" style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)' }}>Voir les tarifs</Link>
             </div>
             <div className="row gap-6" style={{ marginTop: 44, color: 'rgba(255,255,255,0.75)', flexWrap: 'wrap' }}>
@@ -152,7 +161,9 @@ export default function DevenirPraticienPage() {
                 <div className="price" style={{ marginBottom: 16 }}>
                   {p.price === 0 ? 'Gratuit' : euro(p.price)}<small>{p.price === 0 ? '' : p.period}</small>
                 </div>
-                <ModalButton modal="signup" payload={{ plan: p.id }} className={p.highlight ? 'btn btn-primary btn-block' : 'btn btn-soft btn-block'}>{p.cta}</ModalButton>
+                {/* See the hero CTA comment above — routes to /contact instead of
+                    silently creating a client account for a practitioner signup. */}
+                <Link href="/contact" className={p.highlight ? 'btn btn-primary btn-block' : 'btn btn-soft btn-block'}>{p.cta}</Link>
               </div>
             ))}
           </div>
@@ -188,7 +199,8 @@ export default function DevenirPraticienPage() {
             <h2 className="h-1" style={{ color: '#fff', marginBottom: 14 }}>Votre vocation mérite d’être vue.</h2>
             <p className="lead" style={{ color: 'rgba(255,255,255,0.82)', maxWidth: 520, margin: '0 auto 28px' }}>Créez votre profil aujourd’hui. La vérification est offerte, et le premier mois aussi.</p>
             <div className="row gap-3" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
-              <ModalButton modal="signup" className="btn btn-aurora btn-lg">Créer mon profil praticien</ModalButton>
+              {/* See the hero CTA comment above. */}
+              <Link href="/contact" className="btn btn-aurora btn-lg">Nous contacter</Link>
               <Link href="/comment-ca-marche" className="btn btn-soft btn-lg" style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)' }}>Comment ça marche</Link>
             </div>
           </div>

@@ -61,6 +61,7 @@ create table clients (
   lastname varchar(255) not null,
   email varchar(255) not null,
   city varchar(255) not null,
+  phone varchar(255),
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

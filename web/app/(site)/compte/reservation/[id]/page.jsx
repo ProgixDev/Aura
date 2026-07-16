@@ -2,7 +2,8 @@
 
 import { use } from 'react';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
@@ -20,6 +21,8 @@ const STATUT_TONE = { en_attente: 'warning', confirme: 'success', termine: 'neut
 
 export default function ReservationDetail({ params }) {
   const { id } = use(params);
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ['rendez-vous-client', id],
@@ -88,7 +91,22 @@ export default function ReservationDetail({ params }) {
             </div>
             <div className="row gap-2 mt-3 wrap">
               <Button href={`/praticien/${prat.id}`} variant="ghost" size="sm">Voir le profil</Button>
-              <ModalButton modal="contact" payload={{ name: prat.name }} className="btn btn-soft btn-sm">Contacter</ModalButton>
+              {/* Same contract as praticien/[id]/page.jsx's "Contacter" button: creates
+                  (or reuses) the conversation, then navigates to it. */}
+              <ModalButton
+                modal="contact"
+                payload={{
+                  name: prat.name,
+                  onSubmit: async (values) => {
+                    const res = await api.post('/client/conversations', {
+                      praticien_id: Number(prat.id),
+                      text: values.message,
+                    });
+                    router.push(`/compte/message/${res.data.conversation.id}`);
+                  },
+                }}
+                className="btn btn-soft btn-sm"
+              >Contacter</ModalButton>
             </div>
           </section>
         </div>
@@ -116,10 +134,37 @@ export default function ReservationDetail({ params }) {
             {upcoming ? (
               <>
                 <ModalButton modal="reschedule" payload={{ name: prat.name }} className="btn btn-primary btn-block">Reprogrammer la séance</ModalButton>
-                <ModalButton modal="cancelBooking" payload={{ name: prat.name }} className="btn btn-danger-soft btn-block">Annuler la séance</ModalButton>
+                <ModalButton
+                  modal="cancelBooking"
+                  payload={{
+                    name: prat.name,
+                    onConfirm: async () => {
+                      await api.post(`/rendez-vous/client/${b.id}/cancel`);
+                      await Promise.all([
+                        queryClient.invalidateQueries({ queryKey: ['rendez-vous-client', id] }),
+                        queryClient.invalidateQueries({ queryKey: ['rendez-vous-client'] }),
+                      ]);
+                    },
+                  }}
+                  className="btn btn-danger-soft btn-block"
+                >Annuler la séance</ModalButton>
               </>
             ) : b.statut === 'termine' ? (
-              <ModalButton modal="review" payload={{ name: prat.name }} className="btn btn-primary btn-block">Laisser un avis</ModalButton>
+              <ModalButton
+                modal="review"
+                payload={{
+                  name: prat.name,
+                  onSubmit: async (values) => {
+                    await api.post('/client/avis', {
+                      praticien_id: b.praticien.id,
+                      note: Number(values.rating) || 5,
+                      avis: values.text,
+                    });
+                    await queryClient.invalidateQueries({ queryKey: ['mes-avis'] });
+                  },
+                }}
+                className="btn btn-primary btn-block"
+              >Laisser un avis</ModalButton>
             ) : (
               <Button href="/praticiens" variant="primary" block>Réserver à nouveau</Button>
             )}

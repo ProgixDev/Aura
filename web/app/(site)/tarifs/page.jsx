@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Icon } from '@/components/ui/Icon';
-import { ModalButton } from '@/components/ui/ModalButton';
 import { Badge } from '@/components/ui/Badge';
 import { plans } from '@/lib/data/content';
 import { euro } from '@/lib/format';
@@ -72,7 +71,10 @@ export default function TarifsPage() {
                     </li>
                   ))}
                 </ul>
-                <ModalButton modal="signup" payload={{ plan: p.id }} className={p.highlight ? 'btn btn-primary btn-block btn-lg' : 'btn btn-soft btn-block btn-lg'}>{p.cta}</ModalButton>
+                {/* Practitioner subscription tiers — onboarding is via contact until the
+                    multipart praticien registration form exists (real endpoint POST /v1/praticien/register).
+                    Must NOT open modal="signup" (that creates a CLIENT account). */}
+                <Link href="/contact" className={p.highlight ? 'btn btn-primary btn-block btn-lg' : 'btn btn-soft btn-block btn-lg'}>{p.cta}</Link>
               </div>
             ))}
           </div>
@@ -140,7 +142,7 @@ export default function TarifsPage() {
             <h2 className="h-1" style={{ color: '#fff', marginBottom: 14 }}>Lancez-vous gratuitement</h2>
             <p className="lead" style={{ color: 'rgba(255,255,255,0.82)', maxWidth: 520, margin: '0 auto 28px' }}>Aucune carte requise pour démarrer. Évoluez le jour où vous en aurez besoin.</p>
             <div className="row gap-3" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
-              <ModalButton modal="signup" className="btn btn-aurora btn-lg">Créer mon profil</ModalButton>
+              <Link href="/contact" className="btn btn-aurora btn-lg">Créer mon profil</Link>
               <Link href="/devenir-praticien" className="btn btn-soft btn-lg" style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)' }}>En savoir plus</Link>
             </div>
           </div>

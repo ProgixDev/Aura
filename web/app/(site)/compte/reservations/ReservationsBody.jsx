@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
@@ -16,6 +16,7 @@ const STATUT_LABEL = { en_attente: 'En attente', confirme: 'Confirmée', termine
 const STATUT_TONE = { en_attente: 'warning', confirme: 'success', termine: 'neutral', annule: 'danger' };
 
 function BookingRow({ rdv }) {
+  const queryClient = useQueryClient();
   const prat = mapPraticien(rdv.praticien);
   const upcoming = rdv.statut === 'confirme' || rdv.statut === 'en_attente';
   return (
@@ -39,11 +40,35 @@ function BookingRow({ rdv }) {
           {upcoming && (
             <>
               <ModalButton modal="reschedule" payload={{ name: prat.name }} className="btn btn-ghost btn-sm btn-block">Reprogrammer</ModalButton>
-              <ModalButton modal="cancelBooking" payload={{ name: prat.name }} className="btn btn-danger-soft btn-sm btn-block">Annuler</ModalButton>
+              <ModalButton
+                modal="cancelBooking"
+                payload={{
+                  name: prat.name,
+                  onConfirm: async () => {
+                    await api.post(`/rendez-vous/client/${rdv.id}/cancel`);
+                    await queryClient.invalidateQueries({ queryKey: ['rendez-vous-client'] });
+                  },
+                }}
+                className="btn btn-danger-soft btn-sm btn-block"
+              >Annuler</ModalButton>
             </>
           )}
           {!upcoming && rdv.statut === 'termine' && (
-            <ModalButton modal="review" payload={{ name: prat.name }} className="btn btn-ghost btn-sm btn-block">Laisser un avis</ModalButton>
+            <ModalButton
+              modal="review"
+              payload={{
+                name: prat.name,
+                onSubmit: async (values) => {
+                  await api.post('/client/avis', {
+                    praticien_id: rdv.praticien.id,
+                    note: Number(values.rating) || 5,
+                    avis: values.text,
+                  });
+                  await queryClient.invalidateQueries({ queryKey: ['mes-avis'] });
+                },
+              }}
+              className="btn btn-ghost btn-sm btn-block"
+            >Laisser un avis</ModalButton>
           )}
         </div>
       </div>

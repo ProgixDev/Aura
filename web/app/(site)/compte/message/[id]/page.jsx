@@ -12,6 +12,21 @@ import { useUI } from '@/lib/store';
 // — no WebSocket infra exists in this codebase (Plan 08 design spec, P8-1).
 const POLL_INTERVAL_MS = 6000;
 
+// The "report" modal (components/modals/registry.jsx) has generic French reason
+// labels with no `type` slug of its own. admin/signalements/page.jsx's TYPE_LABEL —
+// the same vocabulary mobile/app/report.tsx sends — is the real taxonomy the
+// moderation dashboard understands, so map into it here rather than let every
+// report from this button fall back to statut "Autre". Best-effort mapping: two
+// reasons ("Contenu inapproprié", "Tentative de paiement hors plateforme") have no
+// close match and land on 'other'.
+const REPORT_TYPE = {
+  'Contenu inapproprié': 'other',
+  'Comportement déplacé': 'behavior',
+  'Fausse information': 'fake',
+  'Tentative de paiement hors plateforme': 'other',
+  Autre: 'other',
+};
+
 export default function ConversationPage({ params }) {
   const { id } = use(params);
   const queryClient = useQueryClient();
@@ -76,7 +91,26 @@ export default function ConversationPage({ params }) {
               <div className="tiny muted">Praticien</div>
             </div>
           </div>
-          <ModalButton modal="report" payload={{ name }} className="btn btn-icon btn-ghost" title="Signaler">
+          <ModalButton
+            modal="report"
+            payload={{
+              name,
+              onSubmit: async (values) => {
+                const details = values.details?.trim();
+                await api.post('/signalements', {
+                  praticien_id: conv.praticien.id,
+                  type: REPORT_TYPE[values.reason] || 'other',
+                  sujet: values.reason,
+                  // create-signalement.dto.ts requires motif to be >= 3 chars; fall back
+                  // to the reason label itself when the optional details field is too
+                  // short (or empty) instead of letting the backend 422.
+                  motif: details && details.length >= 3 ? details : values.reason,
+                });
+              },
+            }}
+            className="btn btn-icon btn-ghost"
+            title="Signaler"
+          >
             <Icon name="flag" size={16} />
           </ModalButton>
         </div>

@@ -1,5 +1,6 @@
 import {
-  ForbiddenException, Injectable, UnauthorizedException, UnprocessableEntityException,
+  BadRequestException, ForbiddenException, Injectable, UnauthorizedException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -13,6 +14,8 @@ import { success } from '../../common/envelope';
 import { RegisterClientDto } from './dto/register-client.dto';
 import { LoginDto } from '../admin-auth/dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { UpdateClientProfileDto } from './dto/update-client-profile.dto';
+import { ChangeClientPasswordDto } from './dto/change-client-password.dto';
 
 @Injectable()
 export class ClientAuthService {
@@ -103,5 +106,57 @@ export class ClientAuthService {
       undefined,
       'Si un compte existe avec cette adresse email, vous recevrez un lien de réinitialisation.',
     );
+  }
+
+  async updateProfile(user: User, client: Client, dto: UpdateClientProfileDto) {
+    if (dto.email !== undefined && dto.email !== user.email) {
+      if (await this.users.findOneBy({ email: dto.email })) {
+        this.validationError({ email: ['Cette adresse email est déjà utilisée.'] });
+      }
+    }
+
+    // Same fix as register()'s dual-write: one transaction so a mid-way
+    // failure never leaves the users/clients rows out of sync with each other.
+    await this.dataSource.transaction(async (em) => {
+      const clientUpdate: Partial<Client> = {};
+      if (dto.firstname !== undefined) clientUpdate.firstname = dto.firstname;
+      if (dto.lastname !== undefined) clientUpdate.lastname = dto.lastname;
+      if (dto.email !== undefined) clientUpdate.email = dto.email;
+      if (dto.phone !== undefined) clientUpdate.phone = dto.phone;
+      if (dto.city !== undefined) clientUpdate.city = dto.city;
+      if (Object.keys(clientUpdate).length) {
+        await em.getRepository(Client).update(client.id, clientUpdate);
+      }
+
+      const userUpdate: Partial<User> = {};
+      if (dto.email !== undefined) userUpdate.email = dto.email;
+      if (dto.firstname !== undefined || dto.lastname !== undefined) {
+        userUpdate.name = `${dto.firstname ?? client.firstname} ${dto.lastname ?? client.lastname}`;
+      }
+      if (Object.keys(userUpdate).length) {
+        await em.getRepository(User).update(user.id, userUpdate);
+      }
+    });
+
+    const freshUser = await this.users.findOneByOrFail({ id: user.id });
+    const freshClient = await this.clients.findOneByOrFail({ id: client.id });
+    return success({ user: sanitizeUser(freshUser), client: freshClient }, 'Profil mis à jour');
+  }
+
+  async changePassword(user: User, dto: ChangeClientPasswordDto) {
+    const fresh = await this.users.findOneByOrFail({ id: user.id });
+    if (!(await this.hash.compare(dto.current_password, fresh.password))) {
+      throw new BadRequestException({ status: 'error', message: 'Le mot de passe actuel est incorrect' });
+    }
+    await this.users.update(user.id, { password: await this.hash.hash(dto.new_password) });
+    return success(undefined, 'Mot de passe mis à jour avec succès');
+  }
+
+  async deleteAccount(user: User, client: Client) {
+    await this.dataSource.transaction(async (em) => {
+      await em.getRepository(Client).delete(client.id);
+      await em.getRepository(User).delete(user.id);
+    });
+    return success(undefined, 'Compte supprimé');
   }
 }

@@ -1,9 +1,13 @@
-import { Body, Controller, Get, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body, Controller, Delete, Get, HttpCode, Post, Put, Req, UseGuards,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { ClientAuthService } from './client-auth.service';
 import { RegisterClientDto } from './dto/register-client.dto';
 import { LoginDto } from '../admin-auth/dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { UpdateClientProfileDto } from './dto/update-client-profile.dto';
+import { ChangeClientPasswordDto } from './dto/change-client-password.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { ClientGuard } from '../guards/client.guard';
 import { CurrentUser, CurrentClient } from '../decorators';
@@ -46,4 +50,29 @@ export class ClientAuthController {
   @HttpCode(200)
   @Post('forgot-password')
   forgotPassword(@Body() dto: ForgotPasswordDto) { return this.service.forgotPassword(dto); }
+
+  @UseGuards(JwtAuthGuard, ClientGuard)
+  @HttpCode(200)
+  @Put('profile')
+  updateProfile(
+    @CurrentUser() user: User,
+    @CurrentClient() client: Client,
+    @Body() dto: UpdateClientProfileDto,
+  ) {
+    return this.service.updateProfile(user, client, dto);
+  }
+
+  @UseGuards(JwtAuthGuard, ClientGuard)
+  @HttpCode(200)
+  @Post('change-password')
+  changePassword(@CurrentUser() user: User, @Body() dto: ChangeClientPasswordDto) {
+    return this.service.changePassword(user, dto);
+  }
+
+  @UseGuards(JwtAuthGuard, ClientGuard)
+  @HttpCode(200)
+  @Delete('account')
+  deleteAccount(@CurrentUser() user: User, @CurrentClient() client: Client) {
+    return this.service.deleteAccount(user, client);
+  }
 }
