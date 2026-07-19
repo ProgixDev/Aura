@@ -15,9 +15,12 @@ import { usePraticienRegistration } from '@store/praticienRegistration';
 import { api, ApiError } from '@data/api/client';
 
 const schema = z.object({
-  firstName: z.string().min(1, 'Votre prénom').optional(),
-  lastName: z.string().min(1, 'Votre nom').optional(),
-  city: z.string().min(1, 'Votre ville').optional(),
+  // Required only for signup — enforced at runtime in submit() below (they aren't
+  // even rendered in login mode, so a min(1) here would reject the '' defaultValues
+  // and silently block every login submit with no visible error).
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  city: z.string().optional(),
   email: z.string().email('Email invalide'),
   password: z.string().min(8, '8 caractères minimum'),
 });
