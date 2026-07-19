@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -11,7 +12,7 @@ import {
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { radii, spacing } from '@theme/spacing';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, Line, Path } from 'react-native-svg';
 
 interface Props extends TextInputProps {
   label?: string;
@@ -20,15 +21,33 @@ interface Props extends TextInputProps {
   containerStyle?: StyleProp<ViewStyle>;
 }
 
+function EyeIcon({ open }: { open: boolean }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"
+        stroke={colors.muted}
+        strokeWidth={1.6}
+        strokeLinejoin="round"
+      />
+      <Circle cx="12" cy="12" r="3" stroke={colors.muted} strokeWidth={1.6} />
+      {!open && <Line x1="3" y1="21" x2="21" y2="3" stroke={colors.muted} strokeWidth={1.6} strokeLinecap="round" />}
+    </Svg>
+  );
+}
+
 export function Input({
   label,
   leftIcon,
   multiline,
   containerStyle,
   style,
+  secureTextEntry,
   ...rest
 }: Props) {
   const [focused, setFocused] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const isPasswordField = secureTextEntry !== undefined;
   return (
     <View style={[styles.field, containerStyle]}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
@@ -43,6 +62,7 @@ export function Input({
         <TextInput
           {...rest}
           multiline={multiline}
+          secureTextEntry={isPasswordField ? secureTextEntry && !revealed : secureTextEntry}
           placeholderTextColor={colors.muted}
           onFocus={(e) => {
             setFocused(true);
@@ -58,6 +78,16 @@ export function Input({
             style,
           ]}
         />
+        {isPasswordField && (
+          <Pressable
+            onPress={() => setRevealed((v) => !v)}
+            hitSlop={8}
+            style={{ marginLeft: 8 }}
+            accessibilityLabel={revealed ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+          >
+            <EyeIcon open={revealed} />
+          </Pressable>
+        )}
       </View>
     </View>
   );

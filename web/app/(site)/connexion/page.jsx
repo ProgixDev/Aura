@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Icon } from '@/components/ui/Icon';
 import { Lotus } from '@/components/ui/Lotus';
 import { ModalButton } from '@/components/ui/ModalButton';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
 import { useUI } from '@/lib/store';
@@ -94,8 +95,8 @@ export default function ConnexionPage() {
                     <label>Mot de passe</label>
                     <Link href="/mot-de-passe-oublie" className="tiny" style={{ color: 'var(--violet-2)' }}>Oublié ?</Link>
                   </div>
-                  <input
-                    className="input" type="password" placeholder="••••••••" autoComplete="current-password" required
+                  <PasswordInput
+                    placeholder="••••••••" autoComplete="current-password" required
                     value={password} onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>

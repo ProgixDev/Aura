@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal } from './Modal';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { useUI } from '@/lib/store';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
@@ -84,10 +85,10 @@ export function AuthModal({ id, mode: initial = 'login' }) {
         )}
         <div className="field"><label>Email</label><input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vous@exemple.fr" required /></div>
         {mode !== 'forgot' && (
-          <div className="field"><label>Mot de passe</label><input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required /></div>
+          <div className="field"><label>Mot de passe</label><PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required /></div>
         )}
         {mode === 'signup' && (
-          <div className="field"><label>Confirmer le mot de passe</label><input className="input" type="password" value={passwordConfirmation} onChange={(e) => setPasswordConfirmation(e.target.value)} placeholder="••••••••" required /></div>
+          <div className="field"><label>Confirmer le mot de passe</label><PasswordInput value={passwordConfirmation} onChange={(e) => setPasswordConfirmation(e.target.value)} placeholder="••••••••" required /></div>
         )}
         <button type="submit" className="btn btn-primary btn-block" style={{ marginTop: 6 }} disabled={loading}>
           {loading ? '…' : mode === 'login' ? 'Se connecter' : mode === 'signup' ? "S'inscrire" : 'Envoyer le lien'}

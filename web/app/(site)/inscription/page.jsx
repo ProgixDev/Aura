@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@/components/ui/Icon';
 import { Lotus } from '@/components/ui/Lotus';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
 import { useUI } from '@/lib/store';
@@ -163,11 +164,11 @@ export default function InscriptionPage() {
                   </div>
                   <div className="field">
                     <label>Mot de passe</label>
-                    <input className="input" type="password" placeholder="8 caractères minimum" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <PasswordInput placeholder="8 caractères minimum" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                   </div>
                   <div className="field">
                     <label>Confirmer le mot de passe</label>
-                    <input className="input" type="password" placeholder="8 caractères minimum" autoComplete="new-password" required value={passwordConfirmation} onChange={(e) => setPasswordConfirmation(e.target.value)} />
+                    <PasswordInput placeholder="8 caractères minimum" autoComplete="new-password" required value={passwordConfirmation} onChange={(e) => setPasswordConfirmation(e.target.value)} />
                     {fieldErrors.password_confirmation && <p className="tiny" style={{ color: 'var(--danger, #b5524f)' }}>{fieldErrors.password_confirmation[0]}</p>}
                   </div>
 
