@@ -68,7 +68,19 @@ describe('rendez-vous', () => {
       .set('Authorization', `Bearer ${clientToken}`)
       .send({ praticien_id: praticienId, date_heure: '2020-01-01T14:00:00', mode: 'présentiel' })
       .expect(400);
-    expect(res.body.message).toBe('La date du rendez-vous doit être dans le futur.');
+    expect(res.body.message).toBe('Le rendez-vous doit être réservé au moins un jour à l\'avance.');
+  });
+
+  it('POST /api/rendez-vous rejects a same-day date_heure (must book at least a day ahead)', async () => {
+    const now = new Date();
+    const todayLater = new Date(Date.UTC(
+      now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 0, 0, 0,
+    ));
+    const res = await http().post('/api/rendez-vous')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ praticien_id: praticienId, date_heure: todayLater.toISOString(), mode: 'présentiel' })
+      .expect(400);
+    expect(res.body.message).toBe('Le rendez-vous doit être réservé au moins un jour à l\'avance.');
   });
 
   it('POST /api/rendez-vous creates an en_attente rendez_vous and a PaymentIntent', async () => {

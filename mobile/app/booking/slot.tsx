@@ -48,7 +48,14 @@ export default function BookSlot() {
     queryFn: () => practitionerRepo.availability(String(id)),
   });
 
-  const days = availability.map((d) => ({ ...d, ...dayMeta(d.date) }));
+  // Belt-and-suspenders against a stale cache or an un-restarted server: the
+  // earliest bookable day is tomorrow, so drop anything up to and including
+  // today (local). YYYY-MM-DD strings compare correctly lexically.
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const days = availability
+    .filter((d) => d.date > todayStr)
+    .map((d) => ({ ...d, ...dayMeta(d.date) }));
   const selectedDay = days[selectedDayIdx];
 
   // Availability loads async; once it does, land on the first day that

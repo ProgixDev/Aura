@@ -68,14 +68,15 @@ export class PraticiensService {
       throw new NotFoundException({ status: 'error', message: 'Praticien introuvable' });
     }
 
-    // Half-open [today 00:00 UTC, today+14 00:00 UTC) window. This repo buckets dates in
-    // UTC everywhere (see the driver note atop analytics/analytics.utils.ts) so the grid
-    // stays deterministic and consistent across the sqlite (test) and pg (prod, TZ=UTC)
-    // drivers alike — both the window boundaries and the taken-slot keys below use UTC
-    // getters exclusively.
+    // Half-open [tomorrow 00:00 UTC, tomorrow+14 00:00 UTC) window. Booking requires at
+    // least one day's lead time, so today is never offered — the earliest bookable day is
+    // tomorrow. This repo buckets dates in UTC everywhere (see the driver note atop
+    // analytics/analytics.utils.ts) so the grid stays deterministic and consistent across
+    // the sqlite (test) and pg (prod, TZ=UTC) drivers alike — both the window boundaries
+    // and the taken-slot keys below use UTC getters exclusively.
     const now = new Date();
     const windowStart = new Date(Date.UTC(
-      now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0,
+      now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0,
     ));
     const windowEnd = new Date(windowStart.getTime() + AVAILABILITY_WINDOW_DAYS * 24 * 60 * 60 * 1000);
 

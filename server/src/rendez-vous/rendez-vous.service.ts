@@ -45,12 +45,18 @@ export class RendezVousService {
     if (!praticien) this.notFound('Praticien introuvable');
 
     // Belt-and-suspenders: the client only ever offers slots from GET
-    // /praticiens/:id/availability's forward-looking window, but nothing
-    // stops a direct API call from sending a stale/past date_heure.
-    if (new Date(dto.date_heure).getTime() <= Date.now()) {
+    // /praticiens/:id/availability's forward-looking window (which starts
+    // tomorrow — no same-day booking), but nothing stops a direct API call
+    // from sending a same-day or past date_heure. Mirror that window's lower
+    // bound here: the earliest allowed slot is tomorrow 00:00 UTC.
+    const now = new Date();
+    const tomorrowStart = new Date(Date.UTC(
+      now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0,
+    ));
+    if (new Date(dto.date_heure).getTime() < tomorrowStart.getTime()) {
       throw new BadRequestException({
         status: 'error',
-        message: 'La date du rendez-vous doit être dans le futur.',
+        message: 'Le rendez-vous doit être réservé au moins un jour à l\'avance.',
       });
     }
 
