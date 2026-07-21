@@ -4,6 +4,7 @@ import { DataSource } from 'typeorm';
 import { createTestApp, seedAdmin, seedClientUser } from './utils/create-test-app';
 import { EventsModule } from '../src/events/events.module';
 import { Praticien } from '../src/database/entities/praticien.entity';
+import { Event } from '../src/database/entities/event.entity';
 
 describe('events', () => {
   let app: INestApplication;
@@ -77,5 +78,66 @@ describe('events', () => {
 
     const drafts = await http().get('/api/events?status=brouillon').expect(200);
     expect(drafts.body.data.some((e: any) => e.id === created.body.data.id)).toBe(true);
+  });
+
+  describe('client pre-registration', () => {
+    // Directly seed a published event with a known small capacity so capacity
+    // math is deterministic and independent of the admin-create default status.
+    async function seedPublishedEvent(places: number): Promise<number> {
+      const ds = app.get(DataSource);
+      const ev = await ds.getRepository(Event).save({
+        titre: 'Atelier', type: 'atelier', dates: ['2026-08-01'], lieu: 'Lyon',
+        prix: 40, nombre_places: places, description: 'd', status: 'publié',
+      });
+      return ev.id;
+    }
+
+    it('requires client auth', async () => {
+      const eventId = await seedPublishedEvent(10);
+      await http().post(`/api/events/${eventId}/inscription`).send({}).expect(401);
+    });
+
+    it('registers a client, is idempotent-guarded against a second inscription', async () => {
+      const eventId = await seedPublishedEvent(10);
+      const { token } = await seedClientUser(app, 'ev-reg-1@aura.io');
+
+      const res = await http().post(`/api/events/${eventId}/inscription`)
+        .set('Authorization', `Bearer ${token}`).send({ nombre_places: 2 }).expect(201);
+      expect(res.body.data.nombre_places).toBe(2);
+      expect(res.body.data.statut).toBe('inscrit');
+      expect(res.body.message).toBe('Votre inscription a bien été enregistrée.');
+
+      const me = await http().get(`/api/events/${eventId}/inscription/me`)
+        .set('Authorization', `Bearer ${token}`).expect(200);
+      expect(me.body.data.nombre_places).toBe(2);
+
+      const dup = await http().post(`/api/events/${eventId}/inscription`)
+        .set('Authorization', `Bearer ${token}`).send({}).expect(422);
+      expect(dup.body.errors.event[0]).toBe('Vous êtes déjà inscrit à cet événement.');
+    });
+
+    it('rejects when not enough places remain', async () => {
+      const eventId = await seedPublishedEvent(2);
+      const { token } = await seedClientUser(app, 'ev-reg-2@aura.io');
+      const res = await http().post(`/api/events/${eventId}/inscription`)
+        .set('Authorization', `Bearer ${token}`).send({ nombre_places: 5 }).expect(422);
+      expect(res.body.errors.nombre_places[0]).toContain('2 place');
+    });
+
+    it('rejects registration on a non-published event', async () => {
+      const created = await asAdmin(http().post('/api/events/create-event')).send(payload()).expect(201);
+      const { token } = await seedClientUser(app, 'ev-reg-3@aura.io');
+      const res = await http().post(`/api/events/${created.body.data.id}/inscription`)
+        .set('Authorization', `Bearer ${token}`).send({}).expect(422);
+      expect(res.body.errors.event[0]).toContain("n'est pas ouvert");
+    });
+
+    it('me returns null when the client is not registered', async () => {
+      const eventId = await seedPublishedEvent(10);
+      const { token } = await seedClientUser(app, 'ev-reg-4@aura.io');
+      const res = await http().get(`/api/events/${eventId}/inscription/me`)
+        .set('Authorization', `Bearer ${token}`).expect(200);
+      expect(res.body.data).toBeNull();
+    });
   });
 });

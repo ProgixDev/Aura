@@ -1,12 +1,16 @@
 import {
-  Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, Req, UseGuards,
+  Body, Controller, Delete, Get, HttpCode, Param, ParseIntPipe, Post, Put, Query, Req, UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
+import { CreateInscriptionDto } from './dto/create-inscription.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
+import { ClientGuard } from '../auth/guards/client.guard';
+import { CurrentClient } from '../auth/decorators';
+import { Client } from '../database/entities/client.entity';
 
 @Controller('events')
 export class EventsController {
@@ -20,6 +24,25 @@ export class EventsController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Post('create-event')
   store(@Body() dto: CreateEventDto) { return this.service.store(dto); }
+
+  // ---- client pre-registration ----
+
+  @UseGuards(JwtAuthGuard, ClientGuard)
+  @Post(':id/inscription')
+  @HttpCode(201)
+  register(
+    @CurrentClient() client: Client,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateInscriptionDto,
+  ) {
+    return this.service.register(client, id, dto);
+  }
+
+  @UseGuards(JwtAuthGuard, ClientGuard)
+  @Get(':id/inscription/me')
+  myInscription(@CurrentClient() client: Client, @Param('id', ParseIntPipe) id: number) {
+    return this.service.myInscription(client, id);
+  }
 
   @Get(':id')
   show(@Param('id', ParseIntPipe) id: number) { return this.service.show(id); }

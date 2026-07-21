@@ -199,27 +199,27 @@ Then create it for real:
 
 ## Step 15 — Events (Événements)
 
-- [ ] Filter chips (À venir / Retraites / Cercles / Formations / Ateliers) change the list.
-- [ ] Tap an event → opens its details.
+- [x] Filter chips (À venir / Retraites / Cercles / Formations / Ateliers) change the list.
+- [x] Tap an event → opens its details.
 
 ---
 
 ## Step 16 — Profile (Profil)
 
-- [ ] Your name + avatar at top.
-- [ ] Three numbers: sessions, practitioners, favorites — should match what you actually did.
-- [ ] "Mes praticiens favoris" → your hearted practitioners.
-- [ ] "Mes échanges" → exchanges list.
-- [ ] Notifications / payment links open their screens.
-- [ ] **"Se déconnecter"** → logs you out → back to the welcome screen. Reopening the app now asks you to log in again.
+- [x] Your name + avatar at top.
+- [x] Three numbers: sessions, practitioners, favorites — should match what you actually did.
+- [x] "Mes praticiens favoris" → your hearted practitioners.
+- [x] "Mes échanges" → exchanges list.
+- [x] Notifications / payment links open their screens.
+- [x] **"Se déconnecter"** → logs you out → back to the welcome screen. Reopening the app now asks you to log in again.
 
 ---
 
 ## Step 17 — Other screens to click through (quick check, just that they open)
 
-- [ ] Favorites list
-- [ ] Leave a review
-- [ ] Report
+- [x] Favorites list
+- [x] Leave a review
+- [x] Report
 - [ ] Exchanges (list / open / create)
 - [ ] Cercles (list / detail)
 - [ ] Blog (list / article)

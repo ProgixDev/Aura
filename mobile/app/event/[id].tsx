@@ -12,7 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Avatar } from '@components/Avatar';
 import { Badge } from '@components/Badge';
 import { Button } from '@components/Button';
@@ -22,26 +22,54 @@ import { Input } from '@components/Input';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { shadows } from '@theme/shadows';
-import { eventRepo } from '@data/repos';
+import { eventRepo, clientProfileRepo } from '@data/repos';
+import { errorMessage } from '@data/api/client';
 
 // No event booking/registration backend exists yet (see event-adapter's own
 // comment) — mirrors web/app/(site)/evenement/[id]/page.jsx's "Réserver"
 // button exactly: a lightweight interest form with no real API call behind
 // it, not a fake payment flow pretending to charge a card.
-function PreRegisterModal({ visible, eventTitle, onClose }: { visible: boolean; eventTitle: string; onClose: () => void }) {
+function PreRegisterModal({
+  visible, eventId, eventTitle, onClose, onRegistered,
+}: {
+  visible: boolean;
+  eventId: string;
+  eventTitle: string;
+  onClose: () => void;
+  onRegistered: () => void;
+}) {
   const insets = useSafeAreaInsets();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
   const [places, setPlaces] = useState('1');
+  const [submitting, setSubmitting] = useState(false);
 
-  const submit = () => {
-    if (!name.trim() || !email.trim()) {
-      Alert.alert('Champs requis', 'Merci de renseigner votre nom et votre email.');
-      return;
+  // Name/email come from the logged-in client — the user shouldn't retype what
+  // we already have. Shown read-only for confidence; only the seat count is
+  // editable.
+  const { data: profile } = useQuery({
+    queryKey: ['clientProfile'],
+    queryFn: clientProfileRepo.me,
+    enabled: visible,
+  });
+  const fullName = profile ? `${profile.firstname} ${profile.lastname}`.trim() : '…';
+
+  const submit = async () => {
+    if (submitting) return;
+    const n = Math.max(1, parseInt(places, 10) || 1);
+    setSubmitting(true);
+    try {
+      await eventRepo.register(eventId, n);
+      onClose();
+      setPlaces('1');
+      onRegistered();
+      Alert.alert(
+        'Inscription enregistrée',
+        `Votre place${n > 1 ? 's' : ''} pour « ${eventTitle} » ${n > 1 ? 'sont réservées' : 'est réservée'}. Retrouvez le détail dans vos événements.`,
+      );
+    } catch (err) {
+      Alert.alert('Inscription impossible', errorMessage(err, 'Réessayez dans un instant.'));
+    } finally {
+      setSubmitting(false);
     }
-    onClose();
-    setName(''); setEmail(''); setPlaces('1');
-    Alert.alert('Demande envoyée', 'Vous recevrez une confirmation par email.');
   };
 
   return (
@@ -49,12 +77,17 @@ function PreRegisterModal({ visible, eventTitle, onClose }: { visible: boolean; 
       <View style={modalStyles.backdrop}>
         <View style={[modalStyles.sheet, { paddingBottom: insets.bottom + 24 }]}>
           <Text style={modalStyles.title}>Pré-inscription — {eventTitle}</Text>
-          <Input label="Votre nom" value={name} onChangeText={setName} />
-          <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+          <Input label="Votre nom" value={fullName} editable={false} />
+          <Input label="Email" value={profile?.email ?? '…'} editable={false} />
           <Input label="Nombre de places" value={places} onChangeText={setPlaces} keyboardType="number-pad" />
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-            <Button label="Annuler" variant="soft" onPress={onClose} style={{ flex: 1 }} />
-            <Button label="Envoyer" onPress={submit} style={{ flex: 1 }} />
+            <Button label="Annuler" variant="soft" onPress={onClose} style={{ flex: 1 }} disabled={submitting} />
+            <Button
+              label={submitting ? 'Un instant…' : "Confirmer l'inscription"}
+              onPress={submit}
+              style={{ flex: 1 }}
+              disabled={submitting || !profile}
+            />
           </View>
         </View>
       </View>
@@ -71,12 +104,19 @@ const modalStyles = StyleSheet.create({
 export default function EventDetail() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [preRegisterOpen, setPreRegisterOpen] = useState(false);
   const { data: e } = useQuery({
     queryKey: ['event', id],
     queryFn: () => eventRepo.byId(String(id)),
   });
+  // Whether the logged-in client is already registered — drives the dock CTA.
+  const { data: myInscription } = useQuery({
+    queryKey: ['eventInscription', id],
+    queryFn: () => eventRepo.myInscription(String(id)),
+  });
+  const isRegistered = !!myInscription;
 
   if (!e) return <View style={{ flex: 1, backgroundColor: colors.pearl }} />;
 
@@ -175,17 +215,20 @@ export default function EventDetail() {
           </Text>
         </View>
         <Button
-          label="Pré-inscription"
+          label={isRegistered ? '✓ Inscrit·e' : 'Pré-inscription'}
           fullWidth={false}
           onPress={() => setPreRegisterOpen(true)}
+          disabled={isRegistered}
           style={{ flex: 1.2 }}
         />
       </View>
 
       <PreRegisterModal
         visible={preRegisterOpen}
+        eventId={String(id)}
         eventTitle={e.title}
         onClose={() => setPreRegisterOpen(false)}
+        onRegistered={() => queryClient.invalidateQueries({ queryKey: ['eventInscription', id] })}
       />
     </View>
   );

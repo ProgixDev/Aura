@@ -4,17 +4,21 @@ import { In, Repository } from 'typeorm';
 import { Request } from 'express';
 import { Event } from '../database/entities/event.entity';
 import { EventPraticien } from '../database/entities/event-praticien.entity';
+import { EventInscription } from '../database/entities/event-inscription.entity';
 import { Praticien } from '../database/entities/praticien.entity';
+import { Client } from '../database/entities/client.entity';
 import { success } from '../common/envelope';
 import { parsePagination, paginateQb, paginationUrls } from '../common/pagination';
 import { CreateEventDto, EventAnimateurDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
+import { CreateInscriptionDto } from './dto/create-inscription.dto';
 
 @Injectable()
 export class EventsService {
   constructor(
     @InjectRepository(Event) private readonly events: Repository<Event>,
     @InjectRepository(EventPraticien) private readonly links: Repository<EventPraticien>,
+    @InjectRepository(EventInscription) private readonly inscriptions: Repository<EventInscription>,
     @InjectRepository(Praticien) private readonly praticiens: Repository<Praticien>,
   ) {}
 
@@ -103,5 +107,60 @@ export class EventsService {
     await this.links.delete({ event_id: id });
     await this.events.delete(id);
     return success(undefined, 'Événement supprimé avec succès');
+  }
+
+  // ---- client pre-registration ----
+
+  private validationError(errors: Record<string, string[]>): never {
+    throw new UnprocessableEntityException({ status: 'error', message: 'Erreur de validation', errors });
+  }
+
+  // Seats already claimed across every registration for an event.
+  private async placesTaken(eventId: number): Promise<number> {
+    const { sum } = await this.inscriptions.createQueryBuilder('i')
+      .select('COALESCE(SUM(i.nombre_places), 0)', 'sum')
+      .where('i.event_id = :eventId', { eventId })
+      .getRawOne<{ sum: string }>() ?? { sum: '0' };
+    return Number(sum);
+  }
+
+  async register(client: Client, eventId: number, dto: CreateInscriptionDto) {
+    const event = await this.findOr404(eventId);
+    if (event.status !== 'publié') {
+      this.validationError({ event: ["Cet événement n'est pas ouvert aux inscriptions."] });
+    }
+
+    const existing = await this.inscriptions.findOneBy({ event_id: eventId, client_id: client.id });
+    if (existing) {
+      this.validationError({ event: ['Vous êtes déjà inscrit à cet événement.'] });
+    }
+
+    const places = dto.nombre_places ?? 1;
+    const remaining = event.nombre_places - (await this.placesTaken(eventId));
+    if (places > remaining) {
+      this.validationError({
+        nombre_places: [
+          remaining <= 0
+            ? "Cet événement est complet."
+            : `Il ne reste que ${remaining} place(s) disponible(s).`,
+        ],
+      });
+    }
+
+    const saved = await this.inscriptions.save({
+      event_id: eventId, client_id: client.id, nombre_places: places, statut: 'inscrit',
+    });
+    // No email is actually sent — the platform has no mail transport wired yet
+    // (email_templates is admin-only template storage). The registration is
+    // persisted and shows up under "mine"; wiring real notifications is a
+    // separate task.
+    return success(saved, 'Votre inscription a bien été enregistrée.');
+  }
+
+  // The current client's registration for an event, or null — lets the client
+  // prefill/short-circuit the form when they've already registered.
+  async myInscription(client: Client, eventId: number) {
+    const row = await this.inscriptions.findOneBy({ event_id: eventId, client_id: client.id });
+    return success(row ?? null);
   }
 }

@@ -30,6 +30,7 @@ drop table if exists signalements cascade;
 drop table if exists avis cascade;
 drop table if exists promotions cascade;
 drop table if exists programmes cascade;
+drop table if exists event_inscriptions cascade;
 drop table if exists event_praticien cascade;
 drop table if exists events cascade;
 drop table if exists cercles cascade;
@@ -150,6 +151,19 @@ create table event_praticien (
   constraint fk_ep_praticien foreign key (praticien_id) references praticiens(id) on delete cascade
 );
 create unique index uq_event_praticien on event_praticien (event_id, praticien_id);
+
+create table event_inscriptions (
+  id integer generated always as identity primary key,
+  event_id integer not null,
+  client_id integer not null,
+  nombre_places int not null default 1,
+  statut varchar(20) not null default 'inscrit',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  constraint fk_ei_event foreign key (event_id) references events(id) on delete cascade,
+  constraint fk_ei_client foreign key (client_id) references clients(id) on delete cascade
+);
+create unique index uq_event_inscriptions_event_client on event_inscriptions (event_id, client_id);
 
 create table programmes (
   id integer generated always as identity primary key,

@@ -211,12 +211,27 @@ export const disciplineRepo = {
 };
 
 // ---------- Events ----------
+export interface EventInscription {
+  id: number;
+  event_id: number;
+  client_id: number;
+  nombre_places: number;
+  statut: string;
+}
+
 export const eventRepo = {
   list: (): Promise<Event[]> =>
     api.get<{ data: any[] }>('/events?status=publié&per_page=50').then((res) => res.data.map(mapEvent)),
   byId: (id: string): Promise<Event | undefined> =>
     api.get<{ data: any }>(`/events/${id}`).then((res) => mapEvent(res.data)).catch(() => undefined),
   featured: (): Promise<Event[]> => eventRepo.list().then((list) => list.slice(0, 2)),
+  // Real, authenticated pre-registration — persists an event_inscriptions row.
+  register: (eventId: string, nombrePlaces = 1): Promise<EventInscription> =>
+    api.post<{ data: EventInscription }>(`/events/${eventId}/inscription`, { nombre_places: nombrePlaces })
+      .then((res) => res.data),
+  // The current client's registration for this event, or null if not registered.
+  myInscription: (eventId: string): Promise<EventInscription | null> =>
+    api.get<{ data: EventInscription | null }>(`/events/${eventId}/inscription/me`).then((res) => res.data),
 };
 
 // ---------- Cercles ----------
@@ -355,6 +370,20 @@ export const praticienMessageRepo = {
   send: (conversationId: string, text: string): Promise<ChatMessage> =>
     api.post<{ data: any }>(`/praticien/conversations/${conversationId}/messages`, { text })
       .then((res) => mapMessage(res.data, 'praticien')),
+};
+
+// ---------- Client self-profile (real backend, GET /client/profile) ----------
+export interface ClientProfile {
+  firstname: string;
+  lastname: string;
+  email: string;
+  city: string;
+  phone: string | null;
+}
+
+export const clientProfileRepo = {
+  me: (): Promise<ClientProfile> =>
+    api.get<{ data: { client: ClientProfile } }>('/client/profile').then((res) => res.data.client),
 };
 
 // ---------- Praticien self-profile (real backend, GET /praticien/profile) ----------
