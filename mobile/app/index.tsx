@@ -29,7 +29,9 @@ async function resolveDestination(): Promise<string> {
   }
   const path = userType === 'praticien' ? '/praticien/check-token' : '/client/check-token';
   const valid = await api.get(path).then(() => true).catch(() => false);
-  if (valid) return '/(tabs)';
+  // Praticiens get the dashboard; clients get the seeker tabs. Routing both to
+  // '/(tabs)' showed praticiens the client experience.
+  if (valid) return userType === 'praticien' ? '/dashboard' : '/(tabs)';
   signOut();
   return '/onboarding/auth?mode=login';
 }

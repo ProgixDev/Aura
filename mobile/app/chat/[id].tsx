@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -57,8 +57,19 @@ export default function Chat() {
       setPending([]);
       setError(null);
       queryClient.invalidateQueries({ queryKey: ['messages', id] });
+      // Refresh the conversation-list preview (last message + ordering) —
+      // otherwise the list keeps showing the previous last message.
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
   });
+
+  // Opening the chat fetches messages, which marks the incoming ones read
+  // server-side. Refresh the list on the way out so its unread badge clears.
+  useEffect(() => {
+    return () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    };
+  }, [queryClient]);
 
   const send = () => {
     const trimmed = text.trim();

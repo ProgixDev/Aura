@@ -125,6 +125,19 @@ export class RendezVousService {
     return success(rdv);
   }
 
+  // Praticien-facing list: their own rendez-vous, with the booking client
+  // joined so the dashboard can show who booked. Optional `statut` filter.
+  async indexForPraticien(praticien: Praticien, query: Record<string, any>) {
+    const { page, perPage } = parsePagination(query, 20);
+    const qb = this.rendezVous.createQueryBuilder('rdv')
+      .leftJoinAndSelect('rdv.client', 'client')
+      .where('rdv.praticien_id = :pid', { pid: praticien.id });
+    if (query.statut !== undefined) qb.andWhere('rdv.statut = :st', { st: query.statut });
+    qb.orderBy('rdv.date_heure', 'ASC');
+    const { data, pagination } = await paginateQb(qb, page, perPage);
+    return success(data, undefined, { pagination });
+  }
+
   async cancelForClient(client: Client, id: number) {
     const rdv = await this.rendezVous.findOneBy({
       id, client_id: client.id, statut: In(['en_attente', 'confirme']),

@@ -265,6 +265,14 @@ export interface RendezVousPraticien {
   tarif: number;
 }
 
+export interface RendezVousClient {
+  id: number;
+  firstname: string;
+  lastname: string;
+  email: string;
+  city: string;
+}
+
 export interface RendezVous {
   id: number;
   client_id: number;
@@ -279,6 +287,8 @@ export interface RendezVous {
   created_at: string;
   updated_at: string;
   praticien?: RendezVousPraticien;
+  // Present on the praticien-facing list (who booked).
+  client?: RendezVousClient;
 }
 
 export type SubscriptionPlan = 'essentiel' | 'pro' | 'premium';

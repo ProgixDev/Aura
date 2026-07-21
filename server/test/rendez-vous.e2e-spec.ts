@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { createTestApp, seedAdmin, seedClientUser } from './utils/create-test-app';
+import { createTestApp, seedAdmin, seedClientUser, seedPraticienUser } from './utils/create-test-app';
 import { RendezVousModule } from '../src/rendez-vous/rendez-vous.module';
 import { StripeService } from '../src/common/stripe.service';
 import { Praticien } from '../src/database/entities/praticien.entity';
@@ -462,5 +462,37 @@ describe('rendez-vous', () => {
   it('GET /api/admin/rendez-vous/:id 404s for an unknown id', async () => {
     const res = await asAdmin(http().get('/api/admin/rendez-vous/999999')).expect(404);
     expect(res.body.message).toBe('Rendez-vous non trouvé');
+  });
+
+  describe('GET /api/praticien/rendez-vous', () => {
+    it('requires praticien auth (401 anon, 403 for a client)', async () => {
+      await http().get('/api/praticien/rendez-vous').expect(401);
+      await http().get('/api/praticien/rendez-vous')
+        .set('Authorization', `Bearer ${clientToken}`).expect(403);
+    });
+
+    it('returns only the current praticien\'s bookings, with the client joined', async () => {
+      const { praticien, token } = await seedPraticienUser(app, 'rdv-praticien-self@aura.io');
+      const client = await ds.getRepository(Client).save({
+        firstname: 'Nadia', lastname: 'Benali', email: 'nadia.benali@example.com', city: 'Lille',
+      });
+      const mine = await ds.getRepository(RendezVous).save({
+        client_id: client.id, praticien_id: praticien.id, date_heure: new Date('2031-07-01T10:00:00'),
+        duree_minutes: 60, mode: 'visio', statut: 'confirme', tarif: 90,
+      });
+      // Another praticien's booking must not leak into this praticien's list.
+      await ds.getRepository(RendezVous).save({
+        client_id: client.id, praticien_id: praticienId, date_heure: new Date('2031-07-02T10:00:00'),
+        duree_minutes: 60, mode: 'visio', statut: 'confirme', tarif: 80,
+      });
+
+      const res = await http().get('/api/praticien/rendez-vous')
+        .set('Authorization', `Bearer ${token}`).expect(200);
+      const ids = res.body.data.map((r: any) => r.id);
+      expect(ids).toContain(mine.id);
+      expect(res.body.data.every((r: any) => r.praticien_id === praticien.id)).toBe(true);
+      const row = res.body.data.find((r: any) => r.id === mine.id);
+      expect(row.client).toMatchObject({ id: client.id, firstname: 'Nadia', lastname: 'Benali' });
+    });
   });
 });

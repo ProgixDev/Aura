@@ -16,10 +16,31 @@ import { Icon } from '@components/Icon';
 import { ScreenHeader } from '@components/ScreenHeader';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
-import { praticienMessageRepo, praticienProfileRepo, subscriptionRepo, stripeConnectRepo } from '@data/repos';
+import { praticienMessageRepo, praticienProfileRepo, subscriptionRepo, stripeConnectRepo, rendezVousRepo } from '@data/repos';
 import { effectivePlan } from '@utils/subscriptionPlan';
 import { errorMessage } from '@data/api/client';
-import type { Subscription } from '@data/types';
+import { useSession } from '@store/session';
+import type { Subscription, RendezVous } from '@data/types';
+
+// Appointment date/time — formatted in UTC to match the UTC-pinned slot the
+// client booked (see mobile/src/utils/booking.ts), so 15:00 stays 15:00.
+function formatRdv(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat('fr-FR', {
+      weekday: 'short', day: 'numeric', month: 'short',
+      hour: '2-digit', minute: '2-digit', timeZone: 'UTC',
+    }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
+
+const RDV_STATUT: Record<RendezVous['statut'], { label: string; color: string }> = {
+  en_attente: { label: 'En attente', color: colors.muted },
+  confirme: { label: 'Confirmé', color: colors.sage2 },
+  annule: { label: 'Annulé', color: colors.danger },
+  termine: { label: 'Terminé', color: colors.muted },
+};
 
 const PLAN_LABEL: Record<'essentiel' | 'pro' | 'premium', string> = {
   essentiel: 'Essentiel',
@@ -45,6 +66,21 @@ function subscriptionSubtitle(sub?: Subscription): string {
 export default function Dashboard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const signOut = useSession((s) => s.signOut);
+
+  const logout = () => {
+    Alert.alert('Déconnexion', 'Voulez-vous vous déconnecter ?', [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Se déconnecter',
+        style: 'destructive',
+        onPress: () => {
+          signOut();
+          router.replace('/onboarding/auth?mode=login' as any);
+        },
+      },
+    ]);
+  };
   const { data: profile } = useQuery({
     queryKey: ['praticien-profile'],
     queryFn: praticienProfileRepo.me,
@@ -59,6 +95,16 @@ export default function Dashboard() {
     queryFn: praticienMessageRepo.conversations,
   });
   const unreadCount = conversations.filter((c) => c.unread).length;
+
+  const { data: appointments = [] } = useQuery({
+    queryKey: ['praticien-rendez-vous'],
+    queryFn: rendezVousRepo.praticienList,
+  });
+  // Upcoming, non-cancelled bookings — soonest first (endpoint already orders ASC).
+  const now = Date.now();
+  const upcoming = appointments.filter(
+    (r) => r.statut !== 'annule' && new Date(r.date_heure).getTime() >= now,
+  );
 
   const verifMessage = profile ? VERIF_LABEL[profile.statut_verification] : undefined;
 
@@ -104,6 +150,34 @@ export default function Dashboard() {
 
         <PaiementsSection />
 
+        <View style={styles.rdvSection}>
+          <Text style={styles.rdvHeader}>Mes rendez-vous</Text>
+          {upcoming.length === 0 ? (
+            <Text style={styles.rdvEmpty}>Aucun rendez-vous à venir pour le moment.</Text>
+          ) : (
+            upcoming.map((r) => {
+              const st = RDV_STATUT[r.statut];
+              const clientName = r.client
+                ? `${r.client.firstname} ${r.client.lastname}`.trim()
+                : 'Client';
+              return (
+                <View key={r.id} style={styles.rdvCard}>
+                  <View style={styles.rdvIcon}>
+                    <Icon name="cal" size={18} color={colors.ink} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.rdvName}>{clientName}</Text>
+                    <Text style={styles.rdvMeta}>
+                      {formatRdv(r.date_heure)} · {r.mode === 'visio' ? 'Visio' : 'Présentiel'}
+                    </Text>
+                  </View>
+                  <Text style={[styles.rdvStatut, { color: st.color }]}>{st.label}</Text>
+                </View>
+              );
+            })
+          )}
+        </View>
+
         <Row
           icon={<Icon name="exchange" size={20} color={colors.ink} />}
           title="Mes échanges"
@@ -114,6 +188,11 @@ export default function Dashboard() {
           title="Mes messages"
           sub={unreadCount > 0 ? `${unreadCount} non lu${unreadCount > 1 ? 's' : ''}` : 'Aucun nouveau message'}
           onPress={() => router.push('/praticien-messages' as any)}
+        />
+        <Row
+          icon={<Icon name="back" size={20} color={colors.danger} />}
+          title="Se déconnecter"
+          onPress={logout}
         />
       </ScrollView>
     </View>
@@ -303,4 +382,35 @@ const styles = StyleSheet.create({
   },
   rowT: { fontFamily: 'Outfit_500Medium', fontSize: 14, marginBottom: 1 },
   rowS: { ...typography.tiny, fontSize: 12 },
+
+  rdvSection: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 12 },
+  rdvHeader: {
+    fontFamily: 'CormorantGaramond_500Medium',
+    fontSize: 20,
+    color: colors.ink,
+    marginBottom: 12,
+  },
+  rdvEmpty: { ...typography.small, fontSize: 13, marginBottom: 4 },
+  rdvCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.line,
+    marginBottom: 10,
+  },
+  rdvIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: colors.mist,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rdvName: { fontFamily: 'Outfit_500Medium', fontSize: 14, marginBottom: 2 },
+  rdvMeta: { ...typography.tiny, fontSize: 12 },
+  rdvStatut: { fontFamily: 'Outfit_500Medium', fontSize: 12 },
 });

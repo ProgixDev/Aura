@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -52,8 +52,18 @@ export default function PraticienChat() {
       setPending([]);
       setError(null);
       queryClient.invalidateQueries({ queryKey: ['praticien-messages', id] });
+      // Refresh the conversation list (last-message preview + ordering).
+      queryClient.invalidateQueries({ queryKey: ['praticien-conversations'] });
     },
   });
+
+  // Opening the chat marks incoming messages read server-side; refresh the
+  // list on the way out so its unread badge (and dashboard count) clears.
+  useEffect(() => {
+    return () => {
+      queryClient.invalidateQueries({ queryKey: ['praticien-conversations'] });
+    };
+  }, [queryClient]);
 
   const send = () => {
     const trimmed = text.trim();

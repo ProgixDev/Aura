@@ -85,7 +85,9 @@ export default function Auth() {
           });
         }
         setOnboardingSeen();
-        router.replace('/(tabs)' as any);
+        // Praticiens land on their dashboard, clients on the seeker tabs —
+        // routing both to '/(tabs)' showed praticiens the client experience.
+        router.replace((authRole === 'practitioner' ? '/dashboard' : '/(tabs)') as any);
         return;
       }
 

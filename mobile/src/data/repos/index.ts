@@ -454,6 +454,11 @@ export const rendezVousRepo = {
 
   cancel: (id: number): Promise<RendezVous> =>
     api.post<{ status: string; data: RendezVous }>(`/rendez-vous/client/${id}/cancel`).then((res) => res.data),
+
+  // Praticien-facing: the current praticien's booked appointments (client joined),
+  // ordered soonest-first.
+  praticienList: (): Promise<RendezVous[]> =>
+    api.get<{ data: RendezVous[] }>('/praticien/rendez-vous?per_page=100').then((res) => res.data),
 };
 
 // ---------- Subscriptions (praticien billing) — real backend ----------

@@ -5,9 +5,11 @@ import { RendezVousService } from './rendez-vous.service';
 import { CreateRendezVousDto } from './dto/create-rendez-vous.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ClientGuard } from '../auth/guards/client.guard';
+import { PraticienGuard } from '../auth/guards/praticien.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
-import { CurrentClient } from '../auth/decorators';
+import { CurrentClient, CurrentPraticien } from '../auth/decorators';
 import { Client } from '../database/entities/client.entity';
+import { Praticien } from '../database/entities/praticien.entity';
 
 @Controller()
 export class RendezVousController {
@@ -38,6 +40,14 @@ export class RendezVousController {
   @Post('rendez-vous/client/:id/cancel')
   cancel(@CurrentClient() client: Client, @Param('id', ParseIntPipe) id: number) {
     return this.service.cancelForClient(client, id);
+  }
+
+  // ---- praticien ----
+
+  @UseGuards(JwtAuthGuard, PraticienGuard)
+  @Get('praticien/rendez-vous')
+  praticienIndex(@CurrentPraticien() praticien: Praticien, @Query() query: Record<string, any>) {
+    return this.service.indexForPraticien(praticien, query);
   }
 
   // ---- admin ----

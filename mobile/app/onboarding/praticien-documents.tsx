@@ -62,7 +62,8 @@ export default function PraticienDocuments() {
       });
       setOnboardingSeen();
       clearDraft();
-      router.replace('/(tabs)' as any);
+      // Newly-registered praticien → dashboard, not the client tabs.
+      router.replace('/dashboard' as any);
     } catch (err) {
       Alert.alert('Inscription impossible', errorMessage(err));
     } finally {
