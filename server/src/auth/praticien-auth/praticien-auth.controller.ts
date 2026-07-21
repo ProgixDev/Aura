@@ -10,7 +10,7 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CurrentUser } from '../decorators';
 import { User } from '../../database/entities/user.entity';
 
-@Controller('v1/praticien')
+@Controller('praticien')
 export class PraticienAuthController {
   constructor(private readonly service: PraticienAuthService) {}
 

@@ -40,7 +40,7 @@ describe('praticien auth', () => {
   const http = () => request(app.getHttpServer());
 
   it('register creates user + praticien + 5 documents in one transaction', async () => {
-    let req = http().post('/api/v1/praticien/register');
+    let req = http().post('/api/praticien/register');
     for (const [k, v] of Object.entries(FIELDS)) req = req.field(k, v);
     const res = await attachDocs(req).expect(201);
     expect(res.body.message).toContain('En attente de vérification');
@@ -57,7 +57,7 @@ describe('praticien auth', () => {
   });
 
   it('register 422 when a document is missing', async () => {
-    let req = http().post('/api/v1/praticien/register');
+    let req = http().post('/api/praticien/register');
     for (const [k, v] of Object.entries({ ...FIELDS, email: 'other@aura.io' })) req = req.field(k, v);
     for (const f of DOC_FIELDS.slice(0, 4)) {
       req = req.attach(`documents[${f}]`, Buffer.from('x'), { filename: `${f}.pdf`, contentType: 'application/pdf' });
@@ -67,7 +67,7 @@ describe('praticien auth', () => {
   });
 
   it('login returns praticien payload; rejected praticien gets 403 with motif', async () => {
-    const ok = await http().post('/api/v1/praticien/login')
+    const ok = await http().post('/api/praticien/login')
       .send({ email: 'jean@aura.io', password: 'secret123' }).expect(200);
     expect(ok.body.data.verification_status).toBe('en_attente');
     expect(ok.body.data.is_verified).toBe(false);
@@ -77,7 +77,7 @@ describe('praticien auth', () => {
       { email: 'jean@aura.io' },
       { statut_verification: 'rejete', motif_rejet: 'Documents illisibles' },
     );
-    const rej = await http().post('/api/v1/praticien/login')
+    const rej = await http().post('/api/praticien/login')
       .send({ email: 'jean@aura.io', password: 'secret123' }).expect(403);
     expect(rej.body.message).toContain('Documents illisibles');
     expect(rej.body.motif_rejet).toBe('Documents illisibles');
@@ -87,21 +87,21 @@ describe('praticien auth', () => {
   });
 
   it('profile returns praticien + documents_stats; check-token works', async () => {
-    const login = await http().post('/api/v1/praticien/login')
+    const login = await http().post('/api/praticien/login')
       .send({ email: 'jean@aura.io', password: 'secret123' }).expect(200);
     const token = login.body.data.token;
 
-    const prof = await http().get('/api/v1/praticien/profile')
+    const prof = await http().get('/api/praticien/profile')
       .set('Authorization', `Bearer ${token}`).expect(200);
     expect(prof.body.data.documents_stats).toEqual({ total: 5, en_attente: 5, valide: 0, rejete: 0 });
 
-    const chk = await http().get('/api/v1/praticien/check-token')
+    const chk = await http().get('/api/praticien/check-token')
       .set('Authorization', `Bearer ${token}`).expect(200);
     expect(chk.body.message).toBe('Token valide');
 
-    await http().post('/api/v1/praticien/refresh')
+    await http().post('/api/praticien/refresh')
       .set('Authorization', `Bearer ${token}`).expect(200);
-    await http().post('/api/v1/praticien/logout')
+    await http().post('/api/praticien/logout')
       .set('Authorization', `Bearer ${token}`).expect(200);
   });
 });
