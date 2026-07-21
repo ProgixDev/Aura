@@ -29,6 +29,7 @@ import { eventRepo } from '@data/repos';
 // button exactly: a lightweight interest form with no real API call behind
 // it, not a fake payment flow pretending to charge a card.
 function PreRegisterModal({ visible, eventTitle, onClose }: { visible: boolean; eventTitle: string; onClose: () => void }) {
+  const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [places, setPlaces] = useState('1');
@@ -46,7 +47,7 @@ function PreRegisterModal({ visible, eventTitle, onClose }: { visible: boolean; 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={modalStyles.backdrop}>
-        <View style={modalStyles.sheet}>
+        <View style={[modalStyles.sheet, { paddingBottom: insets.bottom + 24 }]}>
           <Text style={modalStyles.title}>Pré-inscription — {eventTitle}</Text>
           <Input label="Votre nom" value={name} onChangeText={setName} />
           <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />

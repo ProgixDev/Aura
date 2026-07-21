@@ -23,12 +23,12 @@ export function PractitionerCard({ practitioner, variant = 'compact' }: Props) {
   if (variant === 'horizontal') {
     return (
       <Pressable onPress={go} style={[styles.hCard, shadows.card]}>
-        <View style={styles.hTop}>
+        <View style={styles.hCover}>
           <Avatar
             source={practitioner.photo}
             gradient={practitioner.gradient}
-            size="md"
-            style={styles.hAvatar}
+            rounded={false}
+            style={styles.hCoverImg}
           />
           {practitioner.online ? (
             <View style={styles.hBadge}>
@@ -146,20 +146,18 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     overflow: 'hidden',
   },
-  hTop: {
-    height: 120,
-    backgroundColor: colors.violet,
+  hCover: {
+    width: '100%',
+    height: 150,
     position: 'relative',
   },
-  hAvatar: {
-    position: 'absolute',
-    left: 14,
-    bottom: -20,
-    borderWidth: 3,
-    borderColor: '#fff',
+  hCoverImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 0,
   },
   hBadge: { position: 'absolute', top: 10, right: 10 },
-  hBody: { paddingTop: 28, paddingHorizontal: 14, paddingBottom: 14 },
+  hBody: { paddingTop: 12, paddingHorizontal: 14, paddingBottom: 14 },
   hName: {
     ...typography.serif,
     fontSize: 17,

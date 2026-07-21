@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  ImageBackground,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,6 +10,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
+import { LinearGradient } from 'expo-linear-gradient';
 import { AuroraBackground } from '@components/AuroraBackground';
 import { Badge } from '@components/Badge';
 import { Icon } from '@components/Icon';
@@ -19,7 +21,7 @@ import { Chip } from '@components/Chip';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { shadows } from '@theme/shadows';
-import { practitionerRepo, disciplineRepo, eventRepo } from '@data/repos';
+import { practitionerRepo, disciplineRepo, eventRepo, articleRepo } from '@data/repos';
 import { useSession } from '@store/session';
 
 const TODAY_LABEL = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -35,6 +37,14 @@ export default function Accueil() {
     queryKey: ['practitioners', 'recommended'],
     queryFn: practitionerRepo.recommended,
   });
+  // Full list backs the per-discipline counts below (same source the domain
+  // page filters). Cheap: recommended already fetches this list internally.
+  const allPractitioners = useQuery({
+    queryKey: ['practitioners', 'all'],
+    queryFn: practitionerRepo.list,
+  });
+  const countForDiscipline = (name: string) =>
+    allPractitioners.data?.filter((p) => p.specialties.includes(name)).length ?? 0;
   const disciplines = useQuery({
     queryKey: ['disciplines'],
     queryFn: disciplineRepo.list,
@@ -43,6 +53,19 @@ export default function Accueil() {
     queryKey: ['events', 'featured'],
     queryFn: eventRepo.featured,
   });
+  const articles = useQuery({
+    queryKey: ['articles'],
+    queryFn: articleRepo.list,
+  });
+  // The educational teaser is about Reiki — open the real Reiki article, not
+  // the discipline page. Resolve by title/slug so it survives slug changes;
+  // fall back to the blog index if the article isn't found.
+  const openReikiArticle = () => {
+    const a = articles.data?.find(
+      (x) => /reiki/i.test(x.titre) || x.slug.includes('reiki'),
+    );
+    router.push((a ? `/blog/${a.slug}` : '/blog') as any);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.pearl }}>
@@ -70,15 +93,37 @@ export default function Accueil() {
             onPress={() => router.push(`/event/${featured.data![0].id}` as any)}
             style={{ marginHorizontal: 20, marginVertical: 16 }}
           >
-            <AuroraBackground variant="soft" rounded={28} style={styles.featured}>
-              <View style={styles.featuredBadge}>
-                <Text style={styles.featuredBadgeTxt}>À l'AFFICHE</Text>
-              </View>
-              <View style={styles.featuredFoot}>
-                <Text style={styles.featuredTitle}>{featured.data[0].title}</Text>
-                <Text style={styles.featuredMeta}>{featured.data[0].when} · {featured.data[0].where}</Text>
-              </View>
-            </AuroraBackground>
+            {featured.data[0].image ? (
+              <ImageBackground
+                source={{ uri: featured.data[0].image }}
+                resizeMode="cover"
+                style={styles.featured}
+                imageStyle={{ borderRadius: 28 }}
+              >
+                {/* Dark scrim so the white badge/title stay legible on any photo. */}
+                <LinearGradient
+                  colors={['rgba(17,9,28,0.15)', 'rgba(17,9,28,0.7)']}
+                  style={[StyleSheet.absoluteFillObject, { borderRadius: 28 }]}
+                />
+                <View style={styles.featuredBadge}>
+                  <Text style={styles.featuredBadgeTxt}>À l'AFFICHE</Text>
+                </View>
+                <View style={styles.featuredFoot}>
+                  <Text style={styles.featuredTitle}>{featured.data[0].title}</Text>
+                  <Text style={styles.featuredMeta}>{featured.data[0].when} · {featured.data[0].where}</Text>
+                </View>
+              </ImageBackground>
+            ) : (
+              <AuroraBackground variant="soft" rounded={28} style={styles.featured}>
+                <View style={styles.featuredBadge}>
+                  <Text style={styles.featuredBadgeTxt}>À l'AFFICHE</Text>
+                </View>
+                <View style={styles.featuredFoot}>
+                  <Text style={styles.featuredTitle}>{featured.data[0].title}</Text>
+                  <Text style={styles.featuredMeta}>{featured.data[0].when} · {featured.data[0].where}</Text>
+                </View>
+              </AuroraBackground>
+            )}
           </Pressable>
         )}
 
@@ -117,7 +162,12 @@ export default function Accueil() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.discName}>{d.name}</Text>
-                  <Text style={styles.discCount}>{d.count} praticiens</Text>
+                  <Text style={styles.discCount}>
+                    {(() => {
+                      const n = countForDiscipline(d.name);
+                      return `${n} praticien${n > 1 ? 's' : ''}`;
+                    })()}
+                  </Text>
                 </View>
               </Pressable>
             ))}
@@ -138,16 +188,27 @@ export default function Accueil() {
                 onPress={() => router.push(`/event/${e.id}` as any)}
                 style={[styles.eventTile, shadows.card]}
               >
-                <AuroraBackground
-                  variant="soft"
-                  style={styles.eventTop}
-                >
-                  <View style={styles.eventPill}>
-                    <Text style={styles.eventPillTxt}>
-                      {e.kind.split('·')[0].trim()}
-                    </Text>
-                  </View>
-                </AuroraBackground>
+                {e.image ? (
+                  <ImageBackground
+                    source={{ uri: e.image }}
+                    resizeMode="cover"
+                    style={styles.eventTop}
+                  >
+                    <View style={styles.eventPill}>
+                      <Text style={styles.eventPillTxt}>
+                        {e.kind.split('·')[0].trim()}
+                      </Text>
+                    </View>
+                  </ImageBackground>
+                ) : (
+                  <AuroraBackground variant="soft" style={styles.eventTop}>
+                    <View style={styles.eventPill}>
+                      <Text style={styles.eventPillTxt}>
+                        {e.kind.split('·')[0].trim()}
+                      </Text>
+                    </View>
+                  </AuroraBackground>
+                )}
                 <View style={{ padding: 14 }}>
                   <Text style={styles.eventTitle}>{e.title}</Text>
                   <Text style={styles.eventMeta}>
@@ -188,7 +249,7 @@ export default function Accueil() {
             3 minutes de lecture pour démystifier une pratique millénaire — sans
             jargon, sans promesse exagérée.
           </Text>
-          <Pressable onPress={() => router.push('/domain/reiki' as any)}>
+          <Pressable onPress={openReikiArticle}>
             <Text style={styles.eduLink}>Lire l'article →</Text>
           </Pressable>
         </View>

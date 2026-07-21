@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -65,7 +66,15 @@ export default function Review() {
     try {
       await avisRepo.create({ praticien_id: Number(praticienId), note: rating, avis: text });
       await queryClient.invalidateQueries({ queryKey: ['reviews', praticienId] });
-      router.back();
+      // Reviews are moderated server-side (saved as `en_attente`, only shown
+      // once an admin publishes them), so it won't appear in the list yet —
+      // tell the user instead of silently returning, which reads as "nothing
+      // happened".
+      Alert.alert(
+        'Merci pour votre avis',
+        'Votre témoignage a bien été envoyé. Il sera publié après vérification par notre équipe.',
+        [{ text: 'Compris', onPress: () => router.back() }],
+      );
     } catch (err: any) {
       setError(err?.message ?? 'Une erreur est survenue, réessayez.');
     } finally {

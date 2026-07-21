@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
-  Image,
+  Animated,
   Pressable,
   ScrollView,
   Share,
@@ -25,6 +25,12 @@ export default function DomainDetail() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
+  // Hero photos are remote — fade the image in over an aurora placeholder so
+  // the load reads as intentional, not a flat solid flashing to a photo.
+  const heroFade = useRef(new Animated.Value(0)).current;
+  const onHeroLoad = () =>
+    Animated.timing(heroFade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+
   const { data: d } = useQuery({
     queryKey: ['discipline', slug],
     queryFn: () => disciplineRepo.bySlug(String(slug)),
@@ -39,19 +45,25 @@ export default function DomainDetail() {
     <View style={{ flex: 1, backgroundColor: colors.pearl }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
         <View style={[styles.hero, { paddingTop: insets.top }]}>
+          {/* Aurora placeholder always sits underneath so the load state is
+              branded, not a flat solid. Remote photo fades in on top. */}
+          <AuroraBackground variant="soft" style={StyleSheet.absoluteFillObject as any}>
+            <></>
+          </AuroraBackground>
           {d?.heroImage ? (
             <>
-              <Image source={d.heroImage} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+              <Animated.Image
+                source={d.heroImage}
+                onLoad={onHeroLoad}
+                style={[StyleSheet.absoluteFillObject, { opacity: heroFade }]}
+                resizeMode="cover"
+              />
               <LinearGradient
                 colors={['rgba(27,23,48,0.15)', 'rgba(27,23,48,0.65)']}
                 style={StyleSheet.absoluteFillObject}
               />
             </>
-          ) : (
-            <AuroraBackground variant="soft" style={StyleSheet.absoluteFillObject as any}>
-              <></>
-            </AuroraBackground>
-          )}
+          ) : null}
           <View style={[styles.heroActions, { top: insets.top + 8 }]}>
             <Pressable style={styles.iconCircle} onPress={() => router.back()}>
               <Icon name="back" size={20} color={colors.ink} />

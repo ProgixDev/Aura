@@ -117,6 +117,7 @@ export default function Onboarding() {
             <Text style={styles.skip}>Passer</Text>
           </Pressable>
           <Button
+            variant="aurora"
             label={index === slides.length - 1 ? 'Commencer' : 'Suivant'}
             onPress={next}
             fullWidth={false}
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     paddingHorizontal: 32,
-    paddingBottom: 60,
+    paddingBottom: 150,
   },
   title: {
     fontFamily: 'CormorantGaramond_300Light',
@@ -156,9 +157,12 @@ const styles = StyleSheet.create({
     maxWidth: 320,
   },
   footer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     paddingHorizontal: 24,
     paddingTop: 24,
-    backgroundColor: colors.pearl,
     alignItems: 'center',
     gap: 20,
   },
@@ -167,11 +171,11 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(45,37,64,0.18)',
+    backgroundColor: 'rgba(255,255,255,0.35)',
   },
   dotActive: {
     width: 24,
-    backgroundColor: colors.ink,
+    backgroundColor: '#fff',
   },
   footerRow: {
     flexDirection: 'row',
@@ -179,5 +183,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  skip: { ...typography.small, color: colors.muted, padding: 8 },
+  skip: { ...typography.small, color: '#fff', padding: 8 },
 });

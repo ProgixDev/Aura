@@ -127,7 +127,10 @@ export default function SplashRoute() {
           }}
         >
           <Text style={styles.wordmark}>
-            Aur<Text style={styles.wordmarkItalic}>a</Text>
+            {' '}Aur<Text style={styles.wordmarkItalic}>a</Text>{' '}
+            {/* Italic 'a' as the last glyph clips on Android/Fabric; the
+                trailing space reserves its overhang, the leading one keeps
+                the mark centered over the underline. */}
           </Text>
           <Animated.View style={[styles.underline, { width: underlineW }]} />
         </Animated.View>
@@ -150,6 +153,9 @@ const styles = StyleSheet.create({
     color: '#FBF9F6',
     letterSpacing: 1.2,
     textAlign: 'center',
+    // Italic 'a' slants past its advance width; pad so it isn't clipped
+    // (symmetric keeps the mark centered over the underline).
+    paddingHorizontal: 12,
     // Soft halo so the mark sits in the gradient rather than on top of it.
     textShadowColor: 'rgba(196,176,232,0.18)',
     textShadowRadius: 40,

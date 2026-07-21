@@ -32,14 +32,17 @@ interface Props {
   size?: number;
   color?: string;
   strokeWidth?: number;
+  /** Fill the glyph with `color` instead of drawing an outline (e.g. an
+      active/favorited heart or star). */
+  filled?: boolean;
 }
 
-export function Icon({ name, size = 22, color = colors.ink, strokeWidth = 1.6 }: Props) {
+export function Icon({ name, size = 22, color = colors.ink, strokeWidth = 1.6, filled = false }: Props) {
   const common = {
     width: size,
     height: size,
     viewBox: '0 0 24 24',
-    fill: 'none',
+    fill: filled ? color : 'none',
     stroke: color,
     strokeWidth,
     strokeLinecap: 'round' as const,

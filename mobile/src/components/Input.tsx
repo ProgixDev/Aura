@@ -54,7 +54,7 @@ export function Input({
       <View
         style={[
           styles.inputWrap,
-          multiline && { minHeight: 96, paddingVertical: 12 },
+          multiline && { height: undefined, minHeight: 96, paddingVertical: 12, alignItems: 'flex-start' },
           focused && styles.inputFocus,
         ]}
       >

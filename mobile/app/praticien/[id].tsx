@@ -140,7 +140,7 @@ export default function PractitionerProfile() {
             </Pressable>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable style={styles.iconCircle} onPress={toggleFavorite} disabled={favPending}>
-                <Icon name="heart" size={18} color={isFavorite ? colors.violet2 : colors.ink} />
+                <Icon name="heart" size={18} filled={isFavorite} color={isFavorite ? colors.violet2 : colors.ink} />
               </Pressable>
               <Pressable
                 style={styles.iconCircle}
