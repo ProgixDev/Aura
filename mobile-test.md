@@ -152,48 +152,48 @@ Then create it for real:
 - [x] Switch tabs "À propos" / "Avis" → bio & photos vs reviews list.
 - [x] "Laisser un avis" → review screen.
 - [x] **"Contacter"** button → opens a chat with them.
-- [ ] **"Réserver"** button → starts the booking.
+- [x] **"Réserver"** button → starts the booking.
 
 ---
 
 ## Step 12 — Booking a session (the important flow)
 
 **Pick a time:**
-- [ ] Days scroll across the top; fully-booked days look faded.
-- [ ] Tap an available time slot → the bottom shows "{day} · {time}".
-- [ ] "Continuer" is greyed out until you pick a slot → then it works.
+- [x] Days scroll across the top; fully-booked days look faded.
+- [x] Tap an available time slot → the bottom shows "{day} · {time}".
+- [x] "Continuer" is greyed out until you pick a slot → then it works.
 
 **Payment:**
-- [ ] Choose "En présentiel" or "En visio".
-- [ ] See the total price and a "Paiement sécurisé via Stripe" note.
-- [ ] Tap "Régler … en toute sécurité" → the Stripe payment popup opens.
-- [ ] Use test card `4242 4242 4242 4242`, any future date, any CVC → payment succeeds.
-- [ ] If you close the popup → no error, you can try again (no double booking).
+- [x] Choose "En présentiel" or "En visio".
+- [x] See the total price and a "Paiement sécurisé via Stripe" note.
+- [x] Tap "Régler … en toute sécurité" → the Stripe payment popup opens.
+- [x] Use test card `4242 4242 4242 4242`, any future date, any CVC → payment succeeds.
+- [x] If you close the popup → no error, you can try again (no double booking).
 
 **Confirmation:**
-- [ ] "Votre séance est réservée." with a glowing circle.
-- [ ] Details card: practitioner, practice, date/time, mode, total paid, reference "RDV-...".
-- [ ] "Envoyer un message" → opens the chat.
-- [ ] "Retour à l'accueil" → back to home.
+- [x] "Votre séance est réservée." with a glowing circle.
+- [x] Details card: practitioner, practice, date/time, mode, total paid, reference "RDV-...".
+- [x] "Envoyer un message" → opens the chat.
+- [x] "Retour à l'accueil" → back to home.
 
 ---
 
 ## Step 13 — Messages
 
-- [ ] List of your conversations (or "Aucune conversation" if none yet).
-- [ ] Search box filters by name; "Tous" / "Non lus" chips filter.
-- [ ] Unread ones are bold with a purple dot.
-- [ ] Tap one → opens the chat.
+- [x] List of your conversations (or "Aucune conversation" if none yet).
+- [x] Search box filters by name; "Tous" / "Non lus" chips filter.
+- [x] Unread ones are bold with a purple dot.
+- [x] Tap one → opens the chat.
 
 ---
 
 ## Step 14 — Chat
 
-- [ ] Header shows who you're talking to.
-- [ ] Type a message + send → your bubble appears right away.
-- [ ] New messages from them appear on their own after a few seconds (no refresh needed).
-- [ ] If sending fails → your bubble disappears, your text comes back, and an error shows.
-- [ ] Back button returns to Messages.
+- [x] Header shows who you're talking to.
+- [x] Type a message + send → your bubble appears right away.
+- [x] New messages from them appear on their own after a few seconds (no refresh needed).
+- [x] If sending fails → your bubble disappears, your text comes back, and an error shows.
+- [x] Back button returns to Messages.
 
 ---
 

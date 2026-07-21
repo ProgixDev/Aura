@@ -1,7 +1,7 @@
 import 'react-native-gesture-handler';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -25,6 +25,8 @@ import {
   Outfit_700Bold,
 } from '@expo-google-fonts/outfit';
 import { colors } from '@theme/colors';
+import { setUnauthorizedHandler } from '@data/api/client';
+import { useSession } from '@store/session';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +41,19 @@ const queryClient = new QueryClient({
 const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
 
 export default function RootLayout() {
+  const router = useRouter();
+
+  // On any authenticated 401 (expired/invalid JWT), sign out and send the user
+  // to login — instead of leaking "Token invalide ou expiré" into whatever
+  // screen fired the request (e.g. the payment sheet).
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      useSession.getState().signOut();
+      router.replace('/onboarding/auth?mode=login' as any);
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [router]);
+
   const [fontsLoaded, fontError] = useFonts({
     CormorantGaramond_300Light,
     CormorantGaramond_300Light_Italic,

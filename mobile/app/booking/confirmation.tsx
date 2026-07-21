@@ -120,7 +120,7 @@ function Row({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.pearl, padding: 24 },
-  body: { flex: 1, alignItems: 'center', justifyContent: 'center', maxWidth: 360 },
+  body: { flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: 360, alignSelf: 'center' },
   orb: {
     width: 140,
     height: 140,

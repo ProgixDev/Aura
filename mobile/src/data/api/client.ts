@@ -16,6 +16,13 @@ export class ApiError extends Error {
 let authToken: string | null = null;
 export const setAuthToken = (token: string | null) => { authToken = token; };
 
+// Called when an *authenticated* request comes back 401 (expired/invalid JWT),
+// so the app can sign the user out and send them to login instead of surfacing
+// a raw "Token invalide ou expiré" wherever the call happened to fire. Set by
+// the root layout; no-op until then.
+let onUnauthorized: (() => void) | null = null;
+export const setUnauthorizedHandler = (fn: (() => void) | null) => { onUnauthorized = fn; };
+
 interface ApiOptions {
   method?: string;
   body?: unknown;
@@ -42,6 +49,9 @@ export async function apiFetch<T = any>(path: string, opts: ApiOptions = {}): Pr
   if (text) { try { payload = JSON.parse(text); } catch { payload = text; } }
 
   if (!res.ok || payload?.status === 'error') {
+    // Only fire on requests that actually carried a token — a 401 from login
+    // itself (wrong credentials) must not trigger a sign-out/redirect loop.
+    if (res.status === 401 && t) onUnauthorized?.();
     throw new ApiError(payload?.message ?? `Request failed (${res.status})`, res.status, payload);
   }
   return payload as T;
