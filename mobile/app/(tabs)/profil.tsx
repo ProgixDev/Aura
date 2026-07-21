@@ -58,6 +58,12 @@ export default function Profil() {
 
         <Section title="Mon parcours">
           <MenuRow
+            icon={<Icon name="cal" size={18} color={colors.ink} />}
+            label="Mes séances"
+            value={rendezVous.length > 0 ? String(rendezVous.length) : undefined}
+            onPress={() => router.push('/rendez-vous' as any)}
+          />
+          <MenuRow
             icon={<Lotus size={16} color={colors.violet2} />}
             label="Laisser un avis"
             onPress={() => router.push('/review' as any)}
