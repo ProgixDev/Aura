@@ -29,7 +29,7 @@ export default function AdminConnexionPage() {
   };
 
   return (
-    <div className="center" style={{ minHeight: '100vh', flexDirection: 'column', gap: 24, padding: 24 }}>
+    <div className="center" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', flexDirection: 'column', gap: 24, padding: 24 }}>
       <div className="row gap-2">
         <Lotus size={28} color="var(--violet-2)" />
         <span className="h-3">Aura <span className="tiny muted">admin</span></span>

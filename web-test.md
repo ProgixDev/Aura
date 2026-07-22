@@ -22,9 +22,9 @@ Do each thing, check the box if it works like the description says.
 
 **What you see:** big purple hero "Tous les guérisseurs, un seul lieu de confiance", some numbers, then sections (values, disciplines, featured practitioners, how it works, testimonial, events).
 
-- [ ] Hero numbers show (verified practitioners / sessions / satisfaction).
-- [ ] "Trouver un praticien" button → practitioners list.
-- [ ] "Je suis praticien" button → the "become a practitioner" page.
+- [x] Hero numbers show (verified practitioners / sessions / satisfaction).
+- [x] "Trouver un praticien" button → practitioners list.
+- [x] "Je suis praticien" button → the "become a practitioner" page.
 - [ ] Discipline tiles → open that discipline's page.
 - [ ] Featured practitioner cards → open that practitioner.
 - [ ] Event cards → open that event.
