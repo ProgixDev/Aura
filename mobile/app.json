@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "GuériEnergies",
+    "name": "GueriEnergies",
     "slug": "guerienergies",
     "version": "1.0.0",
     "scheme": "guerienergies",
@@ -11,8 +11,9 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.progix.guerienergies",
-      "buildNumber": "10",
+      "buildNumber": "1",
       "infoPlist": {
+        "CFBundleDisplayName": "GuériEnergies",
         "NSPhotoLibraryUsageDescription": "GuériEnergies a besoin d'accéder à vos photos pour personnaliser votre profil.",
         "NSCameraUsageDescription": "GuériEnergies a besoin d'accéder à votre caméra pour les séances en visio.",
         "NSMicrophoneUsageDescription": "GuériEnergies a besoin d'accéder à votre micro pour les séances en visio.",
@@ -42,7 +43,8 @@
           "enableGooglePay": false
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "./plugins/withAndroidDisplayName"
     ],
     "experiments": {
       "typedRoutes": true
