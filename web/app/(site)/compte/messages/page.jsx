@@ -1,6 +1,6 @@
 import MessagesList from './MessagesList';
 
-export const metadata = { title: 'Messages — AURA' };
+export const metadata = { title: 'Messages — GUÉRIENERGIES' };
 
 export default function MessagesPage() {
   return (

@@ -76,7 +76,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.pearl }}>
       <SafeAreaProvider>
-        <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY} urlScheme="aura">
+        <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY} urlScheme="guerienergies">
           <QueryClientProvider client={queryClient}>
             <StatusBar style="dark" />
             <Stack

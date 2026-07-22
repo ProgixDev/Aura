@@ -15,8 +15,8 @@ import { parsePagination, paginateQb } from '../common/pagination';
 // — see that plan's Design notes), so both URLs default to the mobile app's own deep-link
 // scheme. Overridable via env in case a given Stripe account's allow-list needs a real
 // https:// URL instead.
-const SUCCESS_URL = process.env.STRIPE_SUBSCRIPTION_SUCCESS_URL || 'aura://subscription?checkout=success';
-const CANCEL_URL = process.env.STRIPE_SUBSCRIPTION_CANCEL_URL || 'aura://subscription?checkout=cancel';
+const SUCCESS_URL = process.env.STRIPE_SUBSCRIPTION_SUCCESS_URL || 'guerienergies://subscription?checkout=success';
+const CANCEL_URL = process.env.STRIPE_SUBSCRIPTION_CANCEL_URL || 'guerienergies://subscription?checkout=cancel';
 
 const ACTIVE_STATUSES = ['active', 'trialing', 'past_due'];
 

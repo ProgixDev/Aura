@@ -148,7 +148,7 @@ export default function ConversationPage({ params }) {
       </div>
 
       <div className="note">
-        <Icon name="shield" size={15} color="var(--violet-2)" /> Réglez toujours vos séances via AURA. Ne communiquez jamais vos coordonnées bancaires par message.
+        <Icon name="shield" size={15} color="var(--violet-2)" /> Réglez toujours vos séances via GUÉRIENERGIES. Ne communiquez jamais vos coordonnées bancaires par message.
       </div>
     </div>
   );

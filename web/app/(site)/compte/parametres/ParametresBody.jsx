@@ -110,7 +110,7 @@ export default function ParametresBody() {
         <div className="stack">
           <Row label="Profil visible des praticiens" desc="Autoriser les praticiens à voir votre prénom et votre ville." on />
           <div className="divider" />
-          <Row label="Partage des données d'usage" desc="Aider à améliorer AURA de façon anonyme." on={false} />
+          <Row label="Partage des données d'usage" desc="Aider à améliorer GUÉRIENERGIES de façon anonyme." on={false} />
         </div>
         <div className="divider" />
         <div className="row gap-2 wrap mt-2">

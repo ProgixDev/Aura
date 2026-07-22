@@ -1,6 +1,6 @@
 import AvisList from './AvisList';
 
-export const metadata = { title: 'Mes avis — AURA' };
+export const metadata = { title: 'Mes avis — GUÉRIENERGIES' };
 
 export default function AvisPage() {
   return (

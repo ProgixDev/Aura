@@ -86,7 +86,7 @@ export default function MessagesList() {
           <span className="h-4" style={{ fontWeight: 500 }}>Avant la séance</span>
         </div>
         <p className="small">
-          Pour votre sécurité, gardez vos échanges et paiements sur AURA. Un praticien ne vous demandera jamais de régler en dehors de la plateforme ni de communiquer vos coordonnées bancaires. En cas de doute, <Link className="more" href="/aide">signalez-le nous</Link>.
+          Pour votre sécurité, gardez vos échanges et paiements sur GUÉRIENERGIES. Un praticien ne vous demandera jamais de régler en dehors de la plateforme ni de communiquer vos coordonnées bancaires. En cas de doute, <Link className="more" href="/aide">signalez-le nous</Link>.
         </p>
       </div>
     </>

@@ -24,7 +24,7 @@ import { PLANS, type PlanDef } from '@data/plans';
 import { effectivePlan } from '@utils/subscriptionPlan';
 import type { Subscription, SubscriptionPlan } from '@data/types';
 
-const RETURN_URL = 'aura://subscription';
+const RETURN_URL = 'guerienergies://subscription';
 
 export default function Subscription() {
   const router = useRouter();

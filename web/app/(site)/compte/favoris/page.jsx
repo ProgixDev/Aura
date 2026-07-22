@@ -2,7 +2,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import FavorisList from './FavorisList';
 
-export const metadata = { title: 'Mes favoris — AURA' };
+export const metadata = { title: 'Mes favoris — GUÉRIENERGIES' };
 
 export default function FavorisPage() {
   return (

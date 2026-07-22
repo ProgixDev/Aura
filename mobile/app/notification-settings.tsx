@@ -13,7 +13,7 @@ const FIELDS: { key: keyof NotificationPreferences; label: string; desc: string 
   { key: 'rappels_seance', label: 'Rappels de séance', desc: 'Un rappel 24h et 1h avant chaque rendez-vous.' },
   { key: 'nouveaux_messages', label: 'Nouveaux messages', desc: "Soyez averti dès qu'un praticien vous répond." },
   { key: 'reponses_avis', label: 'Réponses à mes avis', desc: 'Quand un praticien réagit à votre retour.' },
-  { key: 'newsletter', label: 'Newsletter AURA', desc: 'Inspirations, événements et nouveautés, une fois par mois.' },
+  { key: 'newsletter', label: 'Newsletter GUÉRIENERGIES', desc: 'Inspirations, événements et nouveautés, une fois par mois.' },
 ];
 
 const DEFAULTS: NotificationPreferences = {

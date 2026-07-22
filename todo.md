@@ -3,10 +3,10 @@
 Tasks from client feedback. Grouped by area.
 
 ## Branding
-- [x] **Change the title to "GuériEnergies"** — updated app title everywhere it appears (web + mobile), including legal entity name in CGU/mentions légales/confidentialité and the mobile splash wordmark (redesigned for the longer name). Domains (aura.fr/aura.io), Stripe lookupKeys, DB/seed data, and code comments intentionally left untouched — those need real infra/legal changes outside code.
+- [x] **Change the title to "GuériEnergies"** — updated everywhere (web + mobile): legal entity name, mobile splash wordmark (redesigned for the longer name), Stripe lookupKeys/productName, native bundleIdentifier/package/slug/scheme (`com.progix.guerienergies`), DB/seed data + domains (aura.fr/aura.io → guerienergies equivalents), code comments, READMEs, test fixtures. Reseeded the DB to drop old-brand rows. Left untouched: the Supabase Storage bucket path (`aura-public`, a real live bucket — renaming breaks every seeded image).
 
 ## UI / Spacing
-- [ ] **Review spacing across the app** — no text touching the edge of a box. Add proper padding to all containers/boxes so content is never flush against the border.
+- [x] **Review spacing across the app** — audited web (all `.card`/`.card-pad` usages, all 6 modal components, ad-hoc inline-styled boxes) and all 37 mobile screens (dispatched via subagents in batches of ~4). Result: no violations found — both apps already pad every box that wraps text correctly (web via the `.card-pad`/baked-in-padding CSS system, mobile via the `Card` component defaulting to `padded={true}` + consistent hand-rolled padding elsewhere). Zero files needed changes. Found and fixed unrelated bugs surfaced during the audit: a leftover ALL-CAPS "AURA" wordmark in ~20 client-account pages the earlier rename regex missed, and a broken deep-link scheme (`aura://` vs the renamed `guerienergies` app scheme) in 4 Stripe-related files that would have broken payment-redirect-back-to-app.
 
 ## Practitioner Registration — Documents
 - [ ] **Update required documents when a practitioner registers.** Store:

@@ -1,6 +1,6 @@
 import ReservationsBody from './ReservationsBody';
 
-export const metadata = { title: 'Mes réservations — AURA' };
+export const metadata = { title: 'Mes réservations — GUÉRIENERGIES' };
 
 export default function ReservationsPage() {
   return (

@@ -74,7 +74,7 @@ export default function InscriptionPage() {
             >
               <div className="row gap-2">
                 <Lotus size={22} color="#fff" />
-                <span className="serif" style={{ color: '#fff', fontSize: 22, letterSpacing: '.04em' }}>AURA</span>
+                <span className="serif" style={{ color: '#fff', fontSize: 22, letterSpacing: '.04em' }}>GUÉRIENERGIES</span>
               </div>
               <div>
                 <h2 className="h-1" style={{ color: '#fff', marginBottom: 14 }}>

@@ -87,7 +87,7 @@ export default function PaiementsBody() {
         </div>
       </section>
 
-      <div className="note"><Icon name="shield" size={15} color="var(--violet-2)" /> Vos paiements sont sécurisés et chiffrés. AURA ne conserve jamais vos données bancaires complètes.</div>
+      <div className="note"><Icon name="shield" size={15} color="var(--violet-2)" /> Vos paiements sont sécurisés et chiffrés. GUÉRIENERGIES ne conserve jamais vos données bancaires complètes.</div>
     </div>
   );
 }

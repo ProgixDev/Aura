@@ -62,7 +62,7 @@ export default function PraticiensPage() {
       {/* INTRO HERO */}
       <section className="section-sm" style={{ paddingBottom: 0 }}>
         <div className="container reveal">
-          <span className="eyebrow">L'annuaire AURA</span>
+          <span className="eyebrow">L'annuaire GUÉRIENERGIES</span>
           <h1 className="h-1" style={{ margin: '12px 0 14px' }}>
             Trouver un <span className="italic accent">praticien</span>
           </h1>

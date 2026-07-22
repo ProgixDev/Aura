@@ -1,5 +1,5 @@
 {
-  "name": "aura-monorepo",
+  "name": "guerienergies-monorepo",
   "private": true,
   "scripts": {
     "install:all": "npm install --prefix web && npm install --prefix mobile && npm install --prefix server",

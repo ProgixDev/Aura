@@ -44,7 +44,7 @@ export default function CadeauPage() {
                   <span className="tiny" style={{ color: 'rgba(255,255,255,0.6)' }}>CARTE CADEAU</span>
                 </div>
                 <div className="serif" style={{ color: '#fff', fontSize: 44, marginBottom: 4 }}>120 €</div>
-                <div className="tiny" style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: 2, marginBottom: 26 }}>AURA · 2026 · ✦ ✦ ✦ ✦</div>
+                <div className="tiny" style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: 2, marginBottom: 26 }}>GUÉRIENERGIES · 2026 · ✦ ✦ ✦ ✦</div>
                 <div className="row between">
                   <span className="tiny" style={{ color: 'rgba(255,255,255,0.7)' }}>Pour : un proche cher·e</span>
                   <span className="tiny" style={{ color: 'rgba(255,255,255,0.7)' }}>Valable 1 an</span>

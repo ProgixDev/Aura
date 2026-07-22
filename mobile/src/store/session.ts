@@ -69,7 +69,7 @@ export const useSession = create<SessionState>()(
       },
     }),
     {
-      name: 'aura.session',
+      name: 'guerienergies.session',
       storage: createJSONStorage(() => AsyncStorage),
       onRehydrateStorage: () => (state) => {
         if (state?.token) setAuthToken(state.token);

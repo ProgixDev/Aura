@@ -10,7 +10,7 @@ import { success } from '../common/envelope';
 // redirect back to, so both the refresh and return URLs default to the mobile app's own
 // deep-link scheme. Overridable via env in case a given Stripe account's allow-list needs a
 // real https:// URL instead.
-const CONNECT_RETURN_URL = process.env.STRIPE_CONNECT_RETURN_URL || 'aura://dashboard';
+const CONNECT_RETURN_URL = process.env.STRIPE_CONNECT_RETURN_URL || 'guerienergies://dashboard';
 
 @Injectable()
 export class StripeConnectService {

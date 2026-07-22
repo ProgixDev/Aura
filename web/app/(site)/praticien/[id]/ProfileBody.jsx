@@ -171,7 +171,7 @@ export function ProfileBody({ p, id }) {
           <div className="stack gap-5" style={{ marginTop: 26 }}>
             {p.exchange && <ExchangePanel p={p} />}
             <div className="note">
-              <strong>Le troc bienveillant.</strong> Sur AURA, certains praticiens acceptent
+              <strong>Le troc bienveillant.</strong> Sur GUÉRIENERGIES, certains praticiens acceptent
               d'échanger un soin contre un autre savoir-faire. Contactez {p.name.split(' ')[0]} via
               la messagerie pour proposer votre échange — aucun paiement n'est requis.
             </div>
