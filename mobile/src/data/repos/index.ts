@@ -508,6 +508,22 @@ export const praticienAuthRepo = {
   },
 };
 
+// ---------- Promotions (real backend, POST /promotions/validate) ----------
+export interface PromotionValidation {
+  id: number;
+  code: string;
+  type: 'pourcentage' | 'fixe';
+  valeur: number;
+}
+
+export const promotionRepo = {
+  // Throws (404 "Code promo invalide ou expiré") on an unknown/expired code — same
+  // validation RendezVousService.create() runs server-side when promotion_code is passed,
+  // so a code accepted here is guaranteed to still apply at booking time.
+  validate: (code: string): Promise<PromotionValidation> =>
+    api.post<{ data: PromotionValidation }>('/promotions/validate', { code }).then((res) => res.data),
+};
+
 // ---------- Rendez-vous (real backend) ----------
 interface CreateRendezVousParams {
   praticien_id: number;

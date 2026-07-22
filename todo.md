@@ -28,7 +28,7 @@ Tasks from client feedback. Grouped by area.
 - [x] **Add the ability to file a report (signalement) in the app** — on both the practitioner side and the client side. Client side already existed (`praticien/[id].tsx` → "Signaler"). Practitioner side was missing entirely — the `Signalement` target was hardcoded to `praticien_id` (schema `NOT NULL`), so there was no way to report a client. Made the target polymorphic (mirrors the SIRET/échanges pattern): `praticien_id` now nullable, added nullable `client_id`, exactly one enforced at the service layer + a `chk_sig_target` DB check. New `report-client.tsx` screen, reachable via a flag icon on each booking in the practitioner dashboard. Admin list/detail shows whichever target (client or practitioner) is set. Live DB migrated additively (22 existing rows untouched). e2e coverage added.
 
 ## Promo Codes
-- [ ] **Check if promo codes are implemented in the app.** Promo codes exist in the back office — if not implemented in the app, add promo code entry at the payment step.
+- [x] **Check if promo codes are implemented in the app.** Backend was already fully ready and unused: `POST /promotions/validate` + `RendezVousService.create()` already accepted an optional `promotion_code` and computed the discount (percentage or fixed) — even the mobile repo layer's `CreateRendezVousParams` already had the field. The only missing piece was the UI. Added a "Code promo" field to `booking/payment.tsx`: validates via the existing endpoint, shows the discount line + adjusted total in the recap, passes the code through at booking creation. No server changes needed.
 
 ## Client Reviews (Avis clients)
 - [ ] **Check if client reviews are implemented on mobile.** If not, implement them.

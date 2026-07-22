@@ -14,15 +14,20 @@ import { Button } from '@components/Button';
 import { Card } from '@components/Card';
 import { EscrowNotice } from '@components/EscrowNotice';
 import { Icon } from '@components/Icon';
+import { Input } from '@components/Input';
 import { ScreenHeader } from '@components/ScreenHeader';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { useBooking } from '@store/booking';
-import { practitionerRepo, rendezVousRepo } from '@data/repos';
+import { practitionerRepo, rendezVousRepo, promotionRepo, type PromotionValidation } from '@data/repos';
 import { buildDateHeureIso } from '@utils/booking';
 import { errorMessage } from '@data/api/client';
 
 type Mode = 'présentiel' | 'visio';
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
 
 interface PendingBooking {
   id: number;
@@ -42,6 +47,11 @@ export default function BookPayment() {
   const [pending, setPending] = useState<PendingBooking | null>(null);
   const confirmingRef = useRef(false);
 
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<PromotionValidation | null>(null);
+  const [promoError, setPromoError] = useState('');
+  const [validatingPromo, setValidatingPromo] = useState(false);
+
   const { data: praticien } = useQuery({
     queryKey: ['practitioner', draft?.practitionerId],
     queryFn: () => practitionerRepo.byId(draft?.practitionerId ?? ''),
@@ -49,6 +59,34 @@ export default function BookPayment() {
   });
 
   const subtotal = pending?.tarif ?? praticien?.price ?? 0;
+  const discount = appliedPromo
+    ? appliedPromo.type === 'pourcentage'
+      ? round2(subtotal * (appliedPromo.valeur / 100))
+      : Math.min(subtotal, appliedPromo.valeur)
+    : 0;
+  const total = round2(subtotal - discount);
+
+  const applyPromo = async () => {
+    const code = promoCode.trim();
+    if (!code || validatingPromo) return;
+    setValidatingPromo(true);
+    setPromoError('');
+    try {
+      const promo = await promotionRepo.validate(code);
+      setAppliedPromo(promo);
+    } catch (err) {
+      setAppliedPromo(null);
+      setPromoError(errorMessage(err, 'Code promo invalide ou expiré'));
+    } finally {
+      setValidatingPromo(false);
+    }
+  };
+
+  const removePromo = () => {
+    setAppliedPromo(null);
+    setPromoCode('');
+    setPromoError('');
+  };
 
   const confirm = async () => {
     if (!draft || !draft.day || !draft.slot) return;
@@ -65,6 +103,7 @@ export default function BookPayment() {
           praticien_id: Number(draft.practitionerId),
           date_heure: buildDateHeureIso(draft.day.date, draft.slot),
           mode,
+          promotion_code: appliedPromo?.code,
         });
         // Seeds the query cache confirmation.tsx reads from, so its useQuery resolves
         // instantly with data we already have instead of flashing a loading state.
@@ -141,6 +180,38 @@ export default function BookPayment() {
             body="Vos coordonnées bancaires ne transitent jamais par nos serveurs. Le prélèvement est confirmé dès la validation du paiement."
           />
 
+          <Text style={[styles.section, { marginTop: 24 }]}>Code promo</Text>
+          {appliedPromo ? (
+            <View style={styles.promoApplied}>
+              <Icon name="check" size={16} color={colors.sage2} />
+              <Text style={styles.promoAppliedText}>Code « {appliedPromo.code} » appliqué</Text>
+              {!pending && (
+                <Pressable onPress={removePromo} hitSlop={8}>
+                  <Text style={styles.promoRemove}>Retirer</Text>
+                </Pressable>
+              )}
+            </View>
+          ) : (
+            <View style={styles.promoRow}>
+              <Input
+                containerStyle={{ flex: 1, marginBottom: 0 }}
+                placeholder="Entrez un code"
+                autoCapitalize="characters"
+                value={promoCode}
+                onChangeText={setPromoCode}
+                editable={!pending}
+              />
+              <Pressable
+                style={[styles.promoBtn, (!promoCode.trim() || !!pending) && styles.promoBtnDisabled]}
+                onPress={applyPromo}
+                disabled={!promoCode.trim() || validatingPromo || !!pending}
+              >
+                <Text style={styles.promoBtnText}>{validatingPromo ? '…' : 'Appliquer'}</Text>
+              </Pressable>
+            </View>
+          )}
+          {!!promoError && <Text style={styles.error}>{promoError}</Text>}
+
           {!!error && <Text style={styles.error}>{error}</Text>}
 
           <Text style={[styles.section, { marginTop: 24 }]}>Récapitulatif</Text>
@@ -149,9 +220,12 @@ export default function BookPayment() {
               label={`Séance${praticien?.specialties?.[0] ? ` — ${praticien.specialties[0]}` : ''}`}
               value={`${subtotal.toFixed(2)} €`}
             />
+            {appliedPromo && (
+              <SummaryRow label={`Code « ${appliedPromo.code} »`} value={`− ${discount.toFixed(2)} €`} accent />
+            )}
             <View style={styles.total}>
               <Text style={styles.totalLabel}>Total à régler</Text>
-              <Text style={styles.totalValue}>{subtotal.toFixed(2)} €</Text>
+              <Text style={styles.totalValue}>{total.toFixed(2)} €</Text>
             </View>
           </Card>
         </View>
@@ -160,7 +234,7 @@ export default function BookPayment() {
       <View style={[styles.dock, { paddingBottom: insets.bottom + 14 }]}>
         <Button
           variant="aurora"
-          label={submitting ? 'Paiement en cours…' : `Régler ${subtotal.toFixed(2)} € en toute sécurité`}
+          label={submitting ? 'Paiement en cours…' : `Régler ${total.toFixed(2)} € en toute sécurité`}
           leftIcon={<Icon name="shield" size={18} color="#fff" />}
           onPress={confirm}
           disabled={submitting || !draft || !praticien}
@@ -170,11 +244,11 @@ export default function BookPayment() {
   );
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
+function SummaryRow({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
     <View style={styles.summaryRow}>
       <Text style={styles.summaryL}>{label}</Text>
-      <Text style={styles.summaryV}>{value}</Text>
+      <Text style={[styles.summaryV, accent && { color: colors.sage2 }]}>{value}</Text>
     </View>
   );
 }
@@ -210,6 +284,30 @@ const styles = StyleSheet.create({
   tileP: { ...typography.tiny, fontSize: 12 },
 
   error: { ...typography.small, color: colors.danger, fontSize: 13, marginTop: 10 },
+
+  promoRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
+  promoBtn: {
+    height: 52,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  promoBtnDisabled: { opacity: 0.4 },
+  promoBtnText: { fontFamily: 'Outfit_500Medium', fontSize: 14, color: '#fff' },
+  promoApplied: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 14,
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  promoAppliedText: { ...typography.small, fontSize: 14, flex: 1 },
+  promoRemove: { ...typography.small, fontSize: 13, color: colors.danger },
 
   summaryRow: {
     flexDirection: 'row',
