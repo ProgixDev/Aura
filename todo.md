@@ -31,7 +31,7 @@ Tasks from client feedback. Grouped by area.
 - [x] **Check if promo codes are implemented in the app.** Backend was already fully ready and unused: `POST /promotions/validate` + `RendezVousService.create()` already accepted an optional `promotion_code` and computed the discount (percentage or fixed) — even the mobile repo layer's `CreateRendezVousParams` already had the field. The only missing piece was the UI. Added a "Code promo" field to `booking/payment.tsx`: validates via the existing endpoint, shows the discount line + adjusted total in the recap, passes the code through at booking creation. No server changes needed.
 
 ## Client Reviews (Avis clients)
-- [ ] **Check if client reviews are implemented on mobile.** If not, implement them.
+- [x] **Check if client reviews are implemented on mobile.** Already fully implemented, verified both sides (not just "the repo function exists" — actually checked it's wired into a rendered screen, learned that lesson from the "Les échanges" task): write flow (`review.tsx`, 1-5 rating + text, moderation-aware confirmation message since avis are `en_attente` until an admin publishes them) reachable from `praticien/[id].tsx`'s profile page and the account menu; read flow is a dedicated "Avis" tab on the practitioner profile showing the average rating and every individual review. No gap found, no code changes needed.
 
 ## Blog
 - [ ] **Add a "Blog" section to mobile.** All admin blog articles must appear on mobile.
