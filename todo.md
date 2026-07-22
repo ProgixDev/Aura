@@ -21,11 +21,11 @@ Tasks from client feedback. Grouped by area.
   - Added e2e coverage for the new routes; full suite green (289 e2e + 55 unit server, 73 mobile).
 
 ## Practitioner Messaging
-- [ ] **Add practitioner-to-practitioner messaging** — a separate/additional messaging system in the app so practitioners can communicate with each other.
+- [x] **Add practitioner-to-practitioner messaging** — a separate/additional messaging system in the app so practitioners can communicate with each other. New `peer_conversations`/`peer_messages` tables + `/praticien/peer-conversations` API (both sides guarded by `PraticienGuard`, canonical pair ordering, server-computed `from_me` since both participants share the same role). Mobile: dashboard → "Messagerie praticiens", reuses existing chat UI, directory picker to start new conversations with any practitioner. Admin moderation parity (list/show/flag/unflag). Live DB migrated additively. e2e coverage added; full suite green. Committed on `tasks` branch (not merged).
 
 ## Litiges / Signalements
-- [ ] **Remove "Litiges" (disputes)** from the admin web side (keep "Signalements" / reports).
-- [ ] **Add the ability to file a report (signalement) in the app** — on both the practitioner side and the client side.
+- [x] **Remove "Litiges" (disputes)** from the admin web side (keep "Signalements" / reports). Deleted `admin/litiges` page, removed the sidebar nav entry, and cleaned up a dead `resolveDispute` modal registry entry that only that page used. Backend `Dispute` entity/API left untouched (still real data, just no longer surfaced in admin nav).
+- [x] **Add the ability to file a report (signalement) in the app** — on both the practitioner side and the client side. Client side already existed (`praticien/[id].tsx` → "Signaler"). Practitioner side was missing entirely — the `Signalement` target was hardcoded to `praticien_id` (schema `NOT NULL`), so there was no way to report a client. Made the target polymorphic (mirrors the SIRET/échanges pattern): `praticien_id` now nullable, added nullable `client_id`, exactly one enforced at the service layer + a `chk_sig_target` DB check. New `report-client.tsx` screen, reachable via a flag icon on each booking in the practitioner dashboard. Admin list/detail shows whichever target (client or practitioner) is set. Live DB migrated additively (22 existing rows untouched). e2e coverage added.
 
 ## Promo Codes
 - [ ] **Check if promo codes are implemented in the app.** Promo codes exist in the back office — if not implemented in the app, add promo code entry at the payment step.

@@ -172,6 +172,15 @@ export default function Dashboard() {
                     </Text>
                   </View>
                   <Text style={[styles.rdvStatut, { color: st.color }]}>{st.label}</Text>
+                  {r.client && (
+                    <Pressable
+                      onPress={() => router.push(`/report-client?clientId=${r.client!.id}` as any)}
+                      hitSlop={8}
+                      style={styles.rdvFlag}
+                    >
+                      <Icon name="flag" size={16} color={colors.muted} />
+                    </Pressable>
+                  )}
                 </View>
               );
             })
@@ -424,4 +433,5 @@ const styles = StyleSheet.create({
   rdvName: { fontFamily: 'Outfit_500Medium', fontSize: 14, marginBottom: 2 },
   rdvMeta: { ...typography.tiny, fontSize: 12 },
   rdvStatut: { fontFamily: 'Outfit_500Medium', fontSize: 12 },
+  rdvFlag: { marginLeft: 8, padding: 4 },
 });

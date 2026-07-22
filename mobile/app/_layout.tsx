@@ -116,6 +116,7 @@ export default function RootLayout() {
               <Stack.Screen name="blog/[slug]" />
               <Stack.Screen name="review" options={{ presentation: 'modal' }} />
               <Stack.Screen name="report" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="report-client" options={{ presentation: 'modal' }} />
               <Stack.Screen name="favorites" />
               <Stack.Screen name="rendez-vous" />
               <Stack.Screen name="notification-settings" />

@@ -173,9 +173,10 @@ export const avisRepo = {
 };
 
 // ---------- Signalements (reports) ----------
+// Target is polymorphic — pass exactly one of praticien_id/client_id, never both.
 export const signalementRepo = {
   create: (dto: {
-    praticien_id: number; type: string; sujet: string; motif: string; priorite?: string;
+    praticien_id?: number; client_id?: number; type: string; sujet: string; motif: string; priorite?: string;
   }): Promise<Signalement> =>
     api.post<{ data: Signalement }>('/signalements', dto).then((res) => res.data),
 };

@@ -23,7 +23,6 @@ export const ADMIN_NAV = [
   { group: 'Finances', items: [
     { href: '/admin/paiements', label: 'Paiements', icon: 'card' },
     { href: '/admin/remboursements', label: 'Remboursements', icon: 'euro' },
-    { href: '/admin/litiges', label: 'Litiges', icon: 'flag', badge: 2 },
     { href: '/admin/abonnements', label: 'Abonnements', icon: 'star' },
     { href: '/admin/promotions', label: 'Promotions', icon: 'tag' },
   ]},

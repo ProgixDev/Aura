@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Signalement } from '../database/entities/signalement.entity';
+import { Client } from '../database/entities/client.entity';
+import { Praticien } from '../database/entities/praticien.entity';
 import { User } from '../database/entities/user.entity';
 import { success } from '../common/envelope';
 import { parsePagination, paginateQb } from '../common/pagination';
@@ -13,6 +15,8 @@ import { CreateSignalementDto } from './dto/create-signalement.dto';
 export class SignalementsService {
   constructor(
     @InjectRepository(Signalement) private readonly signalements: Repository<Signalement>,
+    @InjectRepository(Client) private readonly clients: Repository<Client>,
+    @InjectRepository(Praticien) private readonly praticiens: Repository<Praticien>,
     private readonly auditLog: AuditLogService,
   ) {}
 
@@ -23,19 +27,38 @@ export class SignalementsService {
   private withRelations() {
     return this.signalements.createQueryBuilder('s')
       .leftJoinAndSelect('s.signalePar', 'signalePar')
-      .leftJoinAndSelect('s.praticien', 'praticien');
+      .leftJoinAndSelect('s.praticien', 'praticien')
+      .leftJoinAndSelect('s.client', 'client');
   }
 
-  // ---- client (JwtAuthGuard only — signale_par_id points at users, not clients) ----
+  // ---- filing (JwtAuthGuard only — signale_par_id points at users, not clients/praticiens,
+  // so this route works for either role reporting the other) ----
 
   async store(user: User, dto: CreateSignalementDto) {
+    const hasPraticien = dto.praticien_id !== undefined;
+    const hasClient = dto.client_id !== undefined;
+    if (hasPraticien === hasClient) {
+      throw new UnprocessableEntityException({
+        status: 'error', message: 'Erreur de validation',
+        errors: { target: ['Indiquez soit un praticien, soit un client à signaler (un seul des deux).'] },
+      });
+    }
+    if (hasPraticien) {
+      const praticien = await this.praticiens.findOneBy({ id: dto.praticien_id });
+      if (!praticien) this.notFound('Praticien introuvable');
+    } else {
+      const client = await this.clients.findOneBy({ id: dto.client_id });
+      if (!client) this.notFound('Client introuvable');
+    }
+
     const saved = await this.signalements.save({
       date_signalement: new Date(),
       type: dto.type,
       sujet: dto.sujet,
       motif: dto.motif,
       signale_par_id: user.id,
-      praticien_id: dto.praticien_id,
+      praticien_id: dto.praticien_id ?? null,
+      client_id: dto.client_id ?? null,
       priorite: dto.priorite ?? 'normale',
       statut: 'pending',
     });
@@ -67,7 +90,7 @@ export class SignalementsService {
       'a résolu un signalement',
       { type: 'signalement', id: s.id, label: `Signalement — ${s.sujet}` },
       'moderation',
-      { praticien_id: s.praticien_id, priorite: s.priorite },
+      { praticien_id: s.praticien_id, client_id: s.client_id, priorite: s.priorite },
     );
     return success(await this.signalements.findOneBy({ id }), 'Signalement résolu');
   }
@@ -81,7 +104,7 @@ export class SignalementsService {
       'a rejeté un signalement',
       { type: 'signalement', id: s.id, label: `Signalement — ${s.sujet}` },
       'moderation',
-      { praticien_id: s.praticien_id, priorite: s.priorite },
+      { praticien_id: s.praticien_id, client_id: s.client_id, priorite: s.priorite },
     );
     return success(await this.signalements.findOneBy({ id }), 'Signalement rejeté');
   }

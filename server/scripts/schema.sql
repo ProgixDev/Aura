@@ -209,13 +209,16 @@ create table signalements (
   sujet varchar(255) not null,
   motif text not null,
   signale_par_id integer not null,
-  praticien_id integer not null,
+  praticien_id integer,
+  client_id integer,
   priorite varchar(50) not null,
   statut varchar(50) not null,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
   constraint fk_sig_user foreign key (signale_par_id) references users(id) on delete cascade,
-  constraint fk_sig_praticien foreign key (praticien_id) references praticiens(id) on delete cascade
+  constraint fk_sig_praticien foreign key (praticien_id) references praticiens(id) on delete cascade,
+  constraint fk_sig_client foreign key (client_id) references clients(id) on delete cascade,
+  constraint chk_sig_target check (praticien_id is not null or client_id is not null)
 );
 create index idx_sig_statut_priorite on signalements (statut, priorite);
 create index idx_sig_type on signalements (type);

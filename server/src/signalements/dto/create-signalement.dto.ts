@@ -3,7 +3,8 @@ import { IsIn, IsInt, IsOptional, IsString, MaxLength, MinLength } from 'class-v
 export const SIGNALEMENT_PRIORITES = ['basse', 'normale', 'haute', 'urgente'];
 
 export class CreateSignalementDto {
-  @IsInt() praticien_id: number;
+  @IsOptional() @IsInt() praticien_id?: number;
+  @IsOptional() @IsInt() client_id?: number;
   @IsString() @MaxLength(255) type: string;
   @IsString() @MaxLength(255) sujet: string;
   @IsString() @MinLength(3) motif: string;

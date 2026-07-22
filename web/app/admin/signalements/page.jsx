@@ -49,7 +49,12 @@ export default function AdminReportsPage() {
           <span className="table-cell-main" style={{ display: 'block', maxWidth: 320 }}>{r.sujet}</span>
           {r.praticien && (
             <Link href={`/admin/praticien/${r.praticien.id}`} className="tiny more">
-              {r.praticien.firstname} {r.praticien.lastname}
+              {r.praticien.firstname} {r.praticien.lastname} <span className="muted">· praticien</span>
+            </Link>
+          )}
+          {r.client && (
+            <Link href={`/admin/client/${r.client.id}`} className="tiny more">
+              {r.client.firstname} {r.client.lastname} <span className="muted">· client</span>
             </Link>
           )}
         </div>

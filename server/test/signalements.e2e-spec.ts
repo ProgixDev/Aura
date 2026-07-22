@@ -1,23 +1,27 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { createTestApp, seedAdmin, seedClientUser } from './utils/create-test-app';
+import { createTestApp, seedAdmin, seedClientUser, seedPraticienUser } from './utils/create-test-app';
 import { SignalementsModule } from '../src/signalements/signalements.module';
 import { Praticien } from '../src/database/entities/praticien.entity';
+import { Client } from '../src/database/entities/client.entity';
 
 describe('signalements', () => {
   let app: INestApplication;
   let userToken: string;
+  let praticienToken: string;
   let adminToken: string;
   let praticienId: number;
+  let clientId: number;
   let signalementId: number;
 
   beforeAll(async () => {
     app = await createTestApp({ imports: [SignalementsModule] });
     // seedClientUser also creates a plain `users` row — its token is exactly
-    // what a JwtAuthGuard-only route needs; no linked `clients` row is required
-    // here (signalements has no client_id column, see plan Architecture notes).
+    // what a JwtAuthGuard-only route needs; the target is polymorphic
+    // (praticien_id or client_id), reporter identity is just whoever's JWT it is.
     userToken = (await seedClientUser(app, 'sig-user@aura.io')).token;
+    praticienToken = (await seedPraticienUser(app, 'sig-reporter-prat@aura.io')).token;
     adminToken = (await seedAdmin(app, 'sig-admin@aura.io')).token;
     const ds = app.get(DataSource);
     const p = await ds.getRepository(Praticien).save({
@@ -26,6 +30,10 @@ describe('signalements', () => {
       tarif: 10, experience: 1, bio: 'b'.repeat(60),
     });
     praticienId = p.id;
+    const c = await ds.getRepository(Client).save({
+      firstname: 'C', lastname: 'L', email: 'sig-client-target@x.io', city: 'Nice',
+    });
+    clientId = c.id;
   });
   afterAll(async () => { await app.close(); });
   const http = () => request(app.getHttpServer());
@@ -74,6 +82,49 @@ describe('signalements', () => {
         motif: 'Témoignage inventé', priorite: 'urgente',
       }).expect(201);
     expect(ok.body.data.priorite).toBe('urgente');
+  });
+
+  it('requires exactly one target — rejects both praticien_id and client_id together', async () => {
+    const res = await http().post('/api/signalements')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({
+        praticien_id: praticienId, client_id: clientId, type: 'other',
+        sujet: 'Cible ambiguë', motif: 'Les deux cibles sont renseignées.',
+      }).expect(422);
+    expect(res.body.errors.target).toBeDefined();
+  });
+
+  it('requires exactly one target — rejects neither praticien_id nor client_id', async () => {
+    const res = await http().post('/api/signalements')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ type: 'other', sujet: 'Aucune cible', motif: 'Ni praticien ni client renseigné.' })
+      .expect(422);
+    expect(res.body.errors.target).toBeDefined();
+  });
+
+  it('404s on an unknown client_id target', async () => {
+    const res = await http().post('/api/signalements')
+      .set('Authorization', `Bearer ${praticienToken}`)
+      .send({ client_id: 999999, type: 'behavior', sujet: 'Client introuvable', motif: 'Motif suffisant ici' })
+      .expect(404);
+    expect(res.body.message).toBe('Client introuvable');
+  });
+
+  it('a praticien can report a client — client relation shows in admin index', async () => {
+    const res = await http().post('/api/signalements')
+      .set('Authorization', `Bearer ${praticienToken}`)
+      .send({
+        client_id: clientId, type: 'behavior',
+        sujet: 'Client absent sans prévenir', motif: 'Ne s\'est pas présenté à la séance réservée.',
+      }).expect(201);
+    expect(res.body.data.client_id).toBe(clientId);
+    expect(res.body.data.praticien_id).toBeNull();
+
+    const list = await http().get('/api/admin/signalements')
+      .set('Authorization', `Bearer ${adminToken}`).expect(200);
+    const row = list.body.data.find((s: any) => s.id === res.body.data.id);
+    expect(row.client).toMatchObject({ id: clientId });
+    expect(row.praticien).toBeNull();
   });
 
   it('admin index requires JwtAuthGuard + AdminGuard and paginates', async () => {

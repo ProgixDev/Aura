@@ -57,9 +57,6 @@ export const MODAL_REGISTRY = {
   resolveReport: (p) => <FormModal title="Traiter le signalement"
     fields={[{ name: 'action', label: 'Décision', type: 'select', options: ['Aucune action', 'Avertissement', 'Masquer le contenu', 'Suspendre le compte'], required: true }, { name: 'note', label: 'Note interne', type: 'textarea' }]}
     submitLabel="Clôturer" successToast="Signalement traité" {...p} />,
-  resolveDispute: (p) => <FormModal title="Résoudre le litige"
-    fields={[{ name: 'decision', label: 'En faveur de', type: 'select', options: ['Client (remboursement)', 'Praticien (séance due)', 'Compromis 50/50'], required: true }, { name: 'note', label: 'Motivation', type: 'textarea' }]}
-    submitLabel="Trancher" successToast="Litige résolu" {...p} />,
   moderateReview: (p) => <FormModal title="Modérer l'avis"
     fields={[{ name: 'action', label: 'Action', type: 'select', options: ['Publier', 'Masquer', 'Supprimer'], required: true }, { name: 'note', label: 'Raison', type: 'textarea' }]}
     submitLabel="Appliquer" successToast="Avis modéré" {...p} />,

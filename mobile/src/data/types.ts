@@ -188,7 +188,8 @@ export interface Avis {
   updated_at?: string;
 }
 
-/** Real `signalements` row (server/src/database/entities/signalement.entity.ts). */
+/** Real `signalements` row (server/src/database/entities/signalement.entity.ts).
+ *  Target is polymorphic — exactly one of praticien_id/client_id is ever set. */
 export interface Signalement {
   id: number;
   date_signalement: string;
@@ -196,7 +197,8 @@ export interface Signalement {
   sujet: string;
   motif: string;
   signale_par_id: number;
-  praticien_id: number;
+  praticien_id: number | null;
+  client_id: number | null;
   priorite: string;
   statut: string;
   created_at?: string;
