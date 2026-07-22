@@ -11,6 +11,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.achrefdev.aura",
+      "buildNumber": "10",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Aura a besoin d'accéder à vos photos pour personnaliser votre profil.",
         "NSCameraUsageDescription": "Aura a besoin d'accéder à votre caméra pour les séances en visio.",
@@ -21,7 +22,7 @@
     },
     "android": {
       "package": "com.achrefdev.aura",
-      "versionCode": 1,
+      "versionCode": 10,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#BBD4EE"
