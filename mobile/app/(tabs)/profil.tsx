@@ -83,6 +83,11 @@ export default function Profil() {
 
         <Section title="Application">
           <MenuRow
+            icon={<Icon name="book" size={18} color={colors.ink} />}
+            label="Journal"
+            onPress={() => router.push('/blog' as any)}
+          />
+          <MenuRow
             icon={<Lotus size={16} color={colors.violet2} />}
             label="L'âme du projet"
             onPress={() => router.push('/founder' as any)}

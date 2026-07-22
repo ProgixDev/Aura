@@ -34,7 +34,7 @@ Tasks from client feedback. Grouped by area.
 - [x] **Check if client reviews are implemented on mobile.** Already fully implemented, verified both sides (not just "the repo function exists" — actually checked it's wired into a rendered screen, learned that lesson from the "Les échanges" task): write flow (`review.tsx`, 1-5 rating + text, moderation-aware confirmation message since avis are `en_attente` until an admin publishes them) reachable from `praticien/[id].tsx`'s profile page and the account menu; read flow is a dedicated "Avis" tab on the practitioner profile showing the average rating and every individual review. No gap found, no code changes needed.
 
 ## Blog
-- [ ] **Add a "Blog" section to mobile.** All admin blog articles must appear on mobile.
+- [x] **Add a "Blog" section to mobile.** All admin blog articles must appear on mobile. Same pattern as "Les échanges": `blog/index.tsx` (article list) and `blog/[slug].tsx` (detail) already existed, fully wired to the real backend (`GET /articles?status=publié`, correctly showing only published admin articles) — but the only path to `/blog` anywhere in the app was a single hardcoded "Reiki" teaser card on the client home tab, buried in a fallback branch. No genuine "Blog"/"Journal" entry point existed, and practitioners (who never see the client home tab — they land on `/dashboard`) had no path to it at all. Added a "Journal" row to both the client account menu and the practitioner dashboard.
 
 ## Cercles (Circles)
 - [ ] **Practitioners can create a "Cercle" (a group, paid or free) on mobile**, and users can subscribe/register to it.

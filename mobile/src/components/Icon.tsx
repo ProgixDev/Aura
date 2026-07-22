@@ -26,7 +26,8 @@ export type IconName =
   | 'exchange'
   | 'star'
   | 'message'
-  | 'camera';
+  | 'camera'
+  | 'book';
 
 interface Props {
   name: IconName;
@@ -213,6 +214,13 @@ export function Icon({ name, size = 22, color = colors.ink, strokeWidth = 1.6, f
         <Svg {...common}>
           <Path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
           <Circle cx="12" cy="13" r="4" />
+        </Svg>
+      );
+    case 'book':
+      return (
+        <Svg {...common}>
+          <Path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+          <Path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
         </Svg>
       );
   }

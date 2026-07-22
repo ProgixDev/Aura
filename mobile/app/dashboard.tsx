@@ -210,6 +210,11 @@ export default function Dashboard() {
           onPress={() => router.push('/peer-messages' as any)}
         />
         <Row
+          icon={<Icon name="book" size={20} color={colors.ink} />}
+          title="Journal"
+          onPress={() => router.push('/blog' as any)}
+        />
+        <Row
           icon={<Icon name="back" size={20} color={colors.danger} />}
           title="Se déconnecter"
           onPress={logout}
