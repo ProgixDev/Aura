@@ -28,7 +28,7 @@ describe('client-activity', () => {
     const seeded = await seedClientUser(app, 'activity-client@aura.io');
     // seedClientUser assigns firstname 'Client', lastname 'Test' -> full name 'Client Test'
     const praticien = await ds.getRepository(Praticien).save({
-      firstname: 'Elodie', lastname: 'Marceau', email: 'activity-prat@x.io', telephone: '06',
+      firstname: 'Elodie', lastname: 'Marceau', email: 'activity-prat@x.io', siret: '11111111111111', telephone: '06',
       ville: 'Nice', niveau: 'n', specialite: 's', mode: 'm', status: 'actif',
       tarif: 50, experience: 3, bio: 'b'.repeat(60), statut_verification: 'valide',
     });
@@ -85,7 +85,7 @@ describe('client-activity', () => {
   it('caps the feed at 15 items, keeping the most recent', async () => {
     const seeded = await seedClientUser(app, 'activity-cap@aura.io');
     const praticien = await ds.getRepository(Praticien).save({
-      firstname: 'Marc', lastname: 'Lemoine', email: 'activity-cap-prat@x.io', telephone: '06',
+      firstname: 'Marc', lastname: 'Lemoine', email: 'activity-cap-prat@x.io', siret: '11111111111111', telephone: '06',
       ville: 'Nantes', niveau: 'n', specialite: 's', mode: 'm', status: 'actif',
       tarif: 50, experience: 3, bio: 'b'.repeat(60), statut_verification: 'valide',
     });

@@ -178,7 +178,7 @@ export default function PractitionerProfilePage({ params }) {
                 <ul className="stack gap-3" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                   <li className="row gap-2 small">
                     <Icon name="shield" size={15} color="var(--sage-2, var(--violet-2))" />
-                    Identité &amp; assurance vérifiées
+                    Identité &amp; SIRET vérifiés
                   </li>
                   <li className="row gap-2 small">
                     <Icon name="card" size={15} color="var(--violet-2)" />

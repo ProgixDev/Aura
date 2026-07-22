@@ -36,7 +36,7 @@ describe('rendez-vous', () => {
     adminToken = (await seedAdmin(app, 'rdv-admin@aura.io')).token;
     ds = app.get(DataSource);
     const praticien = await ds.getRepository(Praticien).save({
-      firstname: 'Elodie', lastname: 'Marceau', email: 'elodie@aura.io', telephone: '06',
+      firstname: 'Elodie', lastname: 'Marceau', email: 'elodie@aura.io', siret: '11111111111111', telephone: '06',
       ville: 'Annecy', niveau: 'Expert', specialite: 'Magnétisme', mode: 'présentiel & visio',
       status: 'actif', tarif: 80, experience: 10, bio: 'Praticienne expérimentée.',
     });
@@ -382,7 +382,7 @@ describe('rendez-vous', () => {
       firstname: 'Pauline', lastname: 'Girard', email: 'pauline.girard@example.com', city: 'Marseille',
     });
     const otherPraticien = await ds.getRepository(Praticien).save({
-      firstname: 'Marc', lastname: 'Lemoine', email: 'marc.lemoine@aura.io', telephone: '07',
+      firstname: 'Marc', lastname: 'Lemoine', email: 'marc.lemoine@aura.io', siret: '11111111111111', telephone: '07',
       ville: 'Nantes', niveau: 'Confirmé', specialite: 'Reiki', mode: 'présentiel',
       status: 'actif', tarif: 55, experience: 4, bio: 'Praticien confirmé.',
     });

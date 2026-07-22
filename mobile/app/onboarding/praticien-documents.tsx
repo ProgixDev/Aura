@@ -3,6 +3,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { ScreenHeader } from '@components/ScreenHeader';
 import { Button } from '@components/Button';
 import { Icon } from '@components/Icon';
@@ -13,11 +14,9 @@ import { usePraticienRegistration } from '@store/praticienRegistration';
 import { praticienAuthRepo } from '@data/repos';
 import { errorMessage } from '@data/api/client';
 
-const DOC_TYPES: Array<{ key: 'piece_identite' | 'certification' | 'assurance' | 'domicile' | 'charte'; label: string; hint: string }> = [
+const DOC_TYPES: Array<{ key: 'piece_identite' | 'diplome' | 'charte'; label: string; hint: string }> = [
   { key: 'piece_identite', label: "Pièce d'identité", hint: 'Carte nationale, passeport…' },
-  { key: 'certification', label: 'Certification', hint: 'Diplôme ou attestation de formation' },
-  { key: 'assurance', label: 'Assurance professionnelle', hint: 'Attestation en cours de validité' },
-  { key: 'domicile', label: 'Justificatif de domicile', hint: 'Moins de 3 mois' },
+  { key: 'diplome', label: 'Diplôme', hint: 'Diplôme ou attestation de formation' },
   { key: 'charte', label: 'Charte GuériEnergies signée', hint: 'Téléchargée depuis votre email de bienvenue' },
 ];
 
@@ -31,19 +30,38 @@ export default function PraticienDocuments() {
   const setOnboardingSeen = useSession((s) => s.setOnboardingSeen);
   const [submitting, setSubmitting] = useState(false);
 
-  const pick = async (key: (typeof DOC_TYPES)[number]['key']) => {
+  const setDocument = (key: (typeof DOC_TYPES)[number]['key'], doc: { uri: string; name: string; mimeType: string }) => {
+    patchDraft({ documents: { ...draft.documents, [key]: doc } });
+  };
+
+  const pickFromFiles = async (key: (typeof DOC_TYPES)[number]['key']) => {
     const res = await DocumentPicker.getDocumentAsync({
       type: ['image/jpeg', 'image/png', 'application/pdf'],
       copyToCacheDirectory: true,
     });
     if (res.canceled || !res.assets?.[0]) return;
     const asset = res.assets[0];
-    patchDraft({
-      documents: {
-        ...draft.documents,
-        [key]: { uri: asset.uri, name: asset.name, mimeType: asset.mimeType ?? 'application/octet-stream' },
-      },
-    });
+    setDocument(key, { uri: asset.uri, name: asset.name, mimeType: asset.mimeType ?? 'application/octet-stream' });
+  };
+
+  const pickFromCamera = async (key: (typeof DOC_TYPES)[number]['key']) => {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Accès caméra refusé', "Autorisez l'accès à la caméra dans les réglages pour prendre une photo.");
+      return;
+    }
+    const res = await ImagePicker.launchCameraAsync({ quality: 0.8 });
+    if (res.canceled || !res.assets?.[0]) return;
+    const asset = res.assets[0];
+    setDocument(key, { uri: asset.uri, name: `${key}-${Date.now()}.jpg`, mimeType: asset.mimeType ?? 'image/jpeg' });
+  };
+
+  const choose = (key: (typeof DOC_TYPES)[number]['key']) => {
+    Alert.alert('Ajouter un document', undefined, [
+      { text: 'Prendre une photo', onPress: () => pickFromCamera(key) },
+      { text: 'Choisir un fichier', onPress: () => pickFromFiles(key) },
+      { text: 'Annuler', style: 'cancel' },
+    ]);
   };
 
   const allPicked = DOC_TYPES.every((d) => draft.documents?.[d.key]);
@@ -79,14 +97,14 @@ export default function PraticienDocuments() {
       >
         <Text style={styles.h1}>Vos <Text style={styles.italic}>documents</Text></Text>
         <Text style={styles.small}>
-          5 documents requis pour vérifier votre profil. Votre compte sera actif dès validation par notre équipe.
+          {DOC_TYPES.length} documents requis pour vérifier votre profil. Votre compte sera actif dès validation par notre équipe.
         </Text>
         <View style={{ height: 24 }} />
 
         {DOC_TYPES.map((d) => {
           const picked = draft.documents?.[d.key];
           return (
-            <Pressable key={d.key} style={styles.card} onPress={() => pick(d.key)}>
+            <Pressable key={d.key} style={styles.card} onPress={() => choose(d.key)}>
               <View style={[styles.badge, picked && styles.badgeDone]}>
                 <Icon name={picked ? 'check' : 'plus'} size={16} color={picked ? '#fff' : colors.muted} />
               </View>
@@ -96,6 +114,7 @@ export default function PraticienDocuments() {
                   {picked ? picked.name : d.hint}
                 </Text>
               </View>
+              {!picked && <Icon name="camera" size={18} color={colors.muted} />}
             </Pressable>
           );
         })}

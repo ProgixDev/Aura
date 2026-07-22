@@ -21,14 +21,14 @@ const BENEFITS = [
 
 const JOIN = [
   { n: '01', t: 'Créez votre profil', d: 'Disciplines, approche, parcours, tarifs. Racontez qui vous êtes.' },
-  { n: '02', t: 'Soumettez vos documents', d: 'Diplômes, assurance professionnelle, pièce d’identité. Tout reste confidentiel.' },
+  { n: '02', t: 'Soumettez vos documents', d: 'Numéro de SIRET, diplômes, pièce d’identité. Tout reste confidentiel.' },
   { n: '03', t: 'Vérification sous 48h', d: 'Notre équipe contrôle chaque pièce, à la main. On vous écrit dès que c’est bon.' },
   { n: '04', t: 'Recevez vos réservations', d: 'Votre profil est en ligne. Ouvrez votre agenda et accueillez vos premiers clients.' },
 ];
 
 const VERIFY = [
   { i: 'book', t: 'Diplômes & formations', d: 'Nous vérifions vos certifications et la cohérence de votre parcours.' },
-  { i: 'shield', t: 'Assurance professionnelle', d: 'Une RC pro valide est exigée pour protéger vos clients comme vous.' },
+  { i: 'shield', t: 'Numéro de SIRET', d: 'Un SIRET valide confirme votre existence légale en tant que professionnel·le.' },
   { i: 'user', t: 'Identité', d: 'Une pièce officielle confirme que vous êtes bien la personne du profil.' },
 ];
 

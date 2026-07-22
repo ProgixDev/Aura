@@ -15,7 +15,7 @@ describe('favorites', () => {
     clientToken = (await seedClientUser(app, 'fav-client@aura.io')).token;
     const ds = app.get(DataSource);
     const p = await ds.getRepository(Praticien).save({
-      firstname: 'P', lastname: 'L', email: 'fav-prat@x.io', telephone: '06',
+      firstname: 'P', lastname: 'L', email: 'fav-prat@x.io', siret: '11111111111111', telephone: '06',
       ville: 'Nice', niveau: 'n', specialite: 's', mode: 'm', status: 'actif',
       tarif: 10, experience: 1, bio: 'b'.repeat(60),
     });

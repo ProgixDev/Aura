@@ -12,6 +12,7 @@ export class Praticien {
   @Column() firstname: string;
   @Column() lastname: string;
   @Column({ unique: true }) email: string;
+  @Column({ length: 14 }) siret: string;
   @Column() telephone: string;
   @Column() ville: string;
   @Column() niveau: string;

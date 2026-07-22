@@ -18,6 +18,7 @@ const NIVEAUX = ['Novice', 'Praticien confirmé', 'Expert'];
 const MODES = ['présentiel', 'visio uniquement', 'présentiel & visio'];
 
 const schema = z.object({
+  siret: z.string().regex(/^\d{14}$/, 'Le SIRET doit contenir exactement 14 chiffres'),
   telephone: z.string().min(6, 'Numéro invalide'),
   niveau: z.string().min(1, 'Choisissez votre niveau'),
   specialite: z.string().min(1, 'Choisissez votre spécialité'),
@@ -65,6 +66,7 @@ export default function PraticienProfil() {
   const { control, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
+      siret: draft.siret ?? '',
       telephone: draft.telephone ?? '',
       niveau: draft.niveau ?? '',
       specialite: draft.specialite ?? '',
@@ -77,6 +79,7 @@ export default function PraticienProfil() {
 
   const submit = (data: FormValues) => {
     patchDraft({
+      siret: data.siret,
       telephone: data.telephone,
       niveau: data.niveau,
       specialite: data.specialite,
@@ -98,6 +101,15 @@ export default function PraticienProfil() {
         <Text style={styles.h1}>Votre <Text style={styles.italic}>pratique</Text></Text>
         <Text style={styles.small}>Pour que les chercheurs de soin vous trouvent.</Text>
         <View style={{ height: 24 }} />
+
+        <Controller
+          control={control}
+          name="siret"
+          render={({ field: { onChange, value } }) => (
+            <Input label="Numéro de SIRET" value={value} onChangeText={onChange} keyboardType="number-pad" maxLength={14} />
+          )}
+        />
+        {errors.siret && <Text style={styles.error}>{errors.siret.message}</Text>}
 
         <Controller
           control={control}

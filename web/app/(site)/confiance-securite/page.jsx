@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { faq } from '@/lib/data/content';
 
 const PILLARS = [
-  { i: 'shield', tone: 'tint-violet', t: 'Vérification des praticiens', d: 'Diplômes, assurance professionnelle et identité sont contrôlés à la main, document par document, avant toute mise en ligne.' },
+  { i: 'shield', tone: 'tint-violet', t: 'Vérification des praticiens', d: 'Numéro de SIRET, diplômes et identité sont contrôlés à la main, document par document, avant toute mise en ligne.' },
   { i: 'card', tone: 'tint-sky', t: 'Paiement protégé', d: 'Les transactions passent par un prestataire certifié. L’argent n’est versé au praticien qu’une fois la séance réalisée.' },
   { i: 'flag', tone: 'tint-gold', t: 'Modération active', d: 'Profils, messages et avis peuvent être signalés en un clic. Notre équipe intervient rapidement et avec discernement.' },
   { i: 'message', tone: 'tint-sage', t: 'Échanges encadrés', d: 'La messagerie reste sur GuériEnergies : conseil, questions, organisation. Les paiements hors plateforme ne sont jamais protégés.' },
@@ -15,7 +15,7 @@ const VERIF_STEPS = [
   { n: '01', t: 'Soumission', d: 'Le praticien dépose ses justificatifs dans un espace sécurisé et confidentiel.' },
   { n: '02', t: 'Contrôle humain', d: 'Notre équipe vérifie l’authenticité et la validité de chaque pièce, sous 48h.' },
   { n: '03', t: 'Attribution du badge', d: 'Une fois validé, le badge « Vérifiée » apparaît. Les documents, eux, ne sont jamais publiés.' },
-  { n: '04', t: 'Suivi continu', d: 'Assurances et signalements sont surveillés dans le temps. Un badge peut être retiré.' },
+  { n: '04', t: 'Suivi continu', d: 'Documents et signalements sont surveillés dans le temps. Un badge peut être retiré.' },
 ];
 
 const RGPD = [

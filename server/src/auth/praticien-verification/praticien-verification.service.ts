@@ -14,8 +14,7 @@ import { RejectPraticienDto } from './dto/reject-praticien.dto';
 import { DOC_TYPES } from '../praticien-auth/praticien-auth.service';
 
 const DOC_LABELS: Record<string, string> = {
-  piece_identite: "Pièce d'identité", certification: 'Certification',
-  assurance: 'Assurance', domicile: 'Justificatif de domicile', charte: 'Charte signée',
+  piece_identite: "Pièce d'identité", diplome: 'Diplôme', charte: 'Charte signée',
 };
 
 // The only content types a verification document is ever legitimately submitted as.
@@ -98,7 +97,7 @@ export class PraticienVerificationService {
         en_attente: docs.filter((d) => d.statut === 'en_attente').length,
         valides: docs.filter((d) => d.statut === 'valide').length,
         rejetes: docs.filter((d) => d.statut === 'rejete').length,
-        manquants: 5 - docs.length,
+        manquants: DOC_TYPES.length - docs.length,
       },
     });
   }
@@ -124,7 +123,7 @@ export class PraticienVerificationService {
     const anyRejete = all.some((d) => d.statut === 'rejete');
     let statutFinal = 'en_cours';
     let motifRejet: string | null = null;
-    if (all.length === 5 && valides === 5) statutFinal = 'valide';
+    if (all.length === DOC_TYPES.length && valides === DOC_TYPES.length) statutFinal = 'valide';
     else if (anyRejete) {
       statutFinal = 'rejete';
       motifRejet = dto.commentaire_global ?? 'Documents rejetés';
@@ -186,7 +185,7 @@ export class PraticienVerificationService {
     return success(
       {
         praticien,
-        documents_manquants: 5 - docs.length,
+        documents_manquants: DOC_TYPES.length - docs.length,
         documents_en_attente: docs.filter((d) => d.statut === 'en_attente').length,
       },
       'Relance envoyée avec succès',

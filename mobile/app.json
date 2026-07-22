@@ -14,7 +14,7 @@
       "buildNumber": "10",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "GuériEnergies a besoin d'accéder à vos photos pour personnaliser votre profil.",
-        "NSCameraUsageDescription": "GuériEnergies a besoin d'accéder à votre caméra pour les séances en visio.",
+        "NSCameraUsageDescription": "GuériEnergies a besoin d'accéder à votre caméra pour les séances en visio et pour photographier vos documents.",
         "NSMicrophoneUsageDescription": "GuériEnergies a besoin d'accéder à votre micro pour les séances en visio.",
         "NSLocationWhenInUseUsageDescription": "GuériEnergies utilise votre position pour vous recommander des praticiens proches.",
         "ITSAppUsesNonExemptEncryption": false
@@ -42,7 +42,13 @@
           "enableGooglePay": false
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "GuériEnergies a besoin d'accéder à votre caméra pour photographier vos documents et pour les séances en visio."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

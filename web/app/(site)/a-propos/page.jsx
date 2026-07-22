@@ -42,7 +42,7 @@ export default function AProposPage() {
             Le bien-être énergétique souffre d’un paradoxe : des milliers de praticiens compétents, et presque aucun moyen de les distinguer des promesses creuses. Résultat, les clients hésitent, et les praticiens sérieux se fondent dans la masse.
           </p>
           <p className="body" style={{ marginBottom: 18 }}>
-            Nous avons construit GuériEnergies pour résoudre ce paradoxe. Chaque praticien est <span className="serif-accent">vérifié</span> à la main : diplômes, assurance, identité. Chaque paiement est protégé. Chaque échange peut être signalé. La confiance n’est pas un argument marketing — c’est l’infrastructure.
+            Nous avons construit GuériEnergies pour résoudre ce paradoxe. Chaque praticien est <span className="serif-accent">vérifié</span> à la main : SIRET, diplômes, identité. Chaque paiement est protégé. Chaque échange peut être signalé. La confiance n’est pas un argument marketing — c’est l’infrastructure.
           </p>
           <p className="body">
             Nous ne promettons pas de miracles, et nous nous méfions de ceux qui en promettent. Nous offrons un cadre clair, doux et exigeant, où la rencontre entre une personne et un praticien peut se faire sereinement.

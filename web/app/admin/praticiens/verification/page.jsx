@@ -9,10 +9,9 @@ import { useUI } from '@/lib/store';
 import { api, apiFetchBlob } from '@/lib/api';
 import { dateFr } from '@/lib/format';
 
-const DOC_TYPES = ['piece_identite', 'certification', 'assurance', 'domicile', 'charte'];
+const DOC_TYPES = ['piece_identite', 'diplome', 'charte'];
 const DOC_LABELS = {
-  piece_identite: "Pièce d'identité", certification: 'Certification',
-  assurance: 'Assurance', domicile: 'Justificatif de domicile', charte: 'Charte signée',
+  piece_identite: "Pièce d'identité", diplome: 'Diplôme', charte: 'Charte signée',
 };
 
 async function openDocument(doc, toast) {
@@ -63,7 +62,7 @@ export default function VerificationQueuePage() {
 
       <div className="note tint-gold" style={{ marginBottom: 22 }}>
         <Icon name="shield" size={16} color="var(--gold-2)" />
-        <span className="small">Vérifiez chaque document avant d'approuver. Une fois les 5 documents validés, le praticien obtient le statut <strong>validé</strong> et apparaît dans les résultats de recherche.</span>
+        <span className="small">Vérifiez chaque document avant d'approuver. Une fois les {DOC_TYPES.length} documents validés, le praticien obtient le statut <strong>validé</strong> et apparaît dans les résultats de recherche.</span>
       </div>
 
       {isError && <div className="empty"><div className="glyph">❍</div>Impossible de charger la file de vérification.</div>}
@@ -83,6 +82,7 @@ export default function VerificationQueuePage() {
                   <div className="row gap-2"><strong>{p.firstname} {p.lastname}</strong><Badge variant="warning">{p.statut_verification}</Badge></div>
                   <div className="small">{p.specialite} · {p.niveau}</div>
                   <div className="tiny">{p.ville} · inscrit le {dateFr(p.date_inscription || p.created_at)}</div>
+                  <div className="tiny muted">SIRET {p.siret}</div>
                 </div>
               </div>
 

@@ -4,14 +4,14 @@ import { ModalButton } from '@/components/ui/ModalButton';
 import { faq } from '@/lib/data/content';
 
 const CLIENT_STEPS = [
-  { n: '01', i: 'search', t: 'Cherchez en confiance', d: "Filtrez par discipline, ville, modalité, budget. Chaque praticien affiché est vérifié : diplômes, assurance professionnelle, identité." },
+  { n: '01', i: 'search', t: 'Cherchez en confiance', d: "Filtrez par discipline, ville, modalité, budget. Chaque praticien affiché est vérifié : SIRET, diplômes, identité." },
   { n: '02', i: 'message', t: 'Échangez avant de réserver', d: 'Posez vos questions dans la messagerie sécurisée. Sentez si le courant passe. Les paiements ne se font jamais en privé.' },
   { n: '03', i: 'calendar', t: 'Réservez et vivez la séance', d: 'Choisissez un créneau, réglez en ligne en toute sécurité. Annulation gratuite jusqu’à 24h avant.' },
 ];
 
 const PRAT_STEPS = [
   { n: '01', i: 'user', t: 'Créez votre profil', d: 'Présentez votre approche, vos disciplines, votre parcours. Quelques minutes suffisent pour poser les bases.' },
-  { n: '02', i: 'shield', t: 'Faites-vous vérifier', d: 'Soumettez vos diplômes et votre assurance. Notre équipe contrôle chaque document sous 48h.' },
+  { n: '02', i: 'shield', t: 'Faites-vous vérifier', d: 'Soumettez votre SIRET et vos diplômes. Notre équipe contrôle chaque document sous 48h.' },
   { n: '03', i: 'calendar', t: 'Recevez vos premières réservations', d: 'Ouvrez votre agenda, fixez vos tarifs, et laissez les clients vous trouver. Vous êtes payé après chaque séance.' },
 ];
 

@@ -33,7 +33,7 @@ describe('database entities', () => {
   it('cascades PraticienDocument deletion when its Praticien is deleted (onDelete: CASCADE)', async () => {
     const ds = app.get(DataSource);
     const praticien = await ds.getRepository(Praticien).save({
-      firstname: 'P', lastname: 'Q', email: 'p@q.io', telephone: '0600000000',
+      firstname: 'P', lastname: 'Q', email: 'p@q.io', siret: '11111111111111', telephone: '0600000000',
       ville: 'Paris', niveau: 'expert', specialite: 'yoga', mode: 'presentiel',
       status: 'actif', tarif: 50, experience: 5, bio: 'Bio.',
     });

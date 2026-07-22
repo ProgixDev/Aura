@@ -33,7 +33,7 @@ export default function ManifestePage() {
             </blockquote>
 
             <p className="body">
-              GuériEnergies existe pour cela. Pour qu’un badge veuille dire quelque chose. Pour que « vérifiée » ne soit pas un mot vide mais une promesse tenue : des diplômes contrôlés, une assurance valide, une identité confirmée. À la main. Un par un. Parce que la confiance ne s’automatise pas.
+              GuériEnergies existe pour cela. Pour qu’un badge veuille dire quelque chose. Pour que « vérifiée » ne soit pas un mot vide mais une promesse tenue : des diplômes contrôlés, un numéro de SIRET vérifié, une identité confirmée. À la main. Un par un. Parce que la confiance ne s’automatise pas.
             </p>
 
             <h2 className="h-2 serif" style={{ marginTop: 12 }}>Ce en quoi nous croyons</h2>

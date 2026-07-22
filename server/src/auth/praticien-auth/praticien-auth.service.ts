@@ -17,7 +17,7 @@ import { assertUpload } from '../../common/upload.util';
 import { RegisterPraticienDto } from './dto/register-praticien.dto';
 import { LoginDto } from '../admin-auth/dto/login.dto';
 
-export const DOC_TYPES = ['piece_identite', 'certification', 'assurance', 'domicile', 'charte'] as const;
+export const DOC_TYPES = ['piece_identite', 'diplome', 'charte'] as const;
 
 @Injectable()
 export class PraticienAuthService {
@@ -66,7 +66,7 @@ export class PraticienAuthService {
         is_admin: false,
       });
       const praticien = await em.getRepository(Praticien).save({
-        firstname: dto.firstname, lastname: dto.lastname, email: dto.email,
+        firstname: dto.firstname, lastname: dto.lastname, email: dto.email, siret: dto.siret,
         telephone: dto.telephone, ville: dto.ville, niveau: dto.niveau,
         specialite: dto.specialite, mode: dto.mode, status: 'actif',
         tarif: dto.tarif, experience: dto.experience, bio: dto.bio,
@@ -99,7 +99,7 @@ export class PraticienAuthService {
         praticien,
         ...this.tokens.tokenPayload(user),
         documents_soumis: documentsUploaded,
-        documents_requis: 5,
+        documents_requis: DOC_TYPES.length,
       },
       "Votre compte a été créé avec succès. En attente de vérification par l'administrateur.",
     );

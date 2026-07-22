@@ -12,7 +12,7 @@ export const faq = [
     { q: 'Puis-je obtenir une facture ?', a: 'Oui, chaque paiement génère une facture téléchargeable depuis votre espace compte.' },
   ]},
   { cat: 'Praticiens', items: [
-    { q: 'Que signifie le badge « Vérifiée » ?', a: 'Nous avons contrôlé les diplômes, l\'assurance professionnelle et l\'identité du praticien.' },
+    { q: 'Que signifie le badge « Vérifiée » ?', a: 'Nous avons contrôlé le numéro de SIRET, les diplômes et l\'identité du praticien.' },
     { q: 'Comment devenir praticien sur GuériEnergies ?', a: 'Créez un profil praticien, soumettez vos documents, et notre équipe les vérifie sous 48h.' },
   ]},
   { cat: 'Confiance & sécurité', items: [

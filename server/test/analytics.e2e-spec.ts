@@ -64,20 +64,20 @@ describe('analytics: dashboard', () => {
     const twoMonthsAgoRef = new Date(Date.UTC(y, m - 2, 1));
     const twoMonthsAgo = new Date(Date.UTC(twoMonthsAgoRef.getUTCFullYear(), twoMonthsAgoRef.getUTCMonth(), 15));
     const basePrat = await ds.getRepository(Praticien).save({
-      firstname: 'Base', lastname: 'Prat', email: 'dash-base-prat@aura.io', telephone: '0600000000',
+      firstname: 'Base', lastname: 'Prat', email: 'dash-base-prat@aura.io', siret: '11111111111111', telephone: '0600000000',
       ville: 'Paris', niveau: 'Novice', specialite: 'Reiki', mode: 'visio',
       status: 'actif', tarif: 50, experience: 1, bio: 'bio', created_at: twoMonthsAgo,
     });
     await ds.getRepository(Praticien).save([
-      { firstname: 'New1', lastname: 'P', email: 'dash-new1@aura.io', telephone: '0600000001',
+      { firstname: 'New1', lastname: 'P', email: 'dash-new1@aura.io', siret: '11111111111111', telephone: '0600000001',
         ville: 'Paris', niveau: 'Novice', specialite: 'Magnétisme', mode: 'visio',
         status: 'actif', tarif: 50, experience: 1, bio: 'bio', created_at: thisMonthStart },
-      { firstname: 'New2', lastname: 'P', email: 'dash-new2@aura.io', telephone: '0600000002',
+      { firstname: 'New2', lastname: 'P', email: 'dash-new2@aura.io', siret: '11111111111111', telephone: '0600000002',
         ville: 'Lyon', niveau: 'Novice', specialite: 'Hypnose', mode: 'visio',
         status: 'actif', tarif: 50, experience: 1, bio: 'bio', created_at: thisMonthStart },
     ]);
     await ds.getRepository(Praticien).save({
-      firstname: 'Old1', lastname: 'P', email: 'dash-old1@aura.io', telephone: '0600000003',
+      firstname: 'Old1', lastname: 'P', email: 'dash-old1@aura.io', siret: '11111111111111', telephone: '0600000003',
       ville: 'Nice', niveau: 'Novice', specialite: 'Massage', mode: 'visio',
       status: 'actif', tarif: 50, experience: 1, bio: 'bio', created_at: prevMonthStart,
     });
@@ -156,12 +156,12 @@ describe('analytics: revenue', () => {
     const prevYm = `${prevRef.getUTCFullYear()}-${String(prevRef.getUTCMonth() + 1).padStart(2, '0')}`;
 
     const reiki = await ds.getRepository(Praticien).save({
-      firstname: 'R', lastname: 'P', email: 'rev-reiki@aura.io', telephone: '0600000010',
+      firstname: 'R', lastname: 'P', email: 'rev-reiki@aura.io', siret: '11111111111111', telephone: '0600000010',
       ville: 'Paris', niveau: 'Novice', specialite: 'Reiki', mode: 'visio',
       status: 'actif', tarif: 50, experience: 1, bio: 'bio',
     });
     const magnetisme = await ds.getRepository(Praticien).save({
-      firstname: 'M', lastname: 'P', email: 'rev-magnetisme@aura.io', telephone: '0600000011',
+      firstname: 'M', lastname: 'P', email: 'rev-magnetisme@aura.io', siret: '11111111111111', telephone: '0600000011',
       ville: 'Lyon', niveau: 'Novice', specialite: 'Magnétisme', mode: 'visio',
       status: 'actif', tarif: 50, experience: 1, bio: 'bio',
     });
@@ -214,7 +214,7 @@ describe('analytics: growth', () => {
     const recentDate = new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000); // always < 30 days old
 
     const prat = await ds.getRepository(Praticien).save({
-      firstname: 'G', lastname: 'P', email: 'growth-prat@aura.io', telephone: '0600000020',
+      firstname: 'G', lastname: 'P', email: 'growth-prat@aura.io', siret: '11111111111111', telephone: '0600000020',
       ville: 'Paris', niveau: 'Novice', specialite: 'Reiki', mode: 'visio',
       status: 'actif', tarif: 50, experience: 1, bio: 'bio',
     });
@@ -315,7 +315,7 @@ describe('analytics: retention', () => {
     const cohortBYm = `${cohortBMonth.getUTCFullYear()}-${String(cohortBMonth.getUTCMonth() + 1).padStart(2, '0')}`;
 
     const prat = await ds.getRepository(Praticien).save({
-      firstname: 'R', lastname: 'P', email: 'ret-prat@aura.io', telephone: '0600000030',
+      firstname: 'R', lastname: 'P', email: 'ret-prat@aura.io', siret: '11111111111111', telephone: '0600000030',
       ville: 'Paris', niveau: 'Novice', specialite: 'Reiki', mode: 'visio',
       status: 'actif', tarif: 50, experience: 1, bio: 'bio',
     });

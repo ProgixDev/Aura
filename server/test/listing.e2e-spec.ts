@@ -20,7 +20,7 @@ describe('clients + praticiens listing', () => {
       { firstname: 'C2', lastname: 'L', email: 'c2@x.io', city: 'Lyon' },
     ]);
     const p = await ds.getRepository(Praticien).save({
-      firstname: 'P', lastname: 'L', email: 'p@x.io', telephone: '06', ville: 'Nice',
+      firstname: 'P', lastname: 'L', email: 'p@x.io', siret: '11111111111111', telephone: '06', ville: 'Nice',
       niveau: 'n', specialite: 's', mode: 'm', status: 'actif',
       tarif: 10, experience: 1, bio: 'b'.repeat(60),
     });

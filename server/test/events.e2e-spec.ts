@@ -14,7 +14,7 @@ describe('events', () => {
     app = await createTestApp({ imports: [EventsModule] });
     const ds = app.get(DataSource);
     praticienId = (await ds.getRepository(Praticien).save({
-      firstname: 'A', lastname: 'B', email: 'anim@aura.io', telephone: '06', ville: 'Paris',
+      firstname: 'A', lastname: 'B', email: 'anim@aura.io', siret: '11111111111111', telephone: '06', ville: 'Paris',
       niveau: 'expert', specialite: 'yoga', mode: 'presentiel', status: 'actif',
       tarif: 50, experience: 3, bio: 'b'.repeat(60),
     })).id;

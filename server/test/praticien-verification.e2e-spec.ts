@@ -10,13 +10,13 @@ import { StorageService } from '../src/common/storage.service';
 const FAKE_FILE_BYTES = Buffer.from('%PDF-1.4 fake content');
 const fakeStorage = { save: jest.fn(), download: jest.fn().mockResolvedValue(FAKE_FILE_BYTES) };
 
-async function seedPraticien(ds: DataSource, email: string, nDocs = 5) {
+async function seedPraticien(ds: DataSource, email: string, nDocs = 3) {
   const praticien = await ds.getRepository(Praticien).save({
-    firstname: 'P', lastname: 'T', email, telephone: '06', ville: 'Paris',
+    firstname: 'P', lastname: 'T', email, siret: '11111111111111', telephone: '06', ville: 'Paris',
     niveau: 'expert', specialite: 'yoga', mode: 'presentiel', status: 'actif',
     tarif: 50, experience: 3, bio: 'b'.repeat(60), statut_verification: 'en_attente',
   });
-  const types = ['piece_identite', 'certification', 'assurance', 'domicile', 'charte'];
+  const types = ['piece_identite', 'diplome', 'charte'];
   const docs: PraticienDocument[] = [];
   for (const type of types.slice(0, nDocs)) {
     docs.push(await ds.getRepository(PraticienDocument).save({
@@ -62,15 +62,15 @@ describe('praticien verification (admin)', () => {
 
   it('show returns per-type document map with resume', async () => {
     const ds = app.get(DataSource);
-    const { praticien } = await seedPraticien(ds, 'p2@aura.io', 4);
+    const { praticien } = await seedPraticien(ds, 'p2@aura.io', 2);
     const res = await auth(http().get(`/api/v1/admin/praticiens/verification/${praticien.id}`)).expect(200);
     expect(res.body.data.documents.charte.soumis).toBe(false);
     expect(res.body.data.resume_documents).toEqual({
-      soumis: 4, en_attente: 4, valides: 0, rejetes: 0, manquants: 1,
+      soumis: 2, en_attente: 2, valides: 0, rejetes: 0, manquants: 1,
     });
   });
 
-  it('verify: all 5 valide → praticien valide; any rejete → praticien rejete', async () => {
+  it('verify: all 3 valide → praticien valide; any rejete → praticien rejete', async () => {
     const ds = app.get(DataSource);
     const { praticien, docs } = await seedPraticien(ds, 'p3@aura.io');
     const ok = await auth(http().post(`/api/v1/admin/praticiens/verification/${praticien.id}/verify`))
@@ -100,10 +100,10 @@ describe('praticien verification (admin)', () => {
     await auth(http().post(`/api/v1/admin/praticiens/verification/${praticien.id}/reject`))
       .send({ motif_rejet: 'Dossier incomplet et invalide' }).expect(404);
 
-    const { praticien: p6 } = await seedPraticien(ds, 'p6@aura.io', 3);
+    const { praticien: p6 } = await seedPraticien(ds, 'p6@aura.io', 1);
     const rel = await auth(http().post(`/api/v1/admin/praticiens/verification/${p6.id}/relance`)).expect(200);
     expect(rel.body.data.documents_manquants).toBe(2);
-    expect(rel.body.data.documents_en_attente).toBe(3);
+    expect(rel.body.data.documents_en_attente).toBe(1);
   });
 
   it('GET documents/:docId/file streams the stored file, guarded, 404 when missing', async () => {

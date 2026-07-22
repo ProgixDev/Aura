@@ -405,7 +405,7 @@ export const praticienProfileRepo = {
 // ---------- Praticien registration (real backend, multipart POST /praticien/register) ----------
 // DOC_TYPES must match server/src/auth/praticien-auth/praticien-auth.service.ts's DOC_TYPES
 // exactly — the backend rejects the request if any `documents[type]` field is missing.
-const DOC_TYPES = ['piece_identite', 'certification', 'assurance', 'domicile', 'charte'] as const;
+const DOC_TYPES = ['piece_identite', 'diplome', 'charte'] as const;
 
 export const praticienAuthRepo = {
   register: (draft: PraticienRegistrationDraft): Promise<{ token: string }> => {
@@ -413,6 +413,7 @@ export const praticienAuthRepo = {
     const fields: Array<[string, string | number | undefined]> = [
       ['firstname', draft.firstname], ['lastname', draft.lastname], ['email', draft.email],
       ['password', draft.password], ['password_confirmation', draft.password],
+      ['siret', draft.siret],
       ['telephone', draft.telephone], ['ville', draft.ville], ['niveau', draft.niveau],
       ['specialite', draft.specialite], ['mode', draft.mode], ['tarif', draft.tarif],
       ['experience', draft.experience], ['bio', draft.bio],

@@ -41,7 +41,7 @@ describe('audit log integration (real mutation points)', () => {
 
   it('avis publish/reject each write one row', async () => {
     const p = await ds.getRepository(Praticien).save({
-      firstname: 'P', lastname: 'L', email: 'ai-prat@x.io', telephone: '06',
+      firstname: 'P', lastname: 'L', email: 'ai-prat@x.io', siret: '11111111111111', telephone: '06',
       ville: 'Nice', niveau: 'n', specialite: 's', mode: 'm', status: 'actif',
       tarif: 10, experience: 1, bio: 'b'.repeat(60),
     });
@@ -66,7 +66,7 @@ describe('audit log integration (real mutation points)', () => {
 
   it('signalement resolve/reject each write one row', async () => {
     const p = await ds.getRepository(Praticien).save({
-      firstname: 'P', lastname: 'L', email: 'si-prat@x.io', telephone: '06',
+      firstname: 'P', lastname: 'L', email: 'si-prat@x.io', siret: '11111111111111', telephone: '06',
       ville: 'Nice', niveau: 'n', specialite: 's', mode: 'm', status: 'actif',
       tarif: 10, experience: 1, bio: 'b'.repeat(60),
     });
@@ -92,7 +92,7 @@ describe('audit log integration (real mutation points)', () => {
   it('remboursement approve/refuse/complete each write one row', async () => {
     const { client } = await seedClientUser(app, 'rb-client@aura.io');
     const p = await ds.getRepository(Praticien).save({
-      firstname: 'P', lastname: 'L', email: 'rb-prat@x.io', telephone: '06',
+      firstname: 'P', lastname: 'L', email: 'rb-prat@x.io', siret: '11111111111111', telephone: '06',
       ville: 'Nice', niveau: 'n', specialite: 's', mode: 'm', status: 'actif',
       tarif: 10, experience: 1, bio: 'b'.repeat(60),
     });
@@ -125,11 +125,11 @@ describe('audit log integration (real mutation points)', () => {
 
   it('praticien-verification verify/reject each write one row', async () => {
     const p1 = await ds.getRepository(Praticien).save({
-      firstname: 'Vera', lastname: 'Fied', email: 'pv1@x.io', telephone: '06',
+      firstname: 'Vera', lastname: 'Fied', email: 'pv1@x.io', siret: '11111111111111', telephone: '06',
       ville: 'Nice', niveau: 'n', specialite: 's', mode: 'm', status: 'actif',
       tarif: 10, experience: 1, bio: 'b'.repeat(60), statut_verification: 'en_attente',
     });
-    const types = ['piece_identite', 'certification', 'assurance', 'domicile', 'charte'];
+    const types = ['piece_identite', 'diplome', 'charte'];
     const docs: PraticienDocument[] = [];
     for (const type of types) {
       docs.push(await ds.getRepository(PraticienDocument).save({
@@ -144,7 +144,7 @@ describe('audit log integration (real mutation points)', () => {
     expect((verifyLog!.metadata as any).target_label).toBe('Vera Fied');
 
     const p2 = await ds.getRepository(Praticien).save({
-      firstname: 'Rej', lastname: 'Ected', email: 'pv2@x.io', telephone: '06',
+      firstname: 'Rej', lastname: 'Ected', email: 'pv2@x.io', siret: '11111111111111', telephone: '06',
       ville: 'Nice', niveau: 'n', specialite: 's', mode: 'm', status: 'actif',
       tarif: 10, experience: 1, bio: 'b'.repeat(60), statut_verification: 'en_attente',
     });

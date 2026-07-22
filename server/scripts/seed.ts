@@ -143,7 +143,7 @@ const PHOTO_SETS: Array<{ photo: string; hero: string; gallery: string[] }> = [
 
 const NIVEAUX = ['Expert', 'Praticien confirmé', 'Novice'];
 const MODES = ['présentiel & visio', 'présentiel', 'visio uniquement'];
-const DOC_TYPES = ['piece_identite', 'certification', 'assurance', 'domicile', 'charte'];
+const DOC_TYPES = ['piece_identite', 'diplome', 'charte'];
 const CERCLE_PALETTE = ['#8B5CF6', '#38BDF8', '#84A98C', '#D4AF37', '#F472B6', '#F59E0B'];
 
 /** 'YYYY-MM-DD' for `date`-typed columns (e.g. promotions.date_expiration) — that column
@@ -177,6 +177,12 @@ function emailLocal(firstname: string, lastname: string, i: number): string {
 function phoneFor(i: number): string {
   const n = (12345678 + i * 9137) % 100000000;
   return `06${String(n).padStart(8, '0')}`;
+}
+
+/** Deterministic 14-digit SIRET-shaped number (not a real registry lookup, seed data only). */
+function siretFor(i: number): string {
+  const n = (12345678901234 + i * 913137) % 100000000000000;
+  return String(n).padStart(14, '0');
 }
 
 /** French bio sentence, guaranteed well over the 60-char minimum regardless of inputs. */
@@ -328,6 +334,7 @@ async function seedPraticiens(ctx: SeedContext): Promise<Praticien[]> {
       firstname,
       lastname,
       email: `${emailLocal(firstname, lastname, i)}@guerienergies-pro.io`,
+      siret: siretFor(i),
       specialite: pick(DISCIPLINE_NOMS, i),
       ville: pick(CITIES, i + 4),
       // + floor(i/12) decorrelates niveau from specialite across the 3 practitioners that
@@ -358,6 +365,7 @@ async function seedPraticiens(ctx: SeedContext): Promise<Praticien[]> {
         firstname: p.firstname,
         lastname: p.lastname,
         email: p.email,
+        siret: p.siret,
         telephone: phoneFor(i),
         ville: p.ville,
         niveau: p.niveau,

@@ -129,6 +129,7 @@ export async function seedPraticienUser(app: INestApplication, email = 'praticie
     firstname: 'Praticien',
     lastname: 'Test',
     email,
+    siret: '11111111111111',
     telephone: '0600000000',
     ville: 'Paris',
     niveau: 'expert',

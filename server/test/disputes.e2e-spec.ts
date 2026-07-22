@@ -21,7 +21,7 @@ describe('disputes', () => {
     clientId = seeded.client.id;
     const ds = app.get(DataSource);
     const p = await ds.getRepository(Praticien).save({
-      firstname: 'P', lastname: 'L', email: 'disp-prat@x.io', telephone: '06',
+      firstname: 'P', lastname: 'L', email: 'disp-prat@x.io', siret: '11111111111111', telephone: '06',
       ville: 'Nice', niveau: 'n', specialite: 's', mode: 'm', status: 'actif',
       tarif: 10, experience: 1, bio: 'b'.repeat(60),
     });

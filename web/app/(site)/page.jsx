@@ -15,7 +15,7 @@ import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
 
 const STEPS = [
-  { n: '01', t: 'Cherchez en confiance', d: "Filtrez par discipline, ville, modalité. Chaque praticien est vérifié : diplômes, assurance, identité." },
+  { n: '01', t: 'Cherchez en confiance', d: "Filtrez par discipline, ville, modalité. Chaque praticien est vérifié : SIRET, diplômes, identité." },
   { n: '02', t: 'Échangez avant de réserver', d: 'Posez vos questions dans la messagerie sécurisée. Les paiements ne se font jamais en privé.' },
   { n: '03', t: 'Réservez et vivez la séance', d: 'Choisissez un créneau, payez en sécurité. Annulation gratuite jusqu’à 24h avant.' },
 ];

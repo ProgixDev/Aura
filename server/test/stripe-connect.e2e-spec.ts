@@ -170,7 +170,7 @@ describe('stripe-connect (account.updated webhook)', () => {
 
   beforeAll(async () => {
     const connectEnabled = await ds.getRepository(Praticien).save({
-      firstname: 'Connectée', lastname: 'Praticienne', email: 'wh-connect-enabled@aura.io',
+      firstname: 'Connectée', lastname: 'Praticienne', email: 'wh-connect-enabled@aura.io', siret: '11111111111111',
       telephone: '06', ville: 'Nice', niveau: 'Expert', specialite: 'Reiki',
       mode: 'présentiel & visio', status: 'actif', tarif: 100, experience: 8,
       bio: 'Praticienne avec Stripe Connect actif.', statut_verification: 'valide',
@@ -179,7 +179,7 @@ describe('stripe-connect (account.updated webhook)', () => {
     connectEnabledPraticienId = connectEnabled.id;
 
     const notConnected = await ds.getRepository(Praticien).save({
-      firstname: 'NonConnectée', lastname: 'Praticienne', email: 'wh-not-connected@aura.io',
+      firstname: 'NonConnectée', lastname: 'Praticienne', email: 'wh-not-connected@aura.io', siret: '11111111111111',
       telephone: '06', ville: 'Nice', niveau: 'Novice', specialite: 'Reiki',
       mode: 'présentiel & visio', status: 'actif', tarif: 80, experience: 1,
       bio: 'Praticienne sans Stripe Connect.', statut_verification: 'valide',

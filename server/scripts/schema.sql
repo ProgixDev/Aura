@@ -72,6 +72,7 @@ create table praticiens (
   firstname varchar(255) not null,
   lastname varchar(255) not null,
   email varchar(255) not null unique,
+  siret varchar(14) not null,
   telephone varchar(255) not null,
   ville varchar(255) not null,
   niveau varchar(255) not null,

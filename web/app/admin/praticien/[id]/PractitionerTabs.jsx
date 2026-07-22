@@ -56,6 +56,7 @@ export default function PractitionerTabs({ p, myBookings, myReviews }) {
                 <h3 className="h-4" style={{ marginBottom: 14 }}>Coordonnées</h3>
                 <dl className="dl">
                   <dt>Email</dt><dd>{p.email}</dd>
+                  <dt>SIRET</dt><dd>{p.siret}</dd>
                   <dt>Téléphone</dt><dd>{p.telephone}</dd>
                   <dt>Ville</dt><dd>{p.ville}</dd>
                   <dt>Inscrit le</dt><dd>{dateFr(p.date_inscription || p.created_at)}</dd>

@@ -17,7 +17,7 @@ describe('stats', () => {
     ds = app.get(DataSource);
 
     const base = {
-      telephone: '06', niveau: 'n', specialite: 's', mode: 'm', status: 'actif',
+      siret: '11111111111111', telephone: '06', niveau: 'n', specialite: 's', mode: 'm', status: 'actif',
       tarif: 10, experience: 1, bio: 'b'.repeat(60),
     };
     const [p1, p2, p3] = await ds.getRepository(Praticien).save([

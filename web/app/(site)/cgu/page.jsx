@@ -77,7 +77,7 @@ export default function CguPage() {
 
               <h3 className="h-3" id="praticiens" style={{ scrollMarginTop: 96, marginBottom: 8 }}>8. Obligations des praticiens</h3>
               <p className="body" style={{ marginBottom: 24 }}>
-                Le Praticien garantit la véracité des diplômes, certifications et assurances communiqués lors de la vérification. Il s’engage à exercer dans le respect de la déontologie de sa discipline, à ne formuler aucune promesse de guérison et à orienter vers un professionnel de santé lorsque la situation l’exige.
+                Le Praticien garantit la véracité du numéro de SIRET, des diplômes et certifications communiqués lors de la vérification. Il s’engage à exercer dans le respect de la déontologie de sa discipline, à ne formuler aucune promesse de guérison et à orienter vers un professionnel de santé lorsque la situation l’exige.
               </p>
 
               <h3 className="h-3" id="moderation" style={{ scrollMarginTop: 96, marginBottom: 8 }}>9. Modération & sanctions</h3>

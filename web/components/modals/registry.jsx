@@ -44,7 +44,7 @@ export const MODAL_REGISTRY = {
     submitLabel="Proposer le créneau" successToast="Demande de report envoyée" {...p} />,
 
   // ---- admin modals ----
-  verifyPractitioner: (p) => <ConfirmModal title="Vérifier le praticien" message="Confirmer que les documents (diplômes, assurance, identité) sont conformes ? Le badge « Vérifiée » sera attribué." confirmLabel="Vérifier" successToast="Praticien vérifié" {...p} />,
+  verifyPractitioner: (p) => <ConfirmModal title="Vérifier le praticien" message="Confirmer que les documents (SIRET, diplômes, identité) sont conformes ? Le badge « Vérifiée » sera attribué." confirmLabel="Vérifier" successToast="Praticien vérifié" {...p} />,
   rejectPractitioner: (p) => <ConfirmModal title="Rejeter la candidature" danger withReason reasonLabel="Motif du rejet" message="Le praticien sera notifié du refus." confirmLabel="Rejeter" successToast="Candidature rejetée" {...p} />,
   suspendUser: (p) => <ConfirmModal title="Suspendre le compte" danger withReason reasonLabel="Motif de la suspension" message="L'accès sera bloqué jusqu'à réactivation." confirmLabel="Suspendre" successToast="Compte suspendu" {...p} />,
   banUser: (p) => <ConfirmModal title="Bannir définitivement" danger withReason message="Cette action est irréversible." confirmLabel="Bannir" successToast="Compte banni" {...p} />,

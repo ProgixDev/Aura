@@ -25,7 +25,7 @@ const BODIES = {
     "C’est pourquoi nous vous déconseillons fortement tout paiement en dehors de la plateforme : il échapperait à ces protections.",
   ],
   'badge-verifie': [
-    "Le badge « Vérifiée » signifie que notre équipe a contrôlé trois éléments essentiels : les diplômes ou certifications de la discipline, l’assurance professionnelle en cours de validité, et l’identité du praticien.",
+    "Le badge « Vérifiée » signifie que notre équipe a contrôlé trois éléments essentiels : les diplômes ou certifications de la discipline, le numéro de SIRET, et l’identité du praticien.",
     "Cette vérification est réalisée manuellement, document par document, avant la mise en ligne du profil. Elle est renouvelée périodiquement pour garantir que les informations restent à jour.",
     "Le badge ne garantit pas un résultat thérapeutique — aucun praticien sérieux ne le promet — mais il vous assure que vous échangez avec une personne réelle, qualifiée et assurée.",
   ],
@@ -36,7 +36,7 @@ const BODIES = {
   ],
   'devenir-praticien': [
     "Pour proposer vos séances sur GuériEnergies, créez un profil praticien depuis la page « Devenir praticien ». Vous renseignez vos disciplines, votre approche, vos tarifs et vos modalités.",
-    "Vous soumettez ensuite vos justificatifs : diplômes, certifications et attestation d’assurance professionnelle. Notre équipe les vérifie généralement sous 48 heures.",
+    "Vous soumettez ensuite vos justificatifs : numéro de SIRET, diplômes et certifications. Notre équipe les vérifie généralement sous 48 heures.",
     "Une fois validé, votre profil apparaît dans la recherche avec le badge « Vérifiée ». Vous pouvez alors recevoir des demandes, échanger via la messagerie et gérer vos disponibilités.",
   ],
   'gerer-disponibilites': [
