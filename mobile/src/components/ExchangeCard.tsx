@@ -41,7 +41,9 @@ export function ExchangeCard({ exchange }: { exchange: Exchange }) {
       <View style={styles.head}>
         <View style={styles.titleWrap}>
           <Text style={styles.name} numberOfLines={2}>{exchange.sujet}</Text>
-          <Text style={styles.date}>{dateFr(exchange.created_at)}</Text>
+          <Text style={styles.date}>
+            {exchange.auteur_nom ? `${exchange.auteur_nom} · ` : ''}{dateFr(exchange.created_at)}
+          </Text>
         </View>
         <Chip
           label={STATUT_FR[exchange.statut] ?? exchange.statut}

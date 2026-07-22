@@ -75,7 +75,7 @@ export default function Profil() {
           />
           <MenuRow
             icon={<Icon name="exchange" size={18} color={colors.ink} />}
-            label="Mes échanges"
+            label="Échanges"
             value={activeExchanges > 0 ? `${activeExchanges} actif${activeExchanges > 1 ? 's' : ''}` : undefined}
             onPress={() => router.push('/exchange' as any)}
           />

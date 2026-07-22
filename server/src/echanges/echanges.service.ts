@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Echange, PieceJointe } from '../database/entities/echange.entity';
 import { Client } from '../database/entities/client.entity';
+import { Praticien } from '../database/entities/praticien.entity';
 import { User } from '../database/entities/user.entity';
 import { success } from '../common/envelope';
 import { parsePagination, paginateQb } from '../common/pagination';
@@ -20,6 +21,8 @@ const PIECE_JOINTE_EXTS = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx'];
 export class EchangesService {
   constructor(
     @InjectRepository(Echange) private readonly echanges: Repository<Echange>,
+    @InjectRepository(Client) private readonly clients: Repository<Client>,
+    @InjectRepository(Praticien) private readonly praticiens: Repository<Praticien>,
     private readonly storage: StorageService,
   ) {}
 
@@ -39,6 +42,7 @@ export class EchangesService {
   private withRelations() {
     return this.echanges.createQueryBuilder('e')
       .leftJoinAndSelect('e.client', 'client')
+      .leftJoinAndSelect('e.praticien', 'praticien')
       .leftJoinAndSelect('e.traitePar', 'traitePar')
       .leftJoinAndSelect('e.signalePar', 'signalePar');
   }
@@ -108,6 +112,130 @@ export class EchangesService {
     if (!echange) this.notFound('Échange non trouvé ou ne peut pas être supprimé');
     await this.echanges.softDelete(id);
     return success(undefined, 'Échange supprimé avec succès');
+  }
+
+  // ---- praticien-facing (mirrors the client-facing block above, keyed on praticien_id) ----
+
+  async indexPraticien(praticien: Praticien, query: Record<string, any>) {
+    const { page, perPage } = parsePagination(query, 10);
+    const qb = this.echanges.createQueryBuilder('e')
+      .leftJoinAndSelect('e.praticien', 'praticien')
+      .where('e.praticien_id = :pid', { pid: praticien.id });
+    if (query.statut !== undefined) qb.andWhere('e.statut = :st', { st: query.statut });
+    if (query.type !== undefined) qb.andWhere('e.type = :ty', { ty: query.type });
+    if (query.search !== undefined) {
+      qb.andWhere('(e.sujet LIKE :q OR e.message LIKE :q)', { q: `%${query.search}%` });
+    }
+    qb.orderBy('e.created_at', 'DESC');
+    const { data, pagination } = await paginateQb(qb, page, perPage);
+    return success(data, undefined, { pagination });
+  }
+
+  async storePraticien(praticien: Praticien, dto: CreateEchangeDto, files: Express.Multer.File[]) {
+    this.assertDelaiValid(dto.delai_souhaite);
+    const pieces: PieceJointe[] = [];
+    for (const file of files ?? []) {
+      assertUpload(file, 'pieces_jointes', PIECE_JOINTE_EXTS);
+      const chemin = await this.storage.save(file, `echanges/praticien-${praticien.id}`);
+      pieces.push({ nom: file.originalname, chemin, taille: file.size, type: file.mimetype });
+    }
+    const saved = await this.echanges.save({
+      praticien_id: praticien.id,
+      sujet: dto.sujet, type: dto.type, message: dto.message,
+      ce_que_je_propose: dto.ce_que_je_propose ?? null,
+      ce_que_je_recherche: dto.ce_que_je_recherche ?? null,
+      format: dto.format ?? null,
+      delai_souhaite: dto.delai_souhaite ?? null,
+      pieces_jointes: pieces.length ? pieces : null,
+      statut: 'en_attente', priorite: 'moyenne',
+    });
+    const fresh = await this.echanges.findOne({ where: { id: saved.id }, relations: { praticien: true } });
+    return success(fresh, 'Votre message a été envoyé avec succès');
+  }
+
+  async showPraticien(praticien: Praticien, id: number) {
+    const echange = await this.echanges.findOne({
+      where: { id, praticien_id: praticien.id }, relations: { praticien: true },
+    });
+    if (!echange) this.notFound('Échange non trouvé');
+    return success(echange);
+  }
+
+  async updatePraticien(praticien: Praticien, id: number, dto: UpdateEchangeDto) {
+    this.assertDelaiValid(dto.delai_souhaite);
+    const echange = await this.echanges.findOneBy({
+      id, praticien_id: praticien.id, statut: In(['en_attente', 'lu']),
+    });
+    if (!echange) this.notFound('Échange non trouvé ou ne peut pas être modifié');
+    await this.echanges.update(id, { ...dto });
+    const fresh = await this.echanges.findOne({ where: { id }, relations: { praticien: true } });
+    return success(fresh, 'Échange mis à jour avec succès');
+  }
+
+  async destroyPraticien(praticien: Praticien, id: number) {
+    const echange = await this.echanges.findOneBy({
+      id, praticien_id: praticien.id, statut: In(['en_attente', 'lu']),
+    });
+    if (!echange) this.notFound('Échange non trouvé ou ne peut pas être supprimé');
+    await this.echanges.softDelete(id);
+    return success(undefined, 'Échange supprimé avec succès');
+  }
+
+  // ---- community (public board, visible to any authenticated client or praticien) ----
+
+  async community(query: Record<string, any>, user: User) {
+    const { page, perPage } = parsePagination(query, 10);
+    const [viewerClient, viewerPraticien] = await Promise.all([
+      this.clients.findOneBy({ email: user.email }),
+      this.praticiens.findOneBy({ email: user.email }),
+    ]);
+    const qb = this.echanges.createQueryBuilder('e')
+      .leftJoinAndSelect('e.client', 'client')
+      .leftJoinAndSelect('e.praticien', 'praticien')
+      .where('e.est_masque = false')
+      .andWhere('e.statut != :signale', { signale: 'signale' });
+    if (query.type !== undefined) qb.andWhere('e.type = :ty', { ty: query.type });
+    if (query.search !== undefined) {
+      qb.andWhere('(e.sujet LIKE :q OR e.message LIKE :q)', { q: `%${query.search}%` });
+    }
+    qb.orderBy('e.created_at', 'DESC');
+    const { data, pagination } = await paginateQb(qb, page, perPage);
+    const withAuthor = data.map((e) => ({
+      ...e,
+      auteur_nom: e.client
+        ? `${e.client.firstname} ${e.client.lastname}`
+        : e.praticien ? `${e.praticien.firstname} ${e.praticien.lastname}` : 'Membre',
+      auteur_type: e.client ? 'client' : 'praticien',
+      est_a_moi: Boolean(
+        (viewerClient && e.client_id === viewerClient.id)
+        || (viewerPraticien && e.praticien_id === viewerPraticien.id),
+      ),
+    }));
+    return success(withAuthor, undefined, { pagination });
+  }
+
+  async communityShow(id: number, user: User) {
+    const [viewerClient, viewerPraticien] = await Promise.all([
+      this.clients.findOneBy({ email: user.email }),
+      this.praticiens.findOneBy({ email: user.email }),
+    ]);
+    const echange = await this.withRelations()
+      .where('e.id = :id', { id })
+      .andWhere('e.est_masque = false')
+      .andWhere('e.statut != :signale', { signale: 'signale' })
+      .getOne();
+    if (!echange) this.notFound('Échange non trouvé');
+    return success({
+      ...echange,
+      auteur_nom: echange.client
+        ? `${echange.client.firstname} ${echange.client.lastname}`
+        : echange.praticien ? `${echange.praticien.firstname} ${echange.praticien.lastname}` : 'Membre',
+      auteur_type: echange.client ? 'client' : 'praticien',
+      est_a_moi: Boolean(
+        (viewerClient && echange.client_id === viewerClient.id)
+        || (viewerPraticien && echange.praticien_id === viewerPraticien.id),
+      ),
+    });
   }
 
   // ---- admin-facing ----

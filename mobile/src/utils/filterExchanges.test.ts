@@ -5,6 +5,7 @@ function makeExchange(type: Exchange['type'], id: number): Exchange {
   return {
     id,
     client_id: 1,
+    praticien_id: null,
     sujet: 'Sujet',
     type,
     statut: 'en_attente',

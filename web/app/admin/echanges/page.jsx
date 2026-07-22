@@ -22,7 +22,9 @@ export default function AdminExchangesPage() {
   });
   const echanges = (data?.data ?? []).map((e) => ({
     ...e,
-    client_nom: e.client ? `${e.client.firstname} ${e.client.lastname}` : 'Client',
+    client_nom: e.client
+      ? `${e.client.firstname} ${e.client.lastname}`
+      : e.praticien ? `${e.praticien.firstname} ${e.praticien.lastname} (praticien)` : 'Membre',
   }));
   const enAttente = echanges.filter((e) => e.statut === 'en_attente').length;
   const signales = echanges.filter((e) => e.statut === 'signale').length;

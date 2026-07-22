@@ -10,9 +10,10 @@ import { Input } from '@components/Input';
 import { ScreenHeader } from '@components/ScreenHeader';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
-import { exchangeRepo } from '@data/repos';
+import { exchangeRepo, praticienExchangeRepo } from '@data/repos';
 import { buildEchangeSujet } from '@utils/echange';
 import { errorMessage } from '@data/api/client';
+import { useSession } from '@store/session';
 
 type Format = 'Présentiel' | 'Visio' | 'Peu importe';
 const formats: readonly Format[] = ['Présentiel', 'Visio', 'Peu importe'] as const;
@@ -23,10 +24,12 @@ export default function ExchangeCreate() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const isEditing = Boolean(id);
+  const isPraticien = useSession((s) => s.userType) === 'praticien';
+  const repo = isPraticien ? praticienExchangeRepo : exchangeRepo;
 
   const { data: existing } = useQuery({
     queryKey: ['exchange', id],
-    queryFn: () => exchangeRepo.byId(Number(id)),
+    queryFn: () => repo.byId(Number(id)),
     enabled: isEditing,
   });
 
@@ -65,12 +68,12 @@ export default function ExchangeCreate() {
     setSubmitting(true);
     try {
       if (isEditing) {
-        await exchangeRepo.update(Number(id), payload);
+        await repo.update(Number(id), payload);
       } else {
-        await exchangeRepo.create({ ...payload, type: 'proposition' });
+        await repo.create({ ...payload, type: 'proposition' });
       }
       await queryClient.invalidateQueries({ queryKey: ['exchanges'] });
-      router.replace('/exchange' as any);
+      router.replace((isPraticien ? '/exchange/mine' : '/exchange') as any);
     } catch (err) {
       Alert.alert('Envoi impossible', errorMessage(err));
     } finally {

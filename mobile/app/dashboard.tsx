@@ -181,6 +181,11 @@ export default function Dashboard() {
         <Row
           icon={<Icon name="exchange" size={20} color={colors.ink} />}
           title="Mes échanges"
+          onPress={() => router.push('/exchange/mine' as any)}
+        />
+        <Row
+          icon={<Icon name="exchange" size={20} color={colors.ink} />}
+          title="Tous les échanges"
           onPress={() => router.push('/exchange' as any)}
         />
         <Row

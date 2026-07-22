@@ -13,7 +13,12 @@ Tasks from client feedback. Grouped by area.
 - [x] **Remove** the insurance (assurance) and proof of address (justificatif de domicile) documents from the registration flow. Removed everywhere (code + live DB docs), including the marketing pages that claimed insurance was verified.
 
 ## Forum — "Les échanges"
-- [ ] **Add "Les échanges" (the forum) to mobile.** It exists on the admin side but is missing on mobile — surface it somewhere in the app.
+- [x] **Add "Les échanges" (the forum) to mobile.** Screens already existed but were scoped wrong: the endpoint they called (`/echanges/client/echanges`) only ever returned the *current user's own* posts, and — since échanges only ever had a `client_id` — silently 403'd for practitioner accounts entirely. Rebuilt the scope to match the actual intent:
+  - Added `praticien_id` to `echanges` (nullable, alongside `client_id`, live DB migrated non-destructively — 32 existing rows untouched) so practitioners can author échanges too, not just clients.
+  - New `GET/POST/PUT/PATCH/DELETE /echanges/praticien/echanges` (own posts, mirrors the client routes) and a new public `GET /echanges/community` + `/echanges/community/:id` (every visible échange from every client *and* practitioner, with `auteur_nom`/`auteur_type`/`est_a_moi` computed server-side).
+  - Mobile: client's "Échanges" (renamed from "Mes échanges") now browses the full community board; practitioner's dashboard gets both a fixed "Mes échanges" (own posts only, was silently broken before) and a new "Tous les échanges" entry for the same community board. Edit/delete only shown on your own posts (`est_a_moi`), regardless of which list you're viewing from.
+  - Admin web (list + detail) updated to show the correct author name whether client- or practitioner-authored.
+  - Added e2e coverage for the new routes; full suite green (289 e2e + 55 unit server, 73 mobile).
 
 ## Practitioner Messaging
 - [ ] **Add practitioner-to-practitioner messaging** — a separate/additional messaging system in the app so practitioners can communicate with each other.

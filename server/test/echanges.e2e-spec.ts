@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { randomUUID } from 'crypto';
-import { createTestApp, seedAdmin, seedClientUser } from './utils/create-test-app';
+import { createTestApp, seedAdmin, seedClientUser, seedPraticienUser } from './utils/create-test-app';
 import { EchangesModule } from '../src/echanges/echanges.module';
 import { StorageService } from '../src/common/storage.service';
 
@@ -11,6 +11,7 @@ describe('echanges', () => {
   let app: INestApplication;
   let clientToken: string;
   let adminToken: string;
+  let praticienToken: string;
   beforeAll(async () => {
     app = await createTestApp(
       { imports: [EchangesModule] },
@@ -18,11 +19,13 @@ describe('echanges', () => {
     );
     clientToken = (await seedClientUser(app, 'ech-client@aura.io')).token;
     adminToken = (await seedAdmin(app, 'ech-admin@aura.io')).token;
+    praticienToken = (await seedPraticienUser(app, 'ech-praticien@aura.io')).token;
   });
   afterAll(async () => { await app.close(); });
   const http = () => request(app.getHttpServer());
   const asAdmin = (r: request.Test) => r.set('Authorization', `Bearer ${adminToken}`);
   const asClient = (r: request.Test) => r.set('Authorization', `Bearer ${clientToken}`);
+  const asPraticien = (r: request.Test) => r.set('Authorization', `Bearer ${praticienToken}`);
 
   it('admin routes require admin auth; client routes keep their own guard', async () => {
     await http().get('/api/echanges').expect(401);
@@ -123,5 +126,74 @@ describe('echanges', () => {
     const del = await asAdmin(http().delete(`/api/echanges/${id}`)).expect(200);
     expect(del.body.message).toBe('Échange supprimé avec succès');
     await asAdmin(http().get(`/api/echanges/${id}`)).expect(404);
+  });
+
+  it('praticien routes require praticien auth; create/list/show/update/delete own rows', async () => {
+    await http().get('/api/echanges/praticien/echanges').expect(401);
+    await asClient(http().get('/api/echanges/praticien/echanges')).expect(403);
+
+    const created = await asPraticien(http().post('/api/echanges/praticien/echanges'))
+      .field('sujet', 'Troc atelier reiki')
+      .field('type', 'proposition')
+      .field('message', 'Je propose un atelier reiki contre un coup de main design.')
+      .expect(201);
+    const id = created.body.data.id;
+    expect(created.body.data.statut).toBe('en_attente');
+
+    const list = await asPraticien(http().get('/api/echanges/praticien/echanges')).expect(200);
+    expect(list.body.data.some((e: any) => e.id === id)).toBe(true);
+
+    await asPraticien(http().get(`/api/echanges/praticien/echanges/${id}`)).expect(200);
+
+    const upd = await asPraticien(http().put(`/api/echanges/praticien/echanges/${id}`))
+      .send({ sujet: 'Troc atelier reiki (modifié)' }).expect(200);
+    expect(upd.body.data.sujet).toBe('Troc atelier reiki (modifié)');
+
+    // A different praticien cannot see or touch someone else's row (scoped by praticien_id).
+    const otherToken = (await seedPraticienUser(app, 'ech-praticien-2@aura.io')).token;
+    const asOther = (r: request.Test) => r.set('Authorization', `Bearer ${otherToken}`);
+    await asOther(http().get(`/api/echanges/praticien/echanges/${id}`)).expect(404);
+
+    await asPraticien(http().delete(`/api/echanges/praticien/echanges/${id}`)).expect(200);
+    await asPraticien(http().get(`/api/echanges/praticien/echanges/${id}`)).expect(404);
+  });
+
+  it('community shows visible echanges from both clients and praticiens, with auteur/est_a_moi, excludes hidden/signale', async () => {
+    const clientPost = await asClient(http().post('/api/echanges/client/echanges'))
+      .field('sujet', 'Échange communauté client').field('type', 'demande')
+      .field('message', 'Un message de plus de dix caractères pour ce test.').expect(201);
+    const clientId = clientPost.body.data.id;
+
+    const pratPost = await asPraticien(http().post('/api/echanges/praticien/echanges'))
+      .field('sujet', 'Échange communauté praticien').field('type', 'information')
+      .field('message', 'Un message praticien de plus de dix caractères.').expect(201);
+    const pratId = pratPost.body.data.id;
+
+    const hiddenPost = await asClient(http().post('/api/echanges/client/echanges'))
+      .field('sujet', 'Échange masqué').field('type', 'autre')
+      .field('message', 'Ce message ne doit pas apparaître dans le flux.').expect(201);
+    const hiddenId = hiddenPost.body.data.id;
+    await asAdmin(http().post(`/api/echanges/${hiddenId}/hide`)).expect(200);
+
+    const asClientCommunity = await asClient(http().get('/api/echanges/community?per_page=100')).expect(200);
+    const rows = asClientCommunity.body.data;
+    const seenClient = rows.find((e: any) => e.id === clientId);
+    const seenPrat = rows.find((e: any) => e.id === pratId);
+    expect(seenClient).toBeTruthy();
+    expect(seenClient.est_a_moi).toBe(true);
+    expect(seenClient.auteur_type).toBe('client');
+    expect(seenPrat).toBeTruthy();
+    expect(seenPrat.est_a_moi).toBe(false);
+    expect(seenPrat.auteur_type).toBe('praticien');
+    expect(seenPrat.auteur_nom).toBe('Praticien Test');
+    expect(rows.some((e: any) => e.id === hiddenId)).toBe(false);
+
+    const asPraticienCommunity = await asPraticien(http().get('/api/echanges/community?per_page=100')).expect(200);
+    const seenByPrat = asPraticienCommunity.body.data.find((e: any) => e.id === pratId);
+    expect(seenByPrat.est_a_moi).toBe(true);
+
+    const show = await asClient(http().get(`/api/echanges/community/${pratId}`)).expect(200);
+    expect(show.body.data.auteur_type).toBe('praticien');
+    await asClient(http().get(`/api/echanges/community/${hiddenId}`)).expect(404);
   });
 });

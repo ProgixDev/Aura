@@ -11,9 +11,10 @@ import { ScreenHeader } from '@components/ScreenHeader';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { shadows } from '@theme/shadows';
-import { exchangeRepo } from '@data/repos';
+import { exchangeRepo, praticienExchangeRepo, echangeCommunityRepo } from '@data/repos';
 import { dateFr } from '@utils/format';
 import { errorMessage } from '@data/api/client';
+import { useSession } from '@store/session';
 
 // Chip has no dedicated "danger" tone, so `signale` borrows `violet` to stay
 // visually distinct from the warm/positive statuses.
@@ -39,14 +40,16 @@ export default function ExchangeDetail() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const isPraticien = useSession((s) => s.userType) === 'praticien';
+  const repo = isPraticien ? praticienExchangeRepo : exchangeRepo;
   const { data: x } = useQuery({
     queryKey: ['exchange', id],
-    queryFn: () => exchangeRepo.byId(Number(id)),
+    queryFn: () => echangeCommunityRepo.byId(Number(id)),
   });
 
   if (!x) return <View style={{ flex: 1, backgroundColor: colors.pearl }} />;
 
-  const editable = x.statut === 'en_attente' || x.statut === 'lu';
+  const editable = x.est_a_moi && (x.statut === 'en_attente' || x.statut === 'lu');
   const hasFlow = Boolean(x.ce_que_je_propose || x.ce_que_je_recherche);
 
   const handleDelete = () => {
@@ -57,9 +60,9 @@ export default function ExchangeDetail() {
         style: 'destructive',
         onPress: async () => {
           try {
-            await exchangeRepo.remove(x.id);
+            await repo.remove(x.id);
             await queryClient.invalidateQueries({ queryKey: ['exchanges'] });
-            router.replace('/exchange' as any);
+            router.replace((isPraticien ? '/exchange/mine' : '/exchange') as any);
           } catch (err) {
             Alert.alert('Suppression impossible', errorMessage(err));
           }
@@ -77,7 +80,10 @@ export default function ExchangeDetail() {
       >
         <View style={{ paddingHorizontal: 24 }}>
           <View style={styles.head}>
-            <Text style={styles.name}>{x.sujet}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.name}>{x.sujet}</Text>
+              {x.auteur_nom ? <Text style={styles.date}>{x.auteur_nom}</Text> : null}
+            </View>
             <Chip
               label={STATUT_FR[x.statut] ?? x.statut}
               tone={STATUT_TONE[x.statut] ?? 'neutral'}
@@ -160,6 +166,7 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   name: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 22, flex: 1 },
+  date: { ...typography.tiny, marginTop: 2 },
 
   flow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
   side: { flex: 1, padding: 18, backgroundColor: colors.mist, borderRadius: 14 },

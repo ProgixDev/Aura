@@ -88,7 +88,8 @@ export interface PieceJointe {
 
 export interface Exchange {
   id: number;
-  client_id: number;
+  client_id: number | null;
+  praticien_id: number | null;
   sujet: string;
   type: 'proposition' | 'demande' | 'information' | 'autre';
   statut: string;
@@ -101,6 +102,11 @@ export interface Exchange {
   pieces_jointes: PieceJointe[] | null;
   created_at: string;
   updated_at: string;
+  // Present only on /echanges/community responses (list + show) — absent on the
+  // client/praticien "own échanges" endpoints, where authorship is implicit.
+  auteur_nom?: string;
+  auteur_type?: 'client' | 'praticien';
+  est_a_moi?: boolean;
 }
 
 /** Body shape for exchangeRepo.create/update — matches CreateEchangeDto/UpdateEchangeDto. */

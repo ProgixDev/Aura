@@ -15,15 +15,15 @@ import { Icon } from '@components/Icon';
 import { ScreenHeader } from '@components/ScreenHeader';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
-import { echangeCommunityRepo } from '@data/repos';
+import { praticienExchangeRepo } from '@data/repos';
 import { filterExchanges, type ExchangeFilter } from '@utils/filterExchanges';
 
-export default function ExchangeList() {
+export default function ExchangeMine() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { data: list = [] } = useQuery({
-    queryKey: ['exchanges', 'community'],
-    queryFn: echangeCommunityRepo.list,
+    queryKey: ['exchanges', 'mine'],
+    queryFn: praticienExchangeRepo.list,
   });
   const [filter, setFilter] = useState<ExchangeFilter>('all');
   const filtered = useMemo(() => filterExchanges(list, filter), [list, filter]);
@@ -31,7 +31,7 @@ export default function ExchangeList() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.pearl }}>
       <ScreenHeader
-        title="Échanges"
+        title="Mes échanges"
         rightAction={
           <Pressable
             onPress={() => router.push('/exchange/create' as any)}
@@ -46,14 +46,13 @@ export default function ExchangeList() {
         showsVerticalScrollIndicator={false}
       >
         <View style={{ paddingHorizontal: 20, paddingBottom: 14 }}>
-          <Text style={typography.eyebrow}>ÉCONOMIE DU DON</Text>
+          <Text style={typography.eyebrow}>VOS PUBLICATIONS</Text>
           <Text style={styles.h}>
-            Donner, recevoir,{' '}
-            <Text style={styles.italic}>circuler.</Text>
+            Vos propositions de{' '}
+            <Text style={styles.italic}>troc.</Text>
           </Text>
           <Text style={styles.sub}>
-            Soin contre soin, formation contre formation, bénévolat dans un éco-village.
-            L'argent n'est qu'un langage parmi d'autres.
+            Suivez et gérez les échanges que vous avez publiés à la communauté.
           </Text>
         </View>
 
@@ -69,9 +68,13 @@ export default function ExchangeList() {
           <Chip label="Autres" tone="sage" active={filter === 'autre'} onPress={() => setFilter('autre')} />
         </ScrollView>
 
-        {filtered.map((x) => (
-          <ExchangeCard key={x.id} exchange={x} />
-        ))}
+        {filtered.length === 0 ? (
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>Vous n'avez encore publié aucun échange.</Text>
+          </View>
+        ) : (
+          filtered.map((x) => <ExchangeCard key={x.id} exchange={x} />)
+        )}
       </ScrollView>
     </View>
   );
@@ -97,4 +100,6 @@ const styles = StyleSheet.create({
     color: colors.violet2,
   },
   sub: { ...typography.small, lineHeight: 20 },
+  empty: { paddingHorizontal: 20, paddingVertical: 24 },
+  emptyText: { ...typography.small, color: colors.muted, textAlign: 'center' },
 });

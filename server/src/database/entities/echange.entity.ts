@@ -4,6 +4,7 @@ import {
 } from 'typeorm';
 import { jsonTransformer } from '../../common/transformers';
 import { Client } from './client.entity';
+import { Praticien } from './praticien.entity';
 import { User } from './user.entity';
 
 export interface PieceJointe { nom: string; chemin: string; taille: number; type: string }
@@ -11,7 +12,8 @@ export interface PieceJointe { nom: string; chemin: string; taille: number; type
 @Entity('echanges')
 export class Echange {
   @PrimaryGeneratedColumn() id: number;
-  @Column() client_id: number;
+  @Column({ type: 'int', nullable: true }) client_id: number | null;
+  @Column({ type: 'int', nullable: true }) praticien_id: number | null;
   @Column() sujet: string;
   @Column() type: string;
   @Column({ type: 'varchar', length: 20, default: 'en_attente' }) statut: string;
@@ -36,9 +38,12 @@ export class Echange {
   @UpdateDateColumn({ name: 'updated_at' }) updated_at: Date;
   @DeleteDateColumn({ name: 'deleted_at' }) deleted_at: Date | null;
 
-  @ManyToOne(() => Client, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Client, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'client_id' })
-  client: Client;
+  client: Client | null;
+  @ManyToOne(() => Praticien, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'praticien_id' })
+  praticien: Praticien | null;
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'traite_par' })
   traitePar: User | null;

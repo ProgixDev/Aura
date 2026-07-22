@@ -60,13 +60,17 @@ export default function AdminEchangeDetailPage() {
     );
   }
 
-  const clientNom = e.client ? `${e.client.firstname} ${e.client.lastname}` : 'Client';
+  const auteurNom = e.client
+    ? `${e.client.firstname} ${e.client.lastname}`
+    : e.praticien ? `${e.praticien.firstname} ${e.praticien.lastname}` : 'Membre';
+  const auteurEmail = e.client?.email || e.praticien?.email;
+  const auteurType = e.client ? 'Client' : e.praticien ? 'Praticien' : null;
 
   return (
     <>
       <PageHead
         title={e.sujet}
-        subtitle={`${TYPE_LABEL[e.type] || e.type} · ${clientNom}`}
+        subtitle={`${TYPE_LABEL[e.type] || e.type} · ${auteurNom}`}
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Échanges', href: '/admin/echanges' }, { label: e.sujet }]}
         actions={<>
           <button className="btn btn-soft btn-sm" onClick={() => hideMutation.mutate()}>
@@ -140,10 +144,11 @@ export default function AdminEchangeDetailPage() {
           <div className="card card-pad">
             <h3 className="h-4" style={{ marginBottom: 14 }}>Auteur</h3>
             <div className="row gap-3">
-              <Avatar name={clientNom} size={44} />
+              <Avatar name={auteurNom} size={44} />
               <div>
-                <div style={{ fontWeight: 500 }}>{clientNom}</div>
-                {e.client?.email && <div className="tiny">{e.client.email}</div>}
+                <div style={{ fontWeight: 500 }}>{auteurNom}</div>
+                {auteurType && <div className="tiny muted">{auteurType}</div>}
+                {auteurEmail && <div className="tiny">{auteurEmail}</div>}
               </div>
             </div>
           </div>

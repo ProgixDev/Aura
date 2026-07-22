@@ -276,7 +276,8 @@ create table email_templates (
 
 create table echanges (
   id integer generated always as identity primary key,
-  client_id integer not null,
+  client_id integer,
+  praticien_id integer,
   sujet varchar(255) not null,
   type varchar(255) not null,
   statut varchar(20) not null default 'en_attente',
@@ -301,8 +302,10 @@ create table echanges (
   updated_at timestamptz default now(),
   deleted_at timestamptz,
   constraint fk_ech_client foreign key (client_id) references clients(id) on delete cascade,
+  constraint fk_ech_praticien foreign key (praticien_id) references praticiens(id) on delete cascade,
   constraint fk_ech_traite_par foreign key (traite_par) references users(id) on delete set null,
-  constraint fk_ech_signale_par foreign key (signale_par) references users(id) on delete set null
+  constraint fk_ech_signale_par foreign key (signale_par) references users(id) on delete set null,
+  constraint chk_ech_author check (client_id is not null or praticien_id is not null)
 );
 
 -- rendez_vous before paiements so paiements.rendez_vous_id can carry its FK + UNIQUE inline.

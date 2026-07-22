@@ -105,6 +105,7 @@ export default function RootLayout() {
               <Stack.Screen name="chat/[id]" />
               <Stack.Screen name="event/[id]" />
               <Stack.Screen name="exchange/index" />
+              <Stack.Screen name="exchange/mine" />
               <Stack.Screen name="exchange/[id]" />
               <Stack.Screen name="exchange/create" options={{ presentation: 'modal' }} />
               <Stack.Screen name="payment-history" />

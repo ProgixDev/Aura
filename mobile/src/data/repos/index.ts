@@ -253,6 +253,7 @@ export const articleRepo = {
 };
 
 // ---------- Exchanges (échanges) — real backend ----------
+// Client's own échanges — used by the client-side "mine" bits (e.g. profil.tsx's active count).
 export const exchangeRepo = {
   list: (): Promise<Exchange[]> =>
     api.get<{ data: Exchange[] }>('/echanges/client/echanges?per_page=50').then((r) => r.data),
@@ -264,6 +265,29 @@ export const exchangeRepo = {
     api.put<{ data: Exchange }>(`/echanges/client/echanges/${id}`, payload).then((r) => r.data),
   remove: (id: number): Promise<void> =>
     api.del(`/echanges/client/echanges/${id}`).then(() => undefined),
+};
+
+// Praticien's own échanges — same shape as exchangeRepo, keyed on praticien_id server-side.
+export const praticienExchangeRepo = {
+  list: (): Promise<Exchange[]> =>
+    api.get<{ data: Exchange[] }>('/echanges/praticien/echanges?per_page=50').then((r) => r.data),
+  byId: (id: number): Promise<Exchange> =>
+    api.get<{ data: Exchange }>(`/echanges/praticien/echanges/${id}`).then((r) => r.data),
+  create: (payload: EchangeInput): Promise<Exchange> =>
+    api.post<{ data: Exchange }>('/echanges/praticien/echanges', payload).then((r) => r.data),
+  update: (id: number, payload: Partial<Omit<EchangeInput, 'type'>>): Promise<Exchange> =>
+    api.put<{ data: Exchange }>(`/echanges/praticien/echanges/${id}`, payload).then((r) => r.data),
+  remove: (id: number): Promise<void> =>
+    api.del(`/echanges/praticien/echanges/${id}`).then(() => undefined),
+};
+
+// Community board — every visible échange from every client/praticien, with auteur_nom/
+// auteur_type/est_a_moi attached server-side. Available to any authenticated client or praticien.
+export const echangeCommunityRepo = {
+  list: (): Promise<Exchange[]> =>
+    api.get<{ data: Exchange[] }>('/echanges/community?per_page=50').then((r) => r.data),
+  byId: (id: number): Promise<Exchange> =>
+    api.get<{ data: Exchange }>(`/echanges/community/${id}`).then((r) => r.data),
 };
 
 // ---------- Paiements (payment history) — real backend ----------
