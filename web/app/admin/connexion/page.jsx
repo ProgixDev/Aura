@@ -32,11 +32,11 @@ export default function AdminConnexionPage() {
     <div className="center" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', flexDirection: 'column', gap: 24, padding: 24 }}>
       <div className="row gap-2">
         <Lotus size={28} color="var(--violet-2)" />
-        <span className="h-3">Aura <span className="tiny muted">admin</span></span>
+        <span className="h-3">GuériEnergies <span className="tiny muted">admin</span></span>
       </div>
       <form onSubmit={submit} className="card card-pad" style={{ width: '100%', maxWidth: 380 }}>
         <h1 className="h-3" style={{ marginBottom: 6 }}>Connexion administrateur</h1>
-        <p className="small" style={{ marginBottom: 20 }}>Réservé aux membres de l'équipe Aura.</p>
+        <p className="small" style={{ marginBottom: 20 }}>Réservé aux membres de l'équipe GuériEnergies.</p>
         {error && (
           <div className="note tint-violet" style={{ marginBottom: 16, color: 'var(--danger)' }}>{error}</div>
         )}

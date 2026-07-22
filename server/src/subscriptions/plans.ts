@@ -10,6 +10,6 @@ export const PLAN_PRICES: Record<'essentiel' | 'pro' | 'premium', number> = {
 // Stable identifiers StripeService.findOrCreatePrice() looks up (or provisions on first
 // use) against the Stripe account — no dashboard setup or env-configured price id needed.
 export const PLAN_STRIPE_INFO: Record<'pro' | 'premium', { lookupKey: string; productName: string }> = {
-  pro: { lookupKey: 'aura_plan_pro_monthly', productName: 'Aura — Formule Pro' },
-  premium: { lookupKey: 'aura_plan_premium_monthly', productName: 'Aura — Formule Premium' },
+  pro: { lookupKey: 'guerienergies_plan_pro_monthly', productName: 'GuériEnergies — Formule Pro' },
+  premium: { lookupKey: 'guerienergies_plan_premium_monthly', productName: 'GuériEnergies — Formule Premium' },
 };

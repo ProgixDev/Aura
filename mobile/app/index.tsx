@@ -39,7 +39,7 @@ async function resolveDestination(): Promise<string> {
 const { width } = Dimensions.get('window');
 
 /**
- * Splash — single huge "Aura" wordmark over a deep-violet → ink gradient with
+ * Splash — "GuériEnergies" wordmark over a deep-violet → ink gradient with
  * subtle film grain. The mark breathes (opacity + 1px scale) and a hair-thin
  * underline draws in once on mount. Tap anywhere to advance; otherwise it
  * navigates once resolveDestination() (a real token check) resolves, no
@@ -128,12 +128,7 @@ export default function SplashRoute() {
             alignItems: 'center',
           }}
         >
-          <Text style={styles.wordmark}>
-            {' '}Aur<Text style={styles.wordmarkItalic}>a</Text>{' '}
-            {/* Italic 'a' as the last glyph clips on Android/Fabric; the
-                trailing space reserves its overhang, the leading one keeps
-                the mark centered over the underline. */}
-          </Text>
+          <Text style={styles.wordmark}>GuériEnergies</Text>
           <Animated.View style={[styles.underline, { width: underlineW }]} />
         </Animated.View>
       </View>
@@ -150,21 +145,15 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     fontFamily: 'CormorantGaramond_300Light',
-    fontSize: 112,
-    lineHeight: 118,
+    fontSize: 46,
+    lineHeight: 52,
     color: '#FBF9F6',
-    letterSpacing: 1.2,
+    letterSpacing: 0.5,
     textAlign: 'center',
-    // Italic 'a' slants past its advance width; pad so it isn't clipped
-    // (symmetric keeps the mark centered over the underline).
-    paddingHorizontal: 12,
+    paddingHorizontal: 24,
     // Soft halo so the mark sits in the gradient rather than on top of it.
     textShadowColor: 'rgba(196,176,232,0.18)',
     textShadowRadius: 40,
-  },
-  wordmarkItalic: {
-    fontFamily: 'CormorantGaramond_400Regular_Italic',
-    color: '#FBF9F6',
   },
   underline: {
     height: 1,

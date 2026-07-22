@@ -70,7 +70,7 @@ export default function EvenementsPage() {
           <div className="card card-pad row between wrap gap-4" style={{ alignItems: 'center' }}>
             <div className="flex-1" style={{ minWidth: 280 }}>
               <span className="eyebrow">Communauté</span>
-              <h2 className="h-3" style={{ margin: '8px 0 6px' }}>Les cercles Aura</h2>
+              <h2 className="h-3" style={{ margin: '8px 0 6px' }}>Les cercles GuériEnergies</h2>
               <p className="body">Au-delà des événements ponctuels, prolongez la rencontre dans nos cercles : des espaces de partage continus, en ligne et en présentiel.</p>
             </div>
             <Link href="/cercles" className="btn btn-primary">Découvrir les cercles</Link>
@@ -84,7 +84,7 @@ export default function EvenementsPage() {
           <div className="aurora-dark grain card" style={{ '--orb-x': '24%', '--orb-y': '32%', '--orb-1': '#E4C896', '--orb-2': '#7B5FCF', padding: 'clamp(40px,6vw,68px)', textAlign: 'center', borderRadius: 'var(--r-sheet)' }}>
             <h2 className="h-1" style={{ color: '#fff', marginBottom: 14 }}>Vous organisez un événement ?</h2>
             <p className="lead" style={{ color: 'rgba(255,255,255,0.82)', maxWidth: 500, margin: '0 auto 28px' }}>
-              Praticiens vérifiés : proposez vos retraites, ateliers et cercles à toute la communauté Aura.
+              Praticiens vérifiés : proposez vos retraites, ateliers et cercles à toute la communauté GuériEnergies.
             </p>
             <div className="row gap-3" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
               <ModalButton

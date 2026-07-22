@@ -3,7 +3,7 @@ import { faq } from '@/lib/data/content';
 import { Icon } from '@/components/ui/Icon';
 import { Accordion } from './Accordion';
 
-export const metadata = { title: 'Questions fréquentes — Aura' };
+export const metadata = { title: 'Questions fréquentes — GuériEnergies' };
 
 export default function FaqPage() {
   return (

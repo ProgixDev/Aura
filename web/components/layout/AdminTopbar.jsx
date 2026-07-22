@@ -35,7 +35,7 @@ export default function AdminTopbar() {
       </div>
       <button className="btn btn-icon btn-ghost" onClick={() => open('sendNotification')} title="Envoyer une notification"><Icon name="bell" size={18} /></button>
       <button className="btn btn-icon btn-ghost" onClick={handleSignOut} title="Se déconnecter"><Icon name="logout" size={18} /></button>
-      <Avatar name={admin?.name || 'Admin Aura'} size={36} tone="violet" />
+      <Avatar name={admin?.name || 'Admin GuériEnergies'} size={36} tone="violet" />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-# Aura API (NestJS)
+# GuériEnergies API (NestJS)
 
 NestJS port of the Laravel API in `../server`. Same routes, same JSON envelopes, same French messages — endpoint-for-endpoint parity, with a documented set of deliberate fixes to real bugs found in the original PHP app during the port.
 

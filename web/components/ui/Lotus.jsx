@@ -1,4 +1,4 @@
-// Lotus mark — the Aura brand glyph & rating unit (replaces the star).
+// Lotus mark — the GuériEnergies brand glyph & rating unit (replaces the star).
 export function Lotus({ size = 16, filled = true, color = 'currentColor', style }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={style} aria-hidden>

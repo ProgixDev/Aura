@@ -21,7 +21,7 @@ export default function SettingsHubPage() {
     <>
       <PageHead
         title="Réglages"
-        subtitle="Configuration générale de la plateforme Aura."
+        subtitle="Configuration générale de la plateforme GuériEnergies."
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Réglages' }]}
         actions={<ToastButton message="Réglages enregistrés" tone="success" className="btn btn-primary btn-sm"><Icon name="check" size={15} /> Enregistrer</ToastButton>}
       />
@@ -32,7 +32,7 @@ export default function SettingsHubPage() {
           <div className="stack gap-4">
             <div className="field">
               <label>Nom de la plateforme</label>
-              <input className="input" defaultValue="Aura" />
+              <input className="input" defaultValue="GuériEnergies" />
             </div>
             <div className="field">
               <label>Email de contact</label>

@@ -147,7 +147,7 @@ export default function AdminReservationDetail() {
                 <dl className="dl">
                   <dt>Référence</dt><dd>{paiement.reference}</dd>
                   <dt>Montant brut</dt><dd><strong>{euro(paiement.montant_brut)}</strong></dd>
-                  <dt>Commission Aura</dt><dd>− {euro(paiement.commission)}</dd>
+                  <dt>Commission GuériEnergies</dt><dd>− {euro(paiement.commission)}</dd>
                   <dt>Net praticien</dt><dd><strong>{euro(paiement.montant_net_praticien)}</strong></dd>
                   <dt>Moyen</dt><dd><Badge variant="neutral">{paiement.moyen_paiement}</Badge></dd>
                   <dt>Statut</dt><dd><Badge variant={PAIEMENT_TONE[paiement.statut] || 'neutral'}>{paiement.statut}</Badge></dd>

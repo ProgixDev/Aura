@@ -33,7 +33,7 @@ export default function ManifestePage() {
             </blockquote>
 
             <p className="body">
-              Aura existe pour cela. Pour qu’un badge veuille dire quelque chose. Pour que « vérifiée » ne soit pas un mot vide mais une promesse tenue : des diplômes contrôlés, une assurance valide, une identité confirmée. À la main. Un par un. Parce que la confiance ne s’automatise pas.
+              GuériEnergies existe pour cela. Pour qu’un badge veuille dire quelque chose. Pour que « vérifiée » ne soit pas un mot vide mais une promesse tenue : des diplômes contrôlés, une assurance valide, une identité confirmée. À la main. Un par un. Parce que la confiance ne s’automatise pas.
             </p>
 
             <h2 className="h-2 serif" style={{ marginTop: 12 }}>Ce en quoi nous croyons</h2>
@@ -70,7 +70,7 @@ export default function ManifestePage() {
 
             <div className="center" style={{ marginTop: 8 }}>
               <Lotus size={20} color="var(--violet-2)" />
-              <p className="small muted" style={{ marginTop: 10 }}>— L’équipe Aura</p>
+              <p className="small muted" style={{ marginTop: 10 }}>— L’équipe GuériEnergies</p>
             </div>
           </article>
         </div>
@@ -85,7 +85,7 @@ export default function ManifestePage() {
             Que vous cherchiez un praticien ou que vous en soyez un, votre place est ici.
           </p>
           <div className="row gap-3" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
-            <ModalButton modal="signup" className="btn btn-primary btn-lg">Rejoindre Aura</ModalButton>
+            <ModalButton modal="signup" className="btn btn-primary btn-lg">Rejoindre GuériEnergies</ModalButton>
             <Link href="/a-propos" className="btn btn-ghost btn-lg">À propos de nous</Link>
           </div>
         </div>

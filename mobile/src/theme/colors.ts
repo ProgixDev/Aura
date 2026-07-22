@@ -1,5 +1,5 @@
 /**
- * Aura palette — extracted from the prototype CSS variables.
+ * GuériEnergies palette — extracted from the prototype CSS variables.
  * Sky, violet, sage, gold, pearl, mist, ink. Aurora gradient is the soul.
  */
 export const colors = {

@@ -235,7 +235,7 @@ export default function Accueil() {
           <View style={{ flex: 1 }}>
             <Text style={styles.eyebrow}>L'ÂME DU PROJET</Text>
             <Text style={styles.founderTitle}>
-              Le mot de Laurent, fondateur d'Aura
+              Le mot de Laurent, fondateur d'GuériEnergies
             </Text>
           </View>
           <Icon name="chevron" size={18} color={colors.muted} />

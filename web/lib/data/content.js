@@ -8,12 +8,12 @@ export const faq = [
   ]},
   { cat: 'Paiement', items: [
     { q: 'Le paiement est-il sécurisé ?', a: "Oui. Les paiements passent par un prestataire certifié. L'argent n'est versé au praticien qu'après la séance." },
-    { q: 'Pourquoi ne jamais payer en privé ?', a: "Les paiements hors plateforme ne sont pas protégés. En cas de litige, nous ne pouvons intervenir que si la transaction est passée par Aura." },
+    { q: 'Pourquoi ne jamais payer en privé ?', a: "Les paiements hors plateforme ne sont pas protégés. En cas de litige, nous ne pouvons intervenir que si la transaction est passée par GuériEnergies." },
     { q: 'Puis-je obtenir une facture ?', a: 'Oui, chaque paiement génère une facture téléchargeable depuis votre espace compte.' },
   ]},
   { cat: 'Praticiens', items: [
     { q: 'Que signifie le badge « Vérifiée » ?', a: 'Nous avons contrôlé les diplômes, l\'assurance professionnelle et l\'identité du praticien.' },
-    { q: 'Comment devenir praticien sur Aura ?', a: 'Créez un profil praticien, soumettez vos documents, et notre équipe les vérifie sous 48h.' },
+    { q: 'Comment devenir praticien sur GuériEnergies ?', a: 'Créez un profil praticien, soumettez vos documents, et notre équipe les vérifie sous 48h.' },
   ]},
   { cat: 'Confiance & sécurité', items: [
     { q: 'Comment signaler un problème ?', a: 'Chaque profil, message et avis dispose d\'un bouton de signalement. Notre équipe de modération intervient rapidement.' },
@@ -22,7 +22,7 @@ export const faq = [
 ];
 
 export const testimonials = [
-  { name: 'Marie B.', city: 'Annecy', tone: 'sky', rating: 5, text: "J'arrivais nouée, je suis sortie posée. Aura m'a permis de trouver quelqu'un de confiance sans fouiller des heures." },
+  { name: 'Marie B.', city: 'Annecy', tone: 'sky', rating: 5, text: "J'arrivais nouée, je suis sortie posée. GuériEnergies m'a permis de trouver quelqu'un de confiance sans fouiller des heures." },
   { name: 'Thomas R.', city: 'Lyon', tone: 'violet', rating: 5, text: 'Sceptique au départ, je ressors apaisé. Pas de discours mystique, du concret. Merci.' },
   { name: 'Léa M.', city: 'Paris', tone: 'sage', rating: 5, text: 'Trois séances et mon sommeil est transformé. La praticienne ne promet rien, et c\'est exactement ce qu\'il faut.' },
   { name: 'Sophie D.', city: 'Bordeaux', tone: 'gold', rating: 5, text: "Camille m'a aidée à dénouer quelque chose de très ancien. Bouleversant et libérateur." },
@@ -40,7 +40,7 @@ export const jobs = [
 
 export const pressItems = [
   { id: 'pi1', outlet: 'Le Monde', title: 'Le bien-être énergétique se structure en ligne', date: 'mai 2026', tone: 'violet' },
-  { id: 'pi2', outlet: 'Madame Figaro', title: 'Aura, le « Doctolib » des médecines douces', date: 'avr. 2026', tone: 'sky' },
+  { id: 'pi2', outlet: 'Madame Figaro', title: 'GuériEnergies, le « Doctolib » des médecines douces', date: 'avr. 2026', tone: 'sky' },
   { id: 'pi3', outlet: 'France Inter', title: 'Confiance et soins alternatifs : enquête', date: 'mars 2026', tone: 'sage' },
   { id: 'pi4', outlet: 'Les Échos', title: 'La start-up qui vérifie les guérisseurs', date: 'févr. 2026', tone: 'gold' },
 ];

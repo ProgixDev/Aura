@@ -52,7 +52,7 @@ export default function NewEventPage() {
     <form onSubmit={submit}>
       <PageHead
         title="Nouvel événement"
-        subtitle="Créez une retraite, un atelier ou un cercle et publiez-le sur Aura."
+        subtitle="Créez une retraite, un atelier ou un cercle et publiez-le sur GuériEnergies."
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Événements', href: '/admin/evenements' }, { label: 'Nouveau' }]}
         actions={<a href="/admin/evenements" className="btn btn-soft btn-sm">Annuler</a>}
       />

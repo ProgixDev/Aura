@@ -18,7 +18,7 @@ export default function NewArticlePage() {
   const [extrait, setExtrait] = useState('');
   const [corps, setCorps] = useState('');
   const [status, setStatus] = useState('brouillon');
-  const [auteur, setAuteur] = useState("L'équipe Aura");
+  const [auteur, setAuteur] = useState("L'équipe GuériEnergies");
   const [tempsLecture, setTempsLecture] = useState('');
   const [imageCouverture, setImageCouverture] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
@@ -47,7 +47,7 @@ export default function NewArticlePage() {
     <form onSubmit={submit}>
       <PageHead
         title="Nouvel article"
-        subtitle="Rédigez une parution pour le magazine Aura"
+        subtitle="Rédigez une parution pour le magazine GuériEnergies"
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Contenus', href: '/admin/contenu' }, { label: 'Nouvel article' }]}
         actions={<button type="submit" className="btn btn-primary btn-sm" disabled={createMutation.isPending}><Icon name="check" size={15} /> {createMutation.isPending ? 'Enregistrement…' : 'Enregistrer'}</button>}
       />
@@ -86,7 +86,7 @@ export default function NewArticlePage() {
             <div className="field">
               <label>Corps de l'article</label>
               <textarea className="input" rows={16} required value={corps} onChange={(e) => setCorps(e.target.value)} placeholder="Rédigez ici le contenu de l'article. Séparez les paragraphes par une ligne vide…" style={{ lineHeight: 1.7 }} />
-              <span className="tiny muted" style={{ marginTop: 6 }}>Astuce : gardez un ton calme et éditorial, fidèle à la voix Aura.</span>
+              <span className="tiny muted" style={{ marginTop: 6 }}>Astuce : gardez un ton calme et éditorial, fidèle à la voix GuériEnergies.</span>
             </div>
           </div>
         </div>

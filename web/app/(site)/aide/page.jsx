@@ -3,7 +3,7 @@ import { helpArticles } from '@/lib/data/content';
 import { Icon } from '@/components/ui/Icon';
 
 const CAT_META = {
-  'Premiers pas': { glyph: 'sparkle', tint: 'tint-violet', color: 'var(--violet-2)', d: 'Tout pour bien débuter sur Aura.' },
+  'Premiers pas': { glyph: 'sparkle', tint: 'tint-violet', color: 'var(--violet-2)', d: 'Tout pour bien débuter sur GuériEnergies.' },
   'Réservation': { glyph: 'calendar', tint: 'tint-sky', color: 'var(--sky-2, var(--violet-2))', d: 'Réserver, reporter, annuler une séance.' },
   'Paiement': { glyph: 'card', tint: 'tint-gold', color: 'var(--gold-2, var(--violet-2))', d: 'Paiements sécurisés et factures.' },
   'Confiance': { glyph: 'shield', tint: 'tint-sage', color: 'var(--sage-2, var(--violet-2))', d: 'Vérification, modération, signalements.' },

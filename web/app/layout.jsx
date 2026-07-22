@@ -20,7 +20,7 @@ const outfit = Outfit({
 });
 
 export const metadata = {
-  title: 'Aura — Tous les guérisseurs, un seul lieu de confiance',
+  title: 'GuériEnergies — Tous les guérisseurs, un seul lieu de confiance',
   description:
     "La plateforme française des praticiens du bien-être énergétique. Magnétisme, Reiki, hypnose, chamanisme — trouvez un praticien vérifié près de chez vous.",
 };

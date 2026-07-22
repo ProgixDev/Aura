@@ -22,7 +22,7 @@ const COMPARE = [
 const BILLING_FAQ = [
   { q: 'Puis-je changer de formule à tout moment ?', a: "Oui. Vous pouvez passer à une formule supérieure ou revenir à l’Essentiel quand vous le souhaitez. Le changement prend effet immédiatement, au prorata." },
   { q: 'Y a-t-il un engagement ?', a: "Aucun. Les abonnements sont mensuels et sans engagement. Vous résiliez en un clic depuis votre espace, et restez actif jusqu’à la fin de la période payée." },
-  { q: 'Comment suis-je payé pour mes séances ?', a: "Indépendamment de l’abonnement, vous recevez le montant de chaque séance après sa réalisation, directement sur votre compte. Aura prélève une commission de service transparente." },
+  { q: 'Comment suis-je payé pour mes séances ?', a: "Indépendamment de l’abonnement, vous recevez le montant de chaque séance après sa réalisation, directement sur votre compte. GuériEnergies prélève une commission de service transparente." },
   { q: 'L’Essentiel est-il vraiment gratuit ?', a: "Oui, sans carte requise. Vous bénéficiez du profil vérifié, de la messagerie et du paiement protégé, dans la limite de 5 séances par mois." },
   { q: 'Puis-je obtenir une facture ?', a: 'Chaque paiement d’abonnement génère une facture téléchargeable depuis votre espace compte.' },
 ];

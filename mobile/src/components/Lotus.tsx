@@ -3,7 +3,7 @@ import Svg, { Path, G } from 'react-native-svg';
 import { colors } from '@theme/colors';
 
 /**
- * The Aura mark — a stylised lotus used both as logo and as the rating symbol
+ * The GuériEnergies mark — a stylised lotus used both as logo and as the rating symbol
  * (in place of stars). Reproduced from the prototype's inline SVG.
  */
 export function Lotus({

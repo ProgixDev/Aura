@@ -1,5 +1,5 @@
 /**
- * Platform commission rate (fraction of a booking's montant_brut kept by Aura, the rest
+ * Platform commission rate (fraction of a booking's montant_brut kept by GuériEnergies, the rest
  * going to the praticien via Stripe Connect's application_fee_amount — see Plan 08f).
  *
  * Kept as a synchronous, dependency-free pair of module-level functions (not a service

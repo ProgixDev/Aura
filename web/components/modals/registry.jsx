@@ -26,7 +26,7 @@ export const MODAL_REGISTRY = {
   contact: (p) => <FormModal title={`Contacter ${p?.name || 'le praticien'}`} subtitle="Posez vos questions avant la séance. Aucun paiement en privé."
     fields={[{ name: 'subject', label: 'Objet', type: 'select', options: ['Première prise de contact', 'Question sur une séance', 'Disponibilités', 'Autre'], required: true }, { name: 'message', label: 'Votre message', type: 'textarea', placeholder: 'Bonjour…', required: true }]}
     submitLabel="Envoyer le message" successToast="Message envoyé" {...p} />,
-  report: (p) => <FormModal title="Signaler" subtitle="Aidez-nous à garder Aura sûr et bienveillant." danger
+  report: (p) => <FormModal title="Signaler" subtitle="Aidez-nous à garder GuériEnergies sûr et bienveillant." danger
     fields={[{ name: 'reason', label: 'Motif', type: 'select', options: ['Contenu inapproprié', 'Comportement déplacé', 'Fausse information', 'Tentative de paiement hors plateforme', 'Autre'], required: true }, { name: 'details', label: 'Détails', type: 'textarea', placeholder: 'Décrivez la situation…' }]}
     submitLabel="Envoyer le signalement" successToast="Signalement transmis à la modération" {...p} />,
   review: (p) => <FormModal title="Laisser un avis" subtitle={p?.name ? `Votre expérience avec ${p.name}` : undefined}

@@ -126,7 +126,7 @@ export default function ExchangeCreate() {
           <EscrowNotice
             tone="violet"
             title="Pas d'argent dans les échanges directs."
-            body="Aura n'intervient pas dans la transaction. Faites confiance à votre intuition, et signalez tout abus."
+            body="GuériEnergies n'intervient pas dans la transaction. Faites confiance à votre intuition, et signalez tout abus."
           />
         </View>
       </ScrollView>

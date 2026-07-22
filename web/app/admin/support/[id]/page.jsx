@@ -61,7 +61,7 @@ export default function TicketDetailPage() {
   const thread = [
     { who: t.requester_name, role: 'client', when: dateFr(t.created_at), text: t.message },
     ...(t.messages ?? []).map((m) => ({
-      who: m.author === 'support' ? 'Support Aura' : t.requester_name,
+      who: m.author === 'support' ? 'Support GuériEnergies' : t.requester_name,
       role: m.author === 'support' ? 'support' : 'client',
       when: dateFr(m.at),
       text: m.text,
@@ -98,7 +98,7 @@ export default function TicketDetailPage() {
                   <div className="flex-1">
                     <div className="row gap-2" style={{ marginBottom: 4 }}>
                       <strong style={{ fontSize: 14 }}>{m.who}</strong>
-                      {m.role === 'support' && <Badge variant="info">Aura</Badge>}
+                      {m.role === 'support' && <Badge variant="info">GuériEnergies</Badge>}
                       <span className="tiny">{m.when}</span>
                     </div>
                     <div className={`card-line card-pad ${m.role === 'support' ? 'tint-violet' : ''}`} style={{ padding: '12px 14px' }}>

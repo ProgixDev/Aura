@@ -1,6 +1,6 @@
 import { Lotus } from './Lotus';
 
-/** Rating with lotus glyphs (Aura uses lotuses, not stars). */
+/** Rating with lotus glyphs (GuériEnergies uses lotuses, not stars). */
 export function Rating({ value = 5, count, size = 14, showCount = true }) {
   const full = Math.round(value);
   return (

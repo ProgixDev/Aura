@@ -10,7 +10,7 @@ export function generateStaticParams() {
 
 const BODIES = {
   'reserver-seance': [
-    "Réserver une séance sur Aura prend moins de deux minutes. Depuis la fiche d’un praticien, repérez le bloc « Disponibilités » et choisissez le créneau qui vous convient — en présentiel ou en visio selon ce que propose le praticien.",
+    "Réserver une séance sur GuériEnergies prend moins de deux minutes. Depuis la fiche d’un praticien, repérez le bloc « Disponibilités » et choisissez le créneau qui vous convient — en présentiel ou en visio selon ce que propose le praticien.",
     "Une fois le créneau sélectionné, vous accédez au récapitulatif : durée, tarif et modalité. Le paiement s’effectue en ligne via notre prestataire sécurisé. L’argent est conservé et n’est reversé au praticien qu’après la séance.",
     "Vous recevez immédiatement un email de confirmation, et la séance apparaît dans votre espace compte, rubrique « Mes réservations ». Pensez à arriver quelques minutes en avance pour vous poser.",
   ],
@@ -20,8 +20,8 @@ const BODIES = {
     "Si c’est le praticien qui annule, l’intégralité des sommes versées vous est remboursée automatiquement sous 5 à 10 jours ouvrés.",
   ],
   'paiement-securise': [
-    "Tous les paiements sur Aura transitent par un prestataire certifié PCI-DSS. Nous ne stockons jamais vos données bancaires complètes sur nos serveurs.",
-    "Le principe du séquestre protège chaque transaction : votre paiement est conservé jusqu’à la réalisation de la séance, puis reversé au praticien. En cas de litige, notre équipe peut intervenir — à condition que la transaction soit bien passée par Aura.",
+    "Tous les paiements sur GuériEnergies transitent par un prestataire certifié PCI-DSS. Nous ne stockons jamais vos données bancaires complètes sur nos serveurs.",
+    "Le principe du séquestre protège chaque transaction : votre paiement est conservé jusqu’à la réalisation de la séance, puis reversé au praticien. En cas de litige, notre équipe peut intervenir — à condition que la transaction soit bien passée par GuériEnergies.",
     "C’est pourquoi nous vous déconseillons fortement tout paiement en dehors de la plateforme : il échapperait à ces protections.",
   ],
   'badge-verifie': [
@@ -35,7 +35,7 @@ const BODIES = {
     "Selon la gravité, les suites peuvent aller du simple avertissement au retrait du contenu, voire à la suspension du compte concerné. Vous êtes informé du traitement de votre signalement.",
   ],
   'devenir-praticien': [
-    "Pour proposer vos séances sur Aura, créez un profil praticien depuis la page « Devenir praticien ». Vous renseignez vos disciplines, votre approche, vos tarifs et vos modalités.",
+    "Pour proposer vos séances sur GuériEnergies, créez un profil praticien depuis la page « Devenir praticien ». Vous renseignez vos disciplines, votre approche, vos tarifs et vos modalités.",
     "Vous soumettez ensuite vos justificatifs : diplômes, certifications et attestation d’assurance professionnelle. Notre équipe les vérifie généralement sous 48 heures.",
     "Une fois validé, votre profil apparaît dans la recherche avec le badge « Vérifiée ». Vous pouvez alors recevoir des demandes, échanger via la messagerie et gérer vos disponibilités.",
   ],

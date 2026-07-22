@@ -154,7 +154,7 @@ export default function HomePage() {
         <div className="container-narrow center">
           <Rating value={5} showCount={false} size={20} />
           <p className="serif" style={{ fontSize: 'clamp(24px,3.4vw,38px)', lineHeight: 1.3, margin: '20px 0 28px', fontWeight: 400 }}>
-            « J’arrivais nouée, je suis sortie posée. Aura m’a permis de trouver quelqu’un de confiance, sans avoir à fouiller des heures. »
+            « J’arrivais nouée, je suis sortie posée. GuériEnergies m’a permis de trouver quelqu’un de confiance, sans avoir à fouiller des heures. »
           </p>
           <div className="row gap-3" style={{ justifyContent: 'center' }}>
             <Avatar name="Marie B." size={44} tone="sky" />

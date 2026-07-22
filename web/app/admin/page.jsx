@@ -94,7 +94,7 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <PageHead title="Tableau de bord" subtitle="Bonjour Aïcha — voici l'activité d'Aura aujourd'hui."
+      <PageHead title="Tableau de bord" subtitle="Bonjour Aïcha — voici l'activité d'GuériEnergies aujourd'hui."
         actions={<>
           <ModalButton modal="exportData" className="btn btn-soft btn-sm"><Icon name="download" size={15} /> Exporter</ModalButton>
           <ModalButton modal="sendNotification" className="btn btn-primary btn-sm"><Icon name="bell" size={15} /> Notifier</ModalButton>

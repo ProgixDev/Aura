@@ -150,7 +150,7 @@ export default function PractitionerProfile() {
               </Pressable>
               <Pressable
                 style={styles.iconCircle}
-                onPress={() => Share.share({ message: `${p.name} sur Aura — https://aura.fr/praticien/${id}` })}
+                onPress={() => Share.share({ message: `${p.name} sur GuériEnergies — https://aura.fr/praticien/${id}` })}
               >
                 <Icon name="share" size={18} color={colors.ink} />
               </Pressable>

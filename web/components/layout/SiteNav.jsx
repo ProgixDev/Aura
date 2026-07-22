@@ -23,7 +23,7 @@ export default function SiteNav() {
   return (
     <header className="site-nav">
       <div className="container inner">
-        <Link href="/" className="brand"><Lotus size={26} color="var(--violet-2)" /> Aura</Link>
+        <Link href="/" className="brand"><Lotus size={26} color="var(--violet-2)" /> GuériEnergies</Link>
         <nav className="links">
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} className={active(l.href) ? 'active' : ''}>{l.label}</Link>

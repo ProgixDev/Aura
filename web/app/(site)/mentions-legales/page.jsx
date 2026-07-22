@@ -40,7 +40,7 @@ export default function MentionsLegalesPage() {
 
               <h3 className="h-3" id="editeur" style={{ scrollMarginTop: 96, marginBottom: 8 }}>1. Éditeur du site</h3>
               <p className="body" style={{ marginBottom: 12 }}>
-                Le site Aura est édité par la société <strong>Aura Bien-être SAS</strong>, société par actions simplifiée au capital social de 120 000 €, immatriculée au Registre du Commerce et des Sociétés de Paris sous le numéro 921 048 376.
+                Le site GuériEnergies est édité par la société <strong>GuériEnergies Bien-être SAS</strong>, société par actions simplifiée au capital social de 120 000 €, immatriculée au Registre du Commerce et des Sociétés de Paris sous le numéro 921 048 376.
               </p>
               <ul className="stack gap-1 body" style={{ marginBottom: 24, paddingLeft: 18 }}>
                 <li>Siège social : 18 rue du Faubourg Saint-Antoine, 75012 Paris, France</li>
@@ -51,7 +51,7 @@ export default function MentionsLegalesPage() {
 
               <h3 className="h-3" id="direction" style={{ scrollMarginTop: 96, marginBottom: 8 }}>2. Direction de la publication</h3>
               <p className="body" style={{ marginBottom: 24 }}>
-                Le directeur de la publication est Madame Camille Dauphin, en sa qualité de Présidente d’Aura Bien-être SAS. Elle peut être contactée à l’adresse <strong>direction@aura.fr</strong> pour toute question relative au contenu éditorial du site.
+                Le directeur de la publication est Madame Camille Dauphin, en sa qualité de Présidente de GuériEnergies Bien-être SAS. Elle peut être contactée à l’adresse <strong>direction@aura.fr</strong> pour toute question relative au contenu éditorial du site.
               </p>
 
               <h3 className="h-3" id="hebergeur" style={{ scrollMarginTop: 96, marginBottom: 8 }}>3. Hébergement</h3>
@@ -61,17 +61,17 @@ export default function MentionsLegalesPage() {
 
               <h3 className="h-3" id="propriete" style={{ scrollMarginTop: 96, marginBottom: 8 }}>4. Propriété intellectuelle</h3>
               <p className="body" style={{ marginBottom: 24 }}>
-                L’ensemble des éléments composant le site — marque Aura, logo, charte graphique, textes, illustrations, photographies, vidéos et code source — est la propriété exclusive d’Aura Bien-être SAS ou fait l’objet d’une licence d’utilisation. Toute reproduction, représentation, modification ou exploitation, totale ou partielle, sans autorisation écrite préalable, est interdite et constitue une contrefaçon sanctionnée par les articles L.335-2 et suivants du Code de la propriété intellectuelle.
+                L’ensemble des éléments composant le site — marque GuériEnergies, logo, charte graphique, textes, illustrations, photographies, vidéos et code source — est la propriété exclusive de GuériEnergies Bien-être SAS ou fait l’objet d’une licence d’utilisation. Toute reproduction, représentation, modification ou exploitation, totale ou partielle, sans autorisation écrite préalable, est interdite et constitue une contrefaçon sanctionnée par les articles L.335-2 et suivants du Code de la propriété intellectuelle.
               </p>
 
               <h3 className="h-3" id="responsabilite" style={{ scrollMarginTop: 96, marginBottom: 8 }}>5. Responsabilité</h3>
               <p className="body" style={{ marginBottom: 24 }}>
-                Aura agit en qualité d’intermédiaire de mise en relation entre praticiens du bien-être et utilisateurs. Aura n’est pas un établissement de soins et ne dispense aucun acte médical. Les contenus publiés par les praticiens n’engagent que leur auteur. Aura ne saurait être tenue responsable des prestations réalisées hors de la plateforme ni des paiements effectués en dehors de son système sécurisé.
+                GuériEnergies agit en qualité d’intermédiaire de mise en relation entre praticiens du bien-être et utilisateurs. GuériEnergies n’est pas un établissement de soins et ne dispense aucun acte médical. Les contenus publiés par les praticiens n’engagent que leur auteur. GuériEnergies ne saurait être tenue responsable des prestations réalisées hors de la plateforme ni des paiements effectués en dehors de son système sécurisé.
               </p>
 
               <h3 className="h-3" id="liens" style={{ scrollMarginTop: 96, marginBottom: 8 }}>6. Liens hypertextes</h3>
               <p className="body" style={{ marginBottom: 24 }}>
-                Le site peut contenir des liens vers des sites tiers. Aura n’exerce aucun contrôle sur ces ressources et décline toute responsabilité quant à leur contenu. La mise en place d’un lien vers le site Aura nécessite une autorisation écrite préalable.
+                Le site peut contenir des liens vers des sites tiers. GuériEnergies n’exerce aucun contrôle sur ces ressources et décline toute responsabilité quant à leur contenu. La mise en place d’un lien vers le site GuériEnergies nécessite une autorisation écrite préalable.
               </p>
 
               <h3 className="h-3" id="donnees" style={{ scrollMarginTop: 96, marginBottom: 8 }}>7. Données personnelles</h3>

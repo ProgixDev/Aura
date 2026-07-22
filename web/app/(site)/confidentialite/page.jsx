@@ -36,12 +36,12 @@ export default function ConfidentialitePage() {
 
             <div className="flex-1" style={{ minWidth: 280 }}>
               <p className="lead" style={{ marginBottom: 28 }}>
-                Chez Aura, la protection de vos données est <span className="serif-accent">une question de confiance</span>. Cette politique explique, en toute transparence, quelles informations nous collectons, pourquoi, et comment vous gardez le contrôle, conformément au Règlement (UE) 2016/679 (RGPD) et à la loi Informatique et Libertés.
+                Chez GuériEnergies, la protection de vos données est <span className="serif-accent">une question de confiance</span>. Cette politique explique, en toute transparence, quelles informations nous collectons, pourquoi, et comment vous gardez le contrôle, conformément au Règlement (UE) 2016/679 (RGPD) et à la loi Informatique et Libertés.
               </p>
 
               <h3 className="h-3" id="responsable" style={{ scrollMarginTop: 96, marginBottom: 8 }}>1. Responsable du traitement</h3>
               <p className="body" style={{ marginBottom: 24 }}>
-                Le responsable du traitement est <strong>Aura Bien-être SAS</strong>, 18 rue du Faubourg Saint-Antoine, 75012 Paris. Notre Délégué à la Protection des Données (DPO) est joignable à l’adresse <strong>dpo@aura.fr</strong>.
+                Le responsable du traitement est <strong>GuériEnergies Bien-être SAS</strong>, 18 rue du Faubourg Saint-Antoine, 75012 Paris. Notre Délégué à la Protection des Données (DPO) est joignable à l’adresse <strong>dpo@aura.fr</strong>.
               </p>
 
               <h3 className="h-3" id="donnees" style={{ scrollMarginTop: 96, marginBottom: 8 }}>2. Données collectées</h3>
@@ -60,7 +60,7 @@ export default function ConfidentialitePage() {
 
               <h3 className="h-3" id="destinataires" style={{ scrollMarginTop: 96, marginBottom: 8 }}>4. Destinataires</h3>
               <p className="body" style={{ marginBottom: 24 }}>
-                Vos données sont accessibles aux équipes habilitées d’Aura et à nos sous-traitants (hébergement, paiement, envoi d’emails) agissant sur instruction et liés par un accord de confidentialité. Le praticien que vous réservez reçoit les informations strictement nécessaires à la séance. Nous ne vendons jamais vos données.
+                Vos données sont accessibles aux équipes habilitées de GuériEnergies et à nos sous-traitants (hébergement, paiement, envoi d’emails) agissant sur instruction et liés par un accord de confidentialité. Le praticien que vous réservez reçoit les informations strictement nécessaires à la séance. Nous ne vendons jamais vos données.
               </p>
 
               <h3 className="h-3" id="conservation" style={{ scrollMarginTop: 96, marginBottom: 8 }}>5. Durée de conservation</h3>
@@ -85,7 +85,7 @@ export default function ConfidentialitePage() {
 
               <h3 className="h-3" id="mineurs" style={{ scrollMarginTop: 96, marginBottom: 8 }}>9. Mineurs</h3>
               <p className="body" style={{ marginBottom: 24 }}>
-                Les services d’Aura sont réservés aux personnes majeures. Nous ne collectons pas sciemment de données relatives à des mineurs. Si une telle collecte était portée à notre connaissance, les données seraient supprimées sans délai.
+                Les services de GuériEnergies sont réservés aux personnes majeures. Nous ne collectons pas sciemment de données relatives à des mineurs. Si une telle collecte était portée à notre connaissance, les données seraient supprimées sans délai.
               </p>
 
               <h3 className="h-3" id="contact" style={{ scrollMarginTop: 96, marginBottom: 8 }}>10. Contact & réclamation</h3>

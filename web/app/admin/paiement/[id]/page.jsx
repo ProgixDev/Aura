@@ -52,7 +52,7 @@ export default function AdminPaiementDetailPage() {
             </div>
             <div className="stack gap-3">
               <div className="between"><span className="muted">Montant brut</span><strong>{euro(tx.montant_brut)}</strong></div>
-              <div className="between"><span className="muted">Commission Aura</span><span style={{ color: 'var(--danger)' }}>− {euro(tx.commission)}</span></div>
+              <div className="between"><span className="muted">Commission GuériEnergies</span><span style={{ color: 'var(--danger)' }}>− {euro(tx.commission)}</span></div>
               <div className="divider" />
               <div className="between"><span style={{ fontWeight: 500 }}>Net reversé au praticien</span><strong className="h-4">{euro(tx.montant_net_praticien)}</strong></div>
             </div>

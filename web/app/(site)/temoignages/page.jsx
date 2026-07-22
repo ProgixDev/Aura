@@ -4,7 +4,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Rating } from '@/components/ui/Rating';
 import { ModalButton } from '@/components/ui/ModalButton';
 
-export const metadata = { title: 'Témoignages — Aura' };
+export const metadata = { title: 'Témoignages — GuériEnergies' };
 
 export default function TemoignagesPage() {
   const featured = testimonials[3];

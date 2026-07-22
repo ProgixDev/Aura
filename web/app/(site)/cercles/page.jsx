@@ -29,10 +29,10 @@ export default function CerclesPage() {
         <div className="container-narrow reveal">
           <span className="eyebrow" style={{ color: 'rgba(255,255,255,0.7)' }}>Communauté</span>
           <h1 className="h-display" style={{ color: '#fff', margin: '20px 0 22px' }}>
-            Les <span className="italic" style={{ color: 'var(--violet)' }}>cercles</span> Aura.
+            Les <span className="italic" style={{ color: 'var(--violet)' }}>cercles</span> GuériEnergies.
           </h1>
           <p className="lead" style={{ color: 'rgba(255,255,255,0.82)', maxWidth: 580, margin: '0 auto' }}>
-            Cheminer seul·e, c'est bien. Ensemble, c'est plus doux. Les cercles Aura réunissent celles et ceux qui partagent une pratique, une ville, une intention — pour échanger toute l'année.
+            Cheminer seul·e, c'est bien. Ensemble, c'est plus doux. Les cercles GuériEnergies réunissent celles et ceux qui partagent une pratique, une ville, une intention — pour échanger toute l'année.
           </p>
         </div>
       </section>
@@ -107,7 +107,7 @@ export default function CerclesPage() {
               Praticiens et membres engagés : ouvrez un espace autour de votre pratique ou de votre région.
             </p>
             <div className="row gap-3" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
-              <ToastButton message="Demande envoyée — l'équipe Aura vous recontacte sous 48h." tone="success" className="btn btn-aurora btn-lg">
+              <ToastButton message="Demande envoyée — l'équipe GuériEnergies vous recontacte sous 48h." tone="success" className="btn btn-aurora btn-lg">
                 Proposer un cercle
               </ToastButton>
               <Link href="/evenements" className="btn btn-soft btn-lg" style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)' }}>Voir l'agenda</Link>

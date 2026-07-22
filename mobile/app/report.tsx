@@ -85,7 +85,7 @@ export default function Report() {
       >
         <Text style={styles.h}>Qu'avez-vous remarqué ?</Text>
         <Text style={styles.lead}>
-          Aura est une communauté de soin. Toute signalisation est lue par un humain
+          GuériEnergies est une communauté de soin. Toute signalisation est lue par un humain
           sous 24h. Votre identité reste confidentielle.
         </Text>
 

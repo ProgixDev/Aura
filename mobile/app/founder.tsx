@@ -42,7 +42,7 @@ export default function Founder() {
             souffre.
           </Para>
           <Para>
-            Aura est né de cette recherche. Un lieu où l'on trouve facilement la bonne
+            GuériEnergies est né de cette recherche. Un lieu où l'on trouve facilement la bonne
             personne, où les avis sont honnêtes, où les paiements protègent les deux
             côtés. Mais surtout — un lieu qui ne ressemble pas à une boutique. Un
             lieu qui ressemble à une rencontre.
@@ -51,7 +51,7 @@ export default function Founder() {
             Je crois que les pratiques énergétiques, quand elles sont exercées avec
             honnêteté et humilité, ont leur place dans nos vies modernes. Pas en
             remplacement de la médecine. À côté. Dans les silences, dans les
-            passages, dans les renaissances. Aura est une tentative de leur faire une
+            passages, dans les renaissances. GuériEnergies est une tentative de leur faire une
             vraie place — propre, transparente, vivante.
           </Para>
           <Para>

@@ -25,7 +25,7 @@ export default function CerclesList() {
         <View style={{ paddingHorizontal: 20, paddingBottom: 14 }}>
           <Text style={typography.eyebrow}>COMMUNAUTÉ</Text>
           <Text style={styles.h}>
-            Les <Text style={styles.italic}>cercles</Text> Aura.
+            Les <Text style={styles.italic}>cercles</Text> GuériEnergies.
           </Text>
           <Text style={styles.sub}>
             Des espaces de partage continus, en ligne et en présentiel.

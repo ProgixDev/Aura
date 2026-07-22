@@ -3,7 +3,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Lotus } from '@/components/ui/Lotus';
 import { ModalButton } from '@/components/ui/ModalButton';
 
-export const metadata = { title: 'Cartes cadeaux — Aura' };
+export const metadata = { title: 'Cartes cadeaux — GuériEnergies' };
 
 const AMOUNTS = [50, 80, 120, 200];
 
@@ -31,7 +31,7 @@ export default function CadeauPage() {
                 Offrez un moment de <span className="italic" style={{ color: 'var(--violet)' }}>douceur</span>.
               </h1>
               <p className="lead" style={{ color: 'rgba(255,255,255,0.82)', maxWidth: 480, marginBottom: 28 }}>
-                Le plus beau des cadeaux : du temps pour soi. Une carte Aura, et la personne choisit la séance qui lui ressemble.
+                Le plus beau des cadeaux : du temps pour soi. Une carte GuériEnergies, et la personne choisit la séance qui lui ressemble.
               </p>
               <ModalButton modal="gift" className="btn btn-aurora btn-lg">Offrir une carte</ModalButton>
             </div>
@@ -40,7 +40,7 @@ export default function CadeauPage() {
             <div className="reveal r-2" style={{ display: 'flex', justifyContent: 'center' }}>
               <div className="glass" style={{ width: 340, borderRadius: 24, padding: 28, border: '1px solid rgba(255,255,255,0.28)' }}>
                 <div className="row between" style={{ marginBottom: 36 }}>
-                  <div className="row gap-2"><Lotus size={20} color="#fff" /><span className="serif" style={{ color: '#fff', fontSize: 20 }}>Aura</span></div>
+                  <div className="row gap-2"><Lotus size={20} color="#fff" /><span className="serif" style={{ color: '#fff', fontSize: 20 }}>GuériEnergies</span></div>
                   <span className="tiny" style={{ color: 'rgba(255,255,255,0.6)' }}>CARTE CADEAU</span>
                 </div>
                 <div className="serif" style={{ color: '#fff', fontSize: 44, marginBottom: 4 }}>120 €</div>

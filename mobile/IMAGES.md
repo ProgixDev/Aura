@@ -1,4 +1,4 @@
-# Aura — Image asset brief
+# GuériEnergies — Image asset brief
 
 Every gradient-only surface in the app is a placeholder. This doc lists every
 image we need, where it lands in the code, what dimensions / aspect ratio to

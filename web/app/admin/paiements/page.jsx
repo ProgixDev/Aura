@@ -56,14 +56,14 @@ export default function AdminPaiementsPage() {
     <>
       <PageHead
         title="Paiements"
-        subtitle="Tous les flux financiers transitant par Aura."
+        subtitle="Tous les flux financiers transitant par GuériEnergies."
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Paiements' }]}
         actions={<button className="btn btn-soft btn-sm" onClick={exportCsv}><Icon name="download" size={15} /> Exporter (CSV)</button>}
       />
 
       <div className="grid grid-3" style={{ marginBottom: 24 }}>
         <StatCard label="Volume total" value={euro(stats?.montant_total)} icon="euro" />
-        <StatCard label="Commissions Aura" value={euro(stats?.commission_totale)} icon="chart" />
+        <StatCard label="Commissions GuériEnergies" value={euro(stats?.commission_totale)} icon="chart" />
         <StatCard label="Net reversé" value={euro(stats?.net_total)} icon="card" />
       </div>
 

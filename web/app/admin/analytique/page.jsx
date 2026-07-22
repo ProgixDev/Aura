@@ -57,7 +57,7 @@ export default function AnalyticsOverviewPage() {
     <>
       <PageHead
         title="Analytique"
-        subtitle="Vue d’ensemble de la performance d’Aura."
+        subtitle="Vue d’ensemble de la performance d’GuériEnergies."
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Analytique' }]}
         actions={<>
           <select className="input btn-sm" style={{ width: 'auto', minWidth: 150 }} defaultValue="12m">

@@ -74,7 +74,7 @@ export default function BookPayment() {
       }
 
       const { error: initError } = await initPaymentSheet({
-        merchantDisplayName: 'Aura',
+        merchantDisplayName: 'GuériEnergies',
         paymentIntentClientSecret: booking.clientSecret,
       });
       if (initError) {

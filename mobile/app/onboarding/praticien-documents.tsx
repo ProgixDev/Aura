@@ -18,7 +18,7 @@ const DOC_TYPES: Array<{ key: 'piece_identite' | 'certification' | 'assurance' |
   { key: 'certification', label: 'Certification', hint: 'Diplôme ou attestation de formation' },
   { key: 'assurance', label: 'Assurance professionnelle', hint: 'Attestation en cours de validité' },
   { key: 'domicile', label: 'Justificatif de domicile', hint: 'Moins de 3 mois' },
-  { key: 'charte', label: 'Charte Aura signée', hint: 'Téléchargée depuis votre email de bienvenue' },
+  { key: 'charte', label: 'Charte GuériEnergies signée', hint: 'Téléchargée depuis votre email de bienvenue' },
 ];
 
 export default function PraticienDocuments() {

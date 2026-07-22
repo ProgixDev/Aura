@@ -106,7 +106,7 @@ export default function BillingSettingsPage() {
             </div>
             <div className="field">
               <label>Raison sociale</label>
-              <input className="input" defaultValue="Aura SAS" />
+              <input className="input" defaultValue="GuériEnergies SAS" />
             </div>
             <div className="field">
               <label>Adresse de facturation</label>

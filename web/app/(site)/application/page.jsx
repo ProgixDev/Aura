@@ -4,7 +4,7 @@ import { Lotus } from '@/components/ui/Lotus';
 import { Rating } from '@/components/ui/Rating';
 import { ToastButton } from '@/components/ui/ToastButton';
 
-export const metadata = { title: 'L’application Aura' };
+export const metadata = { title: 'L’application GuériEnergies' };
 
 const FEATURES = [
   { i: 'search', t: 'Trouvez en un geste', d: 'Filtrez par discipline, ville et modalité. Les praticiens vérifiés d’abord.' },
@@ -24,10 +24,10 @@ export default function ApplicationPage() {
             <div className="reveal">
               <span className="eyebrow" style={{ color: 'rgba(255,255,255,0.7)' }}>Application mobile</span>
               <h1 className="h-display" style={{ color: '#fff', margin: '18px 0 18px' }}>
-                Aura, dans votre <span className="italic" style={{ color: 'var(--violet)' }}>poche</span>.
+                GuériEnergies, dans votre <span className="italic" style={{ color: 'var(--violet)' }}>poche</span>.
               </h1>
               <p className="lead" style={{ color: 'rgba(255,255,255,0.82)', maxWidth: 480, marginBottom: 30 }}>
-                Trouvez, échangez, réservez — partout, à tout moment. L’expérience Aura, pensée pour le calme et la confiance.
+                Trouvez, échangez, réservez — partout, à tout moment. L’expérience GuériEnergies, pensée pour le calme et la confiance.
               </p>
               <div className="row gap-3" style={{ flexWrap: 'wrap' }}>
                 <ToastButton message="Lien App Store envoyé." tone="success" className="btn btn-aurora btn-lg">
@@ -50,7 +50,7 @@ export default function ApplicationPage() {
                   <div className="aurora-dark grain" style={{ '--orb-x': '50%', '--orb-y': '20%', padding: '26px 18px 22px' }}>
                     <div className="row gap-2" style={{ marginBottom: 14 }}>
                       <Lotus size={18} color="#fff" />
-                      <span className="serif" style={{ color: '#fff', fontSize: 18 }}>Aura</span>
+                      <span className="serif" style={{ color: '#fff', fontSize: 18 }}>GuériEnergies</span>
                     </div>
                     <div className="serif" style={{ color: '#fff', fontSize: 22, lineHeight: 1.25 }}>Bonjour Camille,<br /><span className="italic" style={{ color: 'var(--violet)' }}>respirez</span>.</div>
                   </div>
@@ -102,7 +102,7 @@ export default function ApplicationPage() {
             <ToastButton message="Lien App Store envoyé." tone="success" className="btn btn-primary btn-lg"><Icon name="download" size={16} /> App Store</ToastButton>
             <ToastButton message="Lien Google Play envoyé." tone="success" className="btn btn-soft btn-lg"><Icon name="download" size={16} /> Google Play</ToastButton>
           </div>
-          <div className="mt-3"><Link href="/" className="more">Découvrir Aura sur le web →</Link></div>
+          <div className="mt-3"><Link href="/" className="more">Découvrir GuériEnergies sur le web →</Link></div>
         </div>
       </section>
     </>

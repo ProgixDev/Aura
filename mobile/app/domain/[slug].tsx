@@ -70,7 +70,7 @@ export default function DomainDetail() {
             </Pressable>
             <Pressable
               style={styles.iconCircle}
-              onPress={() => d && Share.share({ message: `${d.name} sur Aura — https://aura.fr/discipline/${slug}` })}
+              onPress={() => d && Share.share({ message: `${d.name} sur GuériEnergies — https://aura.fr/discipline/${slug}` })}
             >
               <Icon name="share" size={18} color={colors.ink} />
             </Pressable>

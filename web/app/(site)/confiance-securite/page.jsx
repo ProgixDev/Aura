@@ -8,7 +8,7 @@ const PILLARS = [
   { i: 'shield', tone: 'tint-violet', t: 'Vérification des praticiens', d: 'Diplômes, assurance professionnelle et identité sont contrôlés à la main, document par document, avant toute mise en ligne.' },
   { i: 'card', tone: 'tint-sky', t: 'Paiement protégé', d: 'Les transactions passent par un prestataire certifié. L’argent n’est versé au praticien qu’une fois la séance réalisée.' },
   { i: 'flag', tone: 'tint-gold', t: 'Modération active', d: 'Profils, messages et avis peuvent être signalés en un clic. Notre équipe intervient rapidement et avec discernement.' },
-  { i: 'message', tone: 'tint-sage', t: 'Échanges encadrés', d: 'La messagerie reste sur Aura : conseil, questions, organisation. Les paiements hors plateforme ne sont jamais protégés.' },
+  { i: 'message', tone: 'tint-sage', t: 'Échanges encadrés', d: 'La messagerie reste sur GuériEnergies : conseil, questions, organisation. Les paiements hors plateforme ne sont jamais protégés.' },
 ];
 
 const VERIF_STEPS = [
@@ -36,7 +36,7 @@ export default function ConfianceSecuritePage() {
             Votre <span className="italic" style={{ color: 'var(--violet)' }}>sécurité</span>, notre fondation.
           </h1>
           <p className="lead" style={{ color: 'rgba(255,255,255,0.82)', maxWidth: 560, margin: '0 auto' }}>
-            Vérification, paiement protégé, modération, RGPD. Voici concrètement comment Aura veille sur chaque rencontre — pour les clients comme pour les praticiens.
+            Vérification, paiement protégé, modération, RGPD. Voici concrètement comment GuériEnergies veille sur chaque rencontre — pour les clients comme pour les praticiens.
           </p>
         </div>
       </section>
@@ -102,7 +102,7 @@ export default function ConfianceSecuritePage() {
                   </li>
                 ))}
               </ul>
-              <p className="note small" style={{ marginTop: 18 }}>Ne payez jamais en dehors d’Aura : hors plateforme, aucune protection ne s’applique.</p>
+              <p className="note small" style={{ marginTop: 18 }}>Ne payez jamais en dehors de GuériEnergies : hors plateforme, aucune protection ne s’applique.</p>
             </div>
 
             <div className="card card-pad">

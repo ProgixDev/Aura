@@ -77,7 +77,7 @@ export default function DisciplinesPage() {
               Décrivez-nous ce que vous traversez — nous vous orientons vers la discipline et le praticien adaptés.
             </p>
             <div className="row gap-3" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
-              <ModalButton modal="contact" payload={{ name: 'Aura' }} className="btn btn-aurora btn-lg">Être guidé·e</ModalButton>
+              <ModalButton modal="contact" payload={{ name: 'GuériEnergies' }} className="btn btn-aurora btn-lg">Être guidé·e</ModalButton>
               <Link href="/praticiens" className="btn btn-soft btn-lg" style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)' }}>Parcourir les praticiens</Link>
             </div>
           </div>

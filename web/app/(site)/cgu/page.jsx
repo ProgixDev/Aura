@@ -37,17 +37,17 @@ export default function CguPage() {
 
             <div className="flex-1" style={{ minWidth: 280 }}>
               <p className="lead" style={{ marginBottom: 28 }}>
-                Les présentes Conditions Générales d’Utilisation régissent l’accès et l’usage de la plateforme <span className="serif-accent">Aura</span>, éditée par Aura Bien-être SAS. En naviguant sur le site, vous acceptez de vous y conformer pleinement.
+                Les présentes Conditions Générales d’Utilisation régissent l’accès et l’usage de la plateforme <span className="serif-accent">GuériEnergies</span>, éditée par GuériEnergies Bien-être SAS. En naviguant sur le site, vous acceptez de vous y conformer pleinement.
               </p>
 
               <h3 className="h-3" id="objet" style={{ scrollMarginTop: 96, marginBottom: 8 }}>1. Objet & acceptation</h3>
               <p className="body" style={{ marginBottom: 24 }}>
-                Les présentes CGU ont pour objet de définir les modalités de mise à disposition des services de la plateforme et les conditions d’utilisation par l’Utilisateur. La création d’un compte ou la simple consultation du site emporte acceptation sans réserve des présentes conditions. Aura se réserve le droit de les modifier à tout moment ; la version applicable est celle en vigueur à la date de la connexion.
+                Les présentes CGU ont pour objet de définir les modalités de mise à disposition des services de la plateforme et les conditions d’utilisation par l’Utilisateur. La création d’un compte ou la simple consultation du site emporte acceptation sans réserve des présentes conditions. GuériEnergies se réserve le droit de les modifier à tout moment ; la version applicable est celle en vigueur à la date de la connexion.
               </p>
 
               <h3 className="h-3" id="definitions" style={{ scrollMarginTop: 96, marginBottom: 8 }}>2. Définitions</h3>
               <p className="body" style={{ marginBottom: 24 }}>
-                <strong>Plateforme</strong> : le site et l’application Aura. <strong>Utilisateur</strong> : toute personne accédant aux services. <strong>Praticien</strong> : professionnel du bien-être proposant des séances. <strong>Séance</strong> : prestation réservée via la Plateforme. <strong>Contenu</strong> : tout élément publié par un Utilisateur ou un Praticien.
+                <strong>Plateforme</strong> : le site et l’application GuériEnergies. <strong>Utilisateur</strong> : toute personne accédant aux services. <strong>Praticien</strong> : professionnel du bien-être proposant des séances. <strong>Séance</strong> : prestation réservée via la Plateforme. <strong>Contenu</strong> : tout élément publié par un Utilisateur ou un Praticien.
               </p>
 
               <h3 className="h-3" id="compte" style={{ scrollMarginTop: 96, marginBottom: 8 }}>3. Inscription & compte</h3>
@@ -57,7 +57,7 @@ export default function CguPage() {
 
               <h3 className="h-3" id="service" style={{ scrollMarginTop: 96, marginBottom: 8 }}>4. Description du service</h3>
               <p className="body" style={{ marginBottom: 24 }}>
-                Aura est une plateforme de mise en relation. Elle permet de rechercher des praticiens vérifiés, d’échanger via une messagerie sécurisée, de réserver des séances et de régler en ligne. Aura n’est pas partie au contrat de prestation conclu entre l’Utilisateur et le Praticien. Les soins proposés ne se substituent en aucun cas à un avis ou un traitement médical.
+                GuériEnergies est une plateforme de mise en relation. Elle permet de rechercher des praticiens vérifiés, d’échanger via une messagerie sécurisée, de réserver des séances et de régler en ligne. GuériEnergies n’est pas partie au contrat de prestation conclu entre l’Utilisateur et le Praticien. Les soins proposés ne se substituent en aucun cas à un avis ou un traitement médical.
               </p>
 
               <h3 className="h-3" id="reservation" style={{ scrollMarginTop: 96, marginBottom: 8 }}>5. Réservation & paiement</h3>
@@ -82,12 +82,12 @@ export default function CguPage() {
 
               <h3 className="h-3" id="moderation" style={{ scrollMarginTop: 96, marginBottom: 8 }}>9. Modération & sanctions</h3>
               <p className="body" style={{ marginBottom: 24 }}>
-                Aura dispose d’une équipe de modération. Tout contenu signalé est examiné ; les manquements aux présentes CGU peuvent donner lieu à un avertissement, au retrait du contenu, à la suspension ou à la résiliation du compte, sans préjudice d’éventuelles poursuites.
+                GuériEnergies dispose d’une équipe de modération. Tout contenu signalé est examiné ; les manquements aux présentes CGU peuvent donner lieu à un avertissement, au retrait du contenu, à la suspension ou à la résiliation du compte, sans préjudice d’éventuelles poursuites.
               </p>
 
               <h3 className="h-3" id="resiliation" style={{ scrollMarginTop: 96, marginBottom: 8 }}>10. Résiliation</h3>
               <p className="body" style={{ marginBottom: 24 }}>
-                L’Utilisateur peut clôturer son compte à tout moment depuis son espace personnel. Aura peut résilier un compte en cas de manquement grave ou répété aux présentes conditions, après notification lorsque cela est possible.
+                L’Utilisateur peut clôturer son compte à tout moment depuis son espace personnel. GuériEnergies peut résilier un compte en cas de manquement grave ou répété aux présentes conditions, après notification lorsque cela est possible.
               </p>
 
               <h3 className="h-3" id="droit" style={{ scrollMarginTop: 96, marginBottom: 8 }}>11. Droit applicable</h3>

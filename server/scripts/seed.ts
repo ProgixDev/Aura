@@ -219,7 +219,7 @@ async function seedEmailTemplates(ctx: SeedContext): Promise<void> {
       nom: 'Confirmation de réservation',
       objet: 'Votre réservation est confirmée',
       corps:
-        "Bonjour {{client_name}}, votre séance avec {{praticien_name}} est confirmée pour le {{date}}. À très vite sur Aura !",
+        "Bonjour {{client_name}}, votre séance avec {{praticien_name}} est confirmée pour le {{date}}. À très vite sur GuériEnergies !",
       statut: 'actif',
       variables: ['client_name', 'date', 'praticien_name'],
     },
@@ -233,9 +233,9 @@ async function seedEmailTemplates(ctx: SeedContext): Promise<void> {
     },
     {
       nom: 'Bienvenue',
-      objet: 'Bienvenue sur Aura',
+      objet: 'Bienvenue sur GuériEnergies',
       corps:
-        "Bonjour {{client_name}}, bienvenue sur Aura ! Découvrez nos praticiens vérifiés et réservez votre première séance en toute confiance.",
+        "Bonjour {{client_name}}, bienvenue sur GuériEnergies ! Découvrez nos praticiens vérifiés et réservez votre première séance en toute confiance.",
       statut: 'actif',
       variables: ['client_name'],
     },
@@ -243,7 +243,7 @@ async function seedEmailTemplates(ctx: SeedContext): Promise<void> {
       nom: 'Praticien vérifié',
       objet: 'Votre profil praticien est vérifié',
       corps:
-        "Bonjour {{praticien_name}}, félicitations : votre profil est désormais vérifié et visible par tous les clients Aura.",
+        "Bonjour {{praticien_name}}, félicitations : votre profil est désormais vérifié et visible par tous les clients GuériEnergies.",
       statut: 'actif',
       variables: ['praticien_name'],
     },
@@ -251,7 +251,7 @@ async function seedEmailTemplates(ctx: SeedContext): Promise<void> {
       nom: "Demande d'avis",
       objet: 'Partagez votre expérience',
       corps:
-        "Bonjour {{client_name}}, comment s'est passée votre séance avec {{praticien_name}} ? Laissez un avis pour aider la communauté Aura.",
+        "Bonjour {{client_name}}, comment s'est passée votre séance avec {{praticien_name}} ? Laissez un avis pour aider la communauté GuériEnergies.",
       statut: 'inactif',
       variables: ['client_name', 'praticien_name'],
     },
@@ -273,11 +273,11 @@ async function seedPromotions(ctx: SeedContext): Promise<void> {
 
 async function seedCercles(ctx: SeedContext): Promise<void> {
   const rows = await ctx.ds.getRepository(Cercle).save([
-    { nom: 'Cercle Aura — Paris', animateur: 'Camille Fontaine', color: pick(CERCLE_PALETTE, 0), description: 'Un rendez-vous mensuel pour se recentrer en groupe, au cœur de Paris.', image: `${IMAGE_BASE}/cercles/cercle-01.jpg` },
+    { nom: 'Cercle GuériEnergies — Paris', animateur: 'Camille Fontaine', color: pick(CERCLE_PALETTE, 0), description: 'Un rendez-vous mensuel pour se recentrer en groupe, au cœur de Paris.', image: `${IMAGE_BASE}/cercles/cercle-01.jpg` },
     { nom: 'Cercle de femmes — Lyon', animateur: 'Nora El Amrani', color: pick(CERCLE_PALETTE, 1), description: 'Un cercle de parole et de partage entre femmes, une fois par mois.', image: `${IMAGE_BASE}/cercles/cercle-02.jpg` },
     { nom: 'Méditation du matin — Bordeaux', animateur: 'Julien Sabatier', color: pick(CERCLE_PALETTE, 2), description: 'Une séance de méditation guidée pour bien démarrer la journée.', image: `${IMAGE_BASE}/cercles/cercle-03.jpg` },
     { nom: 'Cercle de pleine lune — Marseille', animateur: 'Inès Castellano', color: pick(CERCLE_PALETTE, 3), description: 'Rituel collectif à chaque pleine lune, en bord de mer.', image: `${IMAGE_BASE}/cercles/cercle-04.jpg` },
-    { nom: 'Cercle Aura — Toulouse', animateur: 'Hugo Delmas', color: pick(CERCLE_PALETTE, 4), description: 'Le rendez-vous Aura toulousain pour échanger et se ressourcer.', image: `${IMAGE_BASE}/cercles/cercle-05.jpg` },
+    { nom: 'Cercle GuériEnergies — Toulouse', animateur: 'Hugo Delmas', color: pick(CERCLE_PALETTE, 4), description: 'Le rendez-vous GuériEnergies toulousain pour échanger et se ressourcer.', image: `${IMAGE_BASE}/cercles/cercle-05.jpg` },
     { nom: 'Sagesse et Partage — Nantes', animateur: 'Léa Guillou', color: pick(CERCLE_PALETTE, 5), description: 'Un cercle de discussion autour du développement personnel.', image: `${IMAGE_BASE}/cercles/cercle-06.jpg` },
     { nom: 'Cercle de respiration — Strasbourg', animateur: 'Antoine Weber', color: pick(CERCLE_PALETTE, 0), description: 'Ateliers de respiration consciente ouverts à tous les niveaux.', image: `${IMAGE_BASE}/cercles/cercle-07.jpg` },
     { nom: 'Rondes du cœur — Nice', animateur: 'Manon Rey', color: pick(CERCLE_PALETTE, 1), description: 'Un espace bienveillant pour cultiver la gratitude ensemble.', image: `${IMAGE_BASE}/cercles/cercle-08.jpg` },
@@ -295,9 +295,9 @@ async function seedAdmins(ctx: SeedContext): Promise<User[]> {
       is_admin: true,
       role: 'admin',
     },
-    { name: 'Modération Aura', email: 'moderateur@aura.io', password: ctx.demoHash, is_admin: true, role: 'moderateur' },
-    { name: 'Support Aura', email: 'support@aura.io', password: ctx.demoHash, is_admin: true, role: 'support' },
-    { name: 'Comptabilité Aura', email: 'comptable@aura.io', password: ctx.demoHash, is_admin: true, role: 'comptabilite' },
+    { name: 'Modération GuériEnergies', email: 'moderateur@guerienergies.io', password: ctx.demoHash, is_admin: true, role: 'moderateur' },
+    { name: 'Support GuériEnergies', email: 'support@guerienergies.io', password: ctx.demoHash, is_admin: true, role: 'support' },
+    { name: 'Comptabilité GuériEnergies', email: 'comptable@guerienergies.io', password: ctx.demoHash, is_admin: true, role: 'comptabilite' },
   ]);
   console.log(`  admins: ${rows.length} rows`);
   return rows;
@@ -327,7 +327,7 @@ async function seedPraticiens(ctx: SeedContext): Promise<Praticien[]> {
     return {
       firstname,
       lastname,
-      email: `${emailLocal(firstname, lastname, i)}@aura-pro.io`,
+      email: `${emailLocal(firstname, lastname, i)}@guerienergies-pro.io`,
       specialite: pick(DISCIPLINE_NOMS, i),
       ville: pick(CITIES, i + 4),
       // + floor(i/12) decorrelates niveau from specialite across the 3 practitioners that
@@ -546,7 +546,7 @@ const ARTICLES: Array<{ titre: string; categorie: string; tonalite: string; temp
   { titre: 'Bien choisir son praticien en énergétique', categorie: 'Guide', tonalite: 'sky', temps: 4, image: `${IMAGE_BASE}/articles/article-05.jpg` },
   { titre: 'Le bain sonore, voyage intérieur', categorie: 'Discipline', tonalite: 'sky', temps: 5, image: `${IMAGE_BASE}/articles/article-06.jpg` },
   { titre: 'Gérer son stress au quotidien', categorie: 'Bien-être', tonalite: 'sage', temps: 6, image: `${IMAGE_BASE}/articles/article-07.jpg` },
-  { titre: 'La communauté Aura fête ses 1 an', categorie: 'Communauté', tonalite: 'gold', temps: 3, image: `${IMAGE_BASE}/articles/article-08.jpg` },
+  { titre: 'La communauté GuériEnergies fête ses 1 an', categorie: 'Communauté', tonalite: 'gold', temps: 3, image: `${IMAGE_BASE}/articles/article-08.jpg` },
   { titre: 'Hypnose : mythes et réalités', categorie: 'Discipline', tonalite: 'violet', temps: 7, image: `${IMAGE_BASE}/articles/article-09.jpg` },
   { titre: 'Préparer une retraite de ressourcement', categorie: 'Conseils', tonalite: 'gold', temps: 6, image: `${IMAGE_BASE}/articles/article-10.jpg` },
   { titre: 'Le sommeil réparateur par la sophrologie', categorie: 'Bien-être', tonalite: 'sage', temps: 5, image: `${IMAGE_BASE}/articles/article-11.jpg` },
@@ -579,7 +579,7 @@ const NOTIFICATIONS: Array<{ titre: string; message: string }> = [
   { titre: 'Offre de bienvenue', message: 'Profitez de -15% sur votre première séance.' },
   { titre: 'Vos praticiens favoris ont des créneaux', message: 'Réservez avant qu’il ne soit trop tard.' },
   { titre: 'Maintenance planifiée', message: 'Le service sera indisponible dimanche de 2h à 4h.' },
-  { titre: 'Nouveaux praticiens vérifiés', message: 'De nouveaux talents ont rejoint Aura.' },
+  { titre: 'Nouveaux praticiens vérifiés', message: 'De nouveaux talents ont rejoint GuériEnergies.' },
   { titre: 'Votre récapitulatif du mois', message: 'Retrouvez votre activité des 30 derniers jours.' },
 ];
 type AuditCat = 'moderation' | 'verification' | 'finance' | 'security' | 'support' | 'system';
@@ -699,7 +699,7 @@ async function seedAvis(ctx: SeedContext, clients: Client[], prats: Praticien[],
 
   const rows = termine.map((r, i) => {
     const client = clientById.get(r.client_id);
-    const author = client ? `${client.firstname} ${client.lastname}` : 'Client Aura';
+    const author = client ? `${client.firstname} ${client.lastname}` : 'Client GuériEnergies';
     const m = i % 100;
     const note = m < 70 ? 5 : m < 92 ? 4 : 3;
     const s = i % 20;
@@ -883,11 +883,11 @@ async function seedArticles(ctx: SeedContext): Promise<void> {
       extrait: `${a.titre} — un éclairage clair et accessible pour aller plus loin dans votre bien-être.`,
       corps:
         `Dans cet article, nous explorons ${a.titre.toLowerCase()}. ` +
-        'Aura réunit des praticiens vérifiés pour vous accompagner en toute confiance. ' +
+        'GuériEnergies réunit des praticiens vérifiés pour vous accompagner en toute confiance. ' +
         'Prenez le temps de découvrir, à votre rythme, ce qui résonne avec vos besoins du moment. ' +
         'Chaque pratique est présentée avec bienveillance, sans dogme, dans le respect de votre cheminement.',
       status,
-      auteur: 'L’équipe Aura',
+      auteur: 'L’équipe GuériEnergies',
       temps_lecture: a.temps,
       image_couverture: a.image,
       date_publication: status === 'publié' ? daysFromNow(-between(3, 120, i)) : null,
@@ -915,7 +915,7 @@ async function seedEvents(ctx: SeedContext, prats: Praticien[]): Promise<void> {
       lieu: e.lieu,
       prix: e.prix,
       nombre_places: e.places,
-      description: `${e.titre} — un moment à vivre ensemble, encadré par des praticiens Aura. Places limitées.`,
+      description: `${e.titre} — un moment à vivre ensemble, encadré par des praticiens GuériEnergies. Places limitées.`,
       status,
       image: e.image,
     };

@@ -49,12 +49,12 @@ export default function DevenirPraticienPage() {
       <section className="aurora-dark grain" style={{ '--orb-x': '70%', '--orb-y': '20%', '--orb-1': '#C4B0E8', '--orb-2': '#7B5FCF', padding: '110px 0 120px' }}>
         <div className="container reveal">
           <div style={{ maxWidth: 620 }}>
-            <span className="eyebrow" style={{ color: 'rgba(255,255,255,0.7)' }}>Rejoindre Aura</span>
+            <span className="eyebrow" style={{ color: 'rgba(255,255,255,0.7)' }}>Rejoindre GuériEnergies</span>
             <h1 className="h-display" style={{ color: '#fff', margin: '20px 0 22px' }}>
               Vivez de votre <span className="italic" style={{ color: 'var(--violet)' }}>vocation</span>, en confiance.
             </h1>
             <p className="lead" style={{ color: 'rgba(255,255,255,0.82)', maxWidth: 560, marginBottom: 32 }}>
-              Aura met en lumière les praticiens du bien-être énergétique sérieux. Vous exercez, nous nous occupons de la visibilité, des paiements et de la confiance.
+              GuériEnergies met en lumière les praticiens du bien-être énergétique sérieux. Vous exercez, nous nous occupons de la visibilité, des paiements et de la confiance.
             </p>
             <div className="row gap-3" style={{ flexWrap: 'wrap' }}>
               {/* This used to open the client signup modal (ModalButton modal="signup"),
@@ -83,7 +83,7 @@ export default function DevenirPraticienPage() {
       <section className="section">
         <div className="container">
           <div className="center" style={{ marginBottom: 48 }}>
-            <span className="eyebrow">Pourquoi Aura</span>
+            <span className="eyebrow">Pourquoi GuériEnergies</span>
             <h2 className="h-1" style={{ marginTop: 10 }}>Tout ce dont vous avez besoin pour exercer</h2>
           </div>
           <div className="grid grid-3">
@@ -179,7 +179,7 @@ export default function DevenirPraticienPage() {
           <div className="container-narrow center">
             <Rating value={featured.rating} count={featured.reviews} size={18} showCount />
             <p className="serif" style={{ fontSize: 'clamp(22px,3.2vw,34px)', lineHeight: 1.32, margin: '20px 0 28px', fontWeight: 400 }}>
-              « Aura m’a permis de remplir mon agenda sans démarchage. Les clients arrivent déjà en confiance, et je suis payée sans stress. »
+              « GuériEnergies m’a permis de remplir mon agenda sans démarchage. Les clients arrivent déjà en confiance, et je suis payée sans stress. »
             </p>
             <div className="row gap-3" style={{ justifyContent: 'center' }}>
               <Avatar src={featured.photo} name={featured.name} tone={featured.tone} size={48} />

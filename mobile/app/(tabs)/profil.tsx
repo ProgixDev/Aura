@@ -107,7 +107,7 @@ export default function Profil() {
             <AuroraBackground variant="soft" rounded={10} style={styles.becomeIc}>
               <Lotus size={14} color="#fff" />
             </AuroraBackground>
-            <Text style={styles.becomeLabel}>Devenir praticien sur Aura</Text>
+            <Text style={styles.becomeLabel}>Devenir praticien sur GuériEnergies</Text>
             <Text style={styles.becomeOffer}>1 mois offert</Text>
             <Icon name="chevron" size={18} color={colors.muted} />
           </Pressable>
@@ -117,7 +117,7 @@ export default function Profil() {
           <Pressable onPress={handleSignOut} hitSlop={12}>
             <Text style={styles.logout}>Se déconnecter</Text>
           </Pressable>
-          <Text style={styles.version}>Aura v1.0 · fait avec soin en France</Text>
+          <Text style={styles.version}>GuériEnergies v1.0 · fait avec soin en France</Text>
         </View>
       </ScrollView>
     </View>

@@ -4,11 +4,11 @@ import { Icon } from '@/components/ui/Icon';
 import { Badge } from '@/components/ui/Badge';
 import { ModalButton } from '@/components/ui/ModalButton';
 
-export const metadata = { title: 'Carrières — Aura' };
+export const metadata = { title: 'Carrières — GuériEnergies' };
 
 const PERKS = [
   { i: 'home', t: 'Télétravail souple', d: 'Travaillez d’où vous êtes, avec des temps de rencontre réguliers.' },
-  { i: 'heart', t: 'Bien-être pris au sérieux', d: 'Crédit séances Aura offert et journées de respiration.' },
+  { i: 'heart', t: 'Bien-être pris au sérieux', d: 'Crédit séances GuériEnergies offert et journées de respiration.' },
   { i: 'chart', t: 'Croissance partagée', d: 'BSPCE pour tous, et un vrai plan d’évolution.' },
   { i: 'calendar', t: '6 semaines de congés', d: 'Plus les ponts. On ne plaisante pas avec le repos.' },
   { i: 'book', t: 'Budget apprentissage', d: '1 500 € / an pour vous former, lire, vous équiper.' },
@@ -27,7 +27,7 @@ export default function CarrieresPage() {
     <>
       <section className="aurora-dark grain" style={{ '--orb-x': '30%', '--orb-y': '22%', '--orb-1': '#C4B0E8', '--orb-2': '#7B5FCF', padding: '96px 0 100px' }}>
         <div className="container-narrow reveal center">
-          <span className="eyebrow" style={{ color: 'rgba(255,255,255,0.7)' }}>Rejoindre Aura</span>
+          <span className="eyebrow" style={{ color: 'rgba(255,255,255,0.7)' }}>Rejoindre GuériEnergies</span>
           <h1 className="h-display" style={{ color: '#fff', margin: '18px 0 18px' }}>
             Construire un soin <span className="italic" style={{ color: 'var(--violet)' }}>de confiance</span>.
           </h1>

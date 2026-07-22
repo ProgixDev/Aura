@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
 
-export const metadata = { title: 'Contact — Aura' };
+export const metadata = { title: 'Contact — GuériEnergies' };
 
 const CHANNELS = [
   { i: 'mail', t: 'Écrire à l’équipe', d: 'Une question, une suggestion ? On répond sous 24h ouvrées.', v: 'bonjour@aura.fr' },
@@ -13,7 +13,7 @@ const CHANNELS = [
 const LINKS = [
   { t: 'Centre d’aide', d: 'Articles, guides et réponses immédiates.', href: '/aide', i: 'book' },
   { t: 'Questions fréquentes', d: 'Réservation, paiement, vérification.', href: '/faq', i: 'message' },
-  { t: 'Devenir praticien', d: 'Rejoignez la communauté Aura.', href: '/devenir-praticien', i: 'sparkle' },
+  { t: 'Devenir praticien', d: 'Rejoignez la communauté GuériEnergies.', href: '/devenir-praticien', i: 'sparkle' },
 ];
 
 const FORM_FIELDS = [

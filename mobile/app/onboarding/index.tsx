@@ -27,7 +27,7 @@ const slides = [
     title: 'Tous les guérisseurs.',
     titleItalic: 'Un seul lieu de confiance.',
     text:
-      "Magnétiseurs, chamans, énergéticiens, hypnothérapeutes — l'ensemble des praticiens de l'énergie et du bien-être réunis sur Aura.",
+      "Magnétiseurs, chamans, énergéticiens, hypnothérapeutes — l'ensemble des praticiens de l'énergie et du bien-être réunis sur GuériEnergies.",
   },
   {
     image: onboardingImages[1],
@@ -41,7 +41,7 @@ const slides = [
     title: 'Une communauté qui',
     titleItalic: 'prend soin.',
     text:
-      "Échangez des soins, rejoignez des retraites, partagez vos pratiques. Aura est un cercle, pas un catalogue.",
+      "Échangez des soins, rejoignez des retraites, partagez vos pratiques. GuériEnergies est un cercle, pas un catalogue.",
   },
 ];
 

@@ -3,7 +3,7 @@ import { pressItems } from '@/lib/data/content';
 import { Icon } from '@/components/ui/Icon';
 import { ToastButton } from '@/components/ui/ToastButton';
 
-export const metadata = { title: 'Presse — Aura' };
+export const metadata = { title: 'Presse — GuériEnergies' };
 
 const FACTS = [
   ['2 400+', 'praticiens vérifiés'],
@@ -25,7 +25,7 @@ export default function PressePage() {
         <div className="container-narrow reveal center">
           <span className="eyebrow" style={{ color: 'rgba(255,255,255,0.7)' }}>Espace presse</span>
           <h1 className="h-display" style={{ color: '#fff', margin: '18px 0 18px' }}>
-            Aura dans les <span className="italic" style={{ color: 'var(--violet)' }}>médias</span>.
+            GuériEnergies dans les <span className="italic" style={{ color: 'var(--violet)' }}>médias</span>.
           </h1>
           <p className="lead" style={{ color: 'rgba(255,255,255,0.82)', maxWidth: 540, margin: '0 auto 30px' }}>
             La plateforme qui structure et sécurise le soin énergétique en France. Ressources, chiffres et contacts pour les journalistes.

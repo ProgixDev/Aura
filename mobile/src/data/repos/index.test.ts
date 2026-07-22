@@ -93,9 +93,9 @@ describe('mapEvent', () => {
 
 describe('mapCircle', () => {
   it('maps real fields verbatim and stringifies the numeric id', () => {
-    const row = { id: 3, nom: 'Cercle Aura — Paris', description: 'Un espace de partage.', color: '#7B5FCF', animateur: 'Camille Rossi', image: 'https://x/cercle.jpg' };
+    const row = { id: 3, nom: 'Cercle GuériEnergies — Paris', description: 'Un espace de partage.', color: '#7B5FCF', animateur: 'Camille Rossi', image: 'https://x/cercle.jpg' };
     expect(mapCircle(row)).toEqual({
-      id: '3', nom: 'Cercle Aura — Paris', description: 'Un espace de partage.', color: '#7B5FCF', animateur: 'Camille Rossi', image: 'https://x/cercle.jpg',
+      id: '3', nom: 'Cercle GuériEnergies — Paris', description: 'Un espace de partage.', color: '#7B5FCF', animateur: 'Camille Rossi', image: 'https://x/cercle.jpg',
     });
   });
 
@@ -109,7 +109,7 @@ describe('mapArticle', () => {
   const row = {
     id: 9, slug: 'preparer-premiere-seance', titre: 'Préparer sa première séance',
     categorie: 'Conseils', tonalite: 'sage', extrait: 'extrait réel', corps: 'corps réel',
-    status: 'publié', auteur: "L'équipe Aura", temps_lecture: 4,
+    status: 'publié', auteur: "L'équipe GuériEnergies", temps_lecture: 4,
     image_couverture: null, meta_description: null, mot_clef: null, date_publication: '2026-04-30T00:00:00.000Z',
   };
 

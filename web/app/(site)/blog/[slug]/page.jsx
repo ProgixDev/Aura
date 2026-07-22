@@ -143,7 +143,7 @@ export default function BlogArticlePage({ params }) {
                 <span className="eyebrow">Écrit par</span>
                 <h3 className="h-3" style={{ margin: '4px 0 4px' }}>{post.auteur}</h3>
                 <p className="small muted">
-                  Une voix du Journal d'Aura, dédiée à un bien-être énergétique éthique, sourcé et accessible.
+                  Une voix du Journal de GuériEnergies, dédiée à un bien-être énergétique éthique, sourcé et accessible.
                 </p>
               </div>
               <ModalButton modal="contact" payload={{ name: post.auteur }} className="btn btn-soft btn-sm">Contacter</ModalButton>

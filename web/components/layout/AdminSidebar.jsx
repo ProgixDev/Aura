@@ -52,7 +52,7 @@ export default function AdminSidebar() {
   const isActive = (it) => (it.exact ? pathname === it.href : pathname === it.href || pathname.startsWith(it.href + '/'));
   return (
     <aside className="admin-sidebar">
-      <Link href="/admin" className="brand"><Lotus size={22} color="#fff" /> Aura <span className="tiny" style={{ color: 'rgba(255,255,255,0.4)', marginLeft: 2 }}>admin</span></Link>
+      <Link href="/admin" className="brand"><Lotus size={22} color="#fff" /> GuériEnergies <span className="tiny" style={{ color: 'rgba(255,255,255,0.4)', marginLeft: 2 }}>admin</span></Link>
       {ADMIN_NAV.map((g) => (
         <div className="nav-group" key={g.group}>
           <div className="gl">{g.group}</div>

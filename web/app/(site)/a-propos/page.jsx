@@ -28,7 +28,7 @@ export default function AProposPage() {
             Remettre la <span className="italic" style={{ color: 'var(--violet)' }}>confiance</span> au cœur du soin.
           </h1>
           <p className="lead" style={{ color: 'rgba(255,255,255,0.82)', maxWidth: 580, margin: '0 auto' }}>
-            Aura est née d’une conviction simple : celles et ceux qui cherchent du mieux-être méritent de trouver des praticiens sérieux, sans fouiller des heures ni croiser les doigts.
+            GuériEnergies est née d’une conviction simple : celles et ceux qui cherchent du mieux-être méritent de trouver des praticiens sérieux, sans fouiller des heures ni croiser les doigts.
           </p>
         </div>
       </section>
@@ -42,7 +42,7 @@ export default function AProposPage() {
             Le bien-être énergétique souffre d’un paradoxe : des milliers de praticiens compétents, et presque aucun moyen de les distinguer des promesses creuses. Résultat, les clients hésitent, et les praticiens sérieux se fondent dans la masse.
           </p>
           <p className="body" style={{ marginBottom: 18 }}>
-            Nous avons construit Aura pour résoudre ce paradoxe. Chaque praticien est <span className="serif-accent">vérifié</span> à la main : diplômes, assurance, identité. Chaque paiement est protégé. Chaque échange peut être signalé. La confiance n’est pas un argument marketing — c’est l’infrastructure.
+            Nous avons construit GuériEnergies pour résoudre ce paradoxe. Chaque praticien est <span className="serif-accent">vérifié</span> à la main : diplômes, assurance, identité. Chaque paiement est protégé. Chaque échange peut être signalé. La confiance n’est pas un argument marketing — c’est l’infrastructure.
           </p>
           <p className="body">
             Nous ne promettons pas de miracles, et nous nous méfions de ceux qui en promettent. Nous offrons un cadre clair, doux et exigeant, où la rencontre entre une personne et un praticien peut se faire sereinement.
@@ -103,7 +103,7 @@ export default function AProposPage() {
         <div className="container">
           <div className="aurora-dark grain card" style={{ '--orb-x': '70%', '--orb-y': '30%', padding: 'clamp(40px,5vw,64px)', borderRadius: 'var(--r-sheet)' }}>
             <div className="center" style={{ marginBottom: 36 }}>
-              <span className="eyebrow" style={{ color: 'rgba(255,255,255,0.7)' }}>Aura en chiffres</span>
+              <span className="eyebrow" style={{ color: 'rgba(255,255,255,0.7)' }}>GuériEnergies en chiffres</span>
               <h2 className="h-2" style={{ color: '#fff', marginTop: 10 }}>L’impact, mesuré</h2>
             </div>
             <div className="grid grid-4">

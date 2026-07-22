@@ -1,4 +1,4 @@
--- Aura — full database schema. Run this in the Supabase SQL Editor.
+-- GuériEnergies — full database schema. Run this in the Supabase SQL Editor.
 --
 -- Every datetime column is `timestamptz` and created_at/updated_at carry `default now()`
 -- (same convention as the NafesAI schema). timestamptz stores an absolute instant, so it

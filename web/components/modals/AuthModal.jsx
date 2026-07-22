@@ -73,7 +73,7 @@ export function AuthModal({ id, mode: initial = 'login' }) {
 
   const title = mode === 'login' ? 'Connexion' : mode === 'signup' ? 'Créer un compte' : 'Mot de passe oublié';
   return (
-    <Modal id={id} title={title} subtitle={mode === 'forgot' ? 'Nous vous enverrons un lien de réinitialisation.' : 'Accédez à votre espace Aura.'} size="modal-sm">
+    <Modal id={id} title={title} subtitle={mode === 'forgot' ? 'Nous vous enverrons un lien de réinitialisation.' : 'Accédez à votre espace GuériEnergies.'} size="modal-sm">
       <form onSubmit={submit}>
         {error && <p className="small" style={{ color: 'var(--danger, #b5524f)', marginBottom: 12 }}>{error}</p>}
         {mode === 'signup' && (
