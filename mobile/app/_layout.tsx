@@ -123,6 +123,9 @@ export default function RootLayout() {
               <Stack.Screen name="dashboard" />
               <Stack.Screen name="praticien-messages/index" />
               <Stack.Screen name="praticien-messages/[id]" />
+              <Stack.Screen name="peer-messages/index" />
+              <Stack.Screen name="peer-messages/[id]" />
+              <Stack.Screen name="peer-messages/new" options={{ presentation: 'modal' }} />
               <Stack.Screen name="subscription" />
             </Stack>
           </QueryClientProvider>

@@ -195,6 +195,12 @@ export default function Dashboard() {
           onPress={() => router.push('/praticien-messages' as any)}
         />
         <Row
+          icon={<Icon name="message" size={20} color={colors.ink} />}
+          title="Messagerie praticiens"
+          sub="Échangez avec d'autres praticiens"
+          onPress={() => router.push('/peer-messages' as any)}
+        />
+        <Row
           icon={<Icon name="back" size={20} color={colors.danger} />}
           title="Se déconnecter"
           onPress={logout}

@@ -14,6 +14,8 @@ drop table if exists platform_settings cascade;
 drop table if exists subscriptions cascade;
 drop table if exists disputes cascade;
 drop table if exists audit_logs cascade;
+drop table if exists peer_messages cascade;
+drop table if exists peer_conversations cascade;
 drop table if exists messages cascade;
 drop table if exists conversations cascade;
 drop table if exists notification_preferences cascade;
@@ -414,6 +416,29 @@ create table messages (
   flagged boolean not null default false,
   created_at timestamptz default now(),
   constraint fk_msg_conversation foreign key (conversation_id) references conversations(id) on delete cascade
+);
+
+create table peer_conversations (
+  id integer generated always as identity primary key,
+  praticien_a_id integer not null,
+  praticien_b_id integer not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  constraint fk_peerconv_praticien_a foreign key (praticien_a_id) references praticiens(id) on delete cascade,
+  constraint fk_peerconv_praticien_b foreign key (praticien_b_id) references praticiens(id) on delete cascade
+);
+create unique index uq_peer_conversations_pair on peer_conversations (praticien_a_id, praticien_b_id);
+
+create table peer_messages (
+  id integer generated always as identity primary key,
+  conversation_id integer not null,
+  sender_praticien_id integer not null,
+  text text not null,
+  read_at timestamptz,
+  flagged boolean not null default false,
+  created_at timestamptz default now(),
+  constraint fk_peermsg_conversation foreign key (conversation_id) references peer_conversations(id) on delete cascade,
+  constraint fk_peermsg_sender foreign key (sender_praticien_id) references praticiens(id) on delete cascade
 );
 
 create table audit_logs (

@@ -396,6 +396,56 @@ export const praticienMessageRepo = {
       .then((res) => mapMessage(res.data, 'praticien')),
 };
 
+// ---------- Peer messages (praticien-to-praticien) — real backend ----------
+// Unlike client<->praticien chat, both sides here are practitioners, so "who sent this"
+// can't be told apart by role — the backend attaches `other` (the other participant) on
+// each conversation and `from_me` on each message.
+export function mapPeerConversation(row: any): Conversation {
+  const other = row.other;
+  return {
+    id: String(row.id),
+    name: other ? `${other.firstname} ${other.lastname}`.trim() : 'Praticien',
+    avatar: DEFAULT_GRADIENT,
+    photo: undefined,
+    preview: row.last_message?.text ?? 'Démarrez la conversation…',
+    when: dateFr(conversationTimestamp(row)),
+    unread: (row.unread_count ?? 0) > 0,
+    online: false,
+  };
+}
+
+export function mapPeerMessage(row: any): ChatMessage {
+  const d = new Date(row.created_at);
+  const time = Number.isNaN(d.getTime())
+    ? ''
+    : `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return {
+    id: String(row.id),
+    fromMe: Boolean(row.from_me),
+    text: row.text,
+    time,
+    createdAtIso: row.created_at,
+  };
+}
+
+export const peerMessageRepo = {
+  conversations: (): Promise<Conversation[]> =>
+    api.get<{ data: any[] }>('/praticien/peer-conversations').then((res) => res.data.map(mapPeerConversation)),
+  conversation: (id: string): Promise<Conversation | undefined> =>
+    api.get<{ data: any }>(`/praticien/peer-conversations/${id}`).then((res) => mapPeerConversation(res.data)).catch(() => undefined),
+  messages: (conversationId: string): Promise<ChatMessage[]> =>
+    api.get<{ data: any[] }>(`/praticien/peer-conversations/${conversationId}/messages`)
+      .then((res) => res.data.map(mapPeerMessage)),
+  send: (conversationId: string, text: string): Promise<ChatMessage> =>
+    api.post<{ data: any }>(`/praticien/peer-conversations/${conversationId}/messages`, { text })
+      .then((res) => mapPeerMessage(res.data)),
+  // Creates (or reuses) the conversation with another praticien; lands the caller on the
+  // chat screen with no opening message, same pattern as messageRepo.startConversation.
+  startConversation: (peerId: number): Promise<Conversation> =>
+    api.post<{ data: { conversation: any } }>('/praticien/peer-conversations', { peer_id: peerId })
+      .then((res) => mapPeerConversation(res.data.conversation)),
+};
+
 // ---------- Client self-profile (real backend, GET /client/profile) ----------
 export interface ClientProfile {
   firstname: string;

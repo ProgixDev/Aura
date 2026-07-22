@@ -27,6 +27,7 @@ import { SignalementsModule } from './signalements/signalements.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { NotificationPreferencesModule } from './notification-preferences/notification-preferences.module';
 import { ConversationsModule } from './conversations/conversations.module';
+import { PeerMessagesModule } from './peer-messages/peer-messages.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { DisputesModule } from './disputes/disputes.module';
 import { PlatformSettingsModule } from './platform-settings/platform-settings.module';
@@ -64,6 +65,7 @@ import { ClientActivityModule } from './client-activity/client-activity.module';
     NotificationPreferencesModule,
     RendezVousModule,
     ConversationsModule,
+    PeerMessagesModule,
     AuditLogModule,
     DisputesModule,
     PlatformSettingsModule,
