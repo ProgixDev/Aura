@@ -11,6 +11,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.progix.guerienergies",
+      "buildNumber": "10",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "GuériEnergies a besoin d'accéder à vos photos pour personnaliser votre profil.",
         "NSCameraUsageDescription": "GuériEnergies a besoin d'accéder à votre caméra pour les séances en visio.",
