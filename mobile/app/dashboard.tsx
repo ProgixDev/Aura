@@ -177,6 +177,8 @@ export default function Dashboard() {
                       onPress={() => router.push(`/report-client?clientId=${r.client!.id}` as any)}
                       hitSlop={8}
                       style={styles.rdvFlag}
+                      accessibilityRole="button"
+                      accessibilityLabel="Signaler ce client"
                     >
                       <Icon name="flag" size={16} color={colors.muted} />
                     </Pressable>
@@ -204,7 +206,7 @@ export default function Dashboard() {
           onPress={() => router.push('/praticien-messages' as any)}
         />
         <Row
-          icon={<Icon name="message" size={20} color={colors.ink} />}
+          icon={<Icon name="inperson" size={20} color={colors.ink} />}
           title="Messagerie praticiens"
           sub="Échangez avec d'autres praticiens"
           onPress={() => router.push('/peer-messages' as any)}

@@ -18,7 +18,8 @@ import { ScreenHeader } from '@components/ScreenHeader';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { shadows } from '@theme/shadows';
-import { avisRepo, practitionerRepo } from '@data/repos';
+import { avisRepo, practitionerRepo, rendezVousRepo } from '@data/repos';
+import type { RendezVousPraticien } from '@data/types';
 
 const moods = [
   "Une rencontre lumineuse",
@@ -37,24 +38,68 @@ export default function Review() {
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pickedId, setPickedId] = useState<string | null>(null);
+  const effectiveId = praticienId ?? pickedId ?? undefined;
 
   const { data: p } = useQuery({
-    queryKey: ['practitioner', praticienId],
-    queryFn: () => practitionerRepo.byId(String(praticienId)),
-    enabled: !!praticienId,
+    queryKey: ['practitioner', effectiveId],
+    queryFn: () => practitionerRepo.byId(String(effectiveId)),
+    enabled: !!effectiveId,
   });
 
-  if (!praticienId) {
+  // Only fetched when landing here with no target yet (the profil.tsx menu
+  // entry) — lets the user pick from practitioners they've actually booked,
+  // instead of hitting a dead end.
+  const { data: rendezVous, isLoading: loadingRendezVous } = useQuery({
+    queryKey: ['rendez-vous', 'client'],
+    queryFn: rendezVousRepo.list,
+    enabled: !effectiveId,
+  });
+
+  if (!effectiveId) {
+    const seen = new Map<number, RendezVousPraticien>();
+    (rendezVous ?? []).forEach((r) => {
+      if (r.praticien) seen.set(r.praticien.id, r.praticien);
+    });
+    const praticiens = Array.from(seen.values());
+
     return (
       <View style={{ flex: 1, backgroundColor: colors.pearl }}>
         <ScreenHeader title="Votre ressenti" backIcon="close" />
-        <View style={styles.emptyWrap}>
-          <Lotus size={40} color={colors.violet2} />
-          <Text style={styles.emptyTitle}>Choisissez un praticien</Text>
-          <Text style={styles.emptyBody}>
-            Ouvrez le profil d'un praticien pour laisser un avis sur votre expérience avec lui.
-          </Text>
-        </View>
+        {loadingRendezVous ? (
+          <View style={styles.emptyWrap}>
+            <Text style={styles.emptyBody}>Chargement…</Text>
+          </View>
+        ) : praticiens.length === 0 ? (
+          <View style={styles.emptyWrap}>
+            <Lotus size={40} color={colors.violet2} />
+            <Text style={styles.emptyTitle}>Aucune séance pour l'instant</Text>
+            <Text style={styles.emptyBody}>
+              Réservez une séance avec un praticien avant de partager votre ressenti.
+            </Text>
+          </View>
+        ) : (
+          <>
+            <Text style={[typography.eyebrow, styles.pickerEyebrow]}>
+              QUEL PRATICIEN SOUHAITEZ-VOUS ÉVALUER ?
+            </Text>
+            <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
+              {praticiens.map((pr) => (
+                <Pressable
+                  key={pr.id}
+                  style={styles.pickerRow}
+                  onPress={() => setPickedId(String(pr.id))}
+                >
+                  <Avatar size="md" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.pickerName}>{[pr.firstname, pr.lastname].filter(Boolean).join(' ')}</Text>
+                    <Text style={styles.pickerSub}>{[pr.specialite, pr.ville].filter(Boolean).join(' · ')}</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </>
+        )}
       </View>
     );
   }
@@ -64,8 +109,8 @@ export default function Review() {
     setSubmitting(true);
     setError(null);
     try {
-      await avisRepo.create({ praticien_id: Number(praticienId), note: rating, avis: text });
-      await queryClient.invalidateQueries({ queryKey: ['reviews', praticienId] });
+      await avisRepo.create({ praticien_id: Number(effectiveId), note: rating, avis: text });
+      await queryClient.invalidateQueries({ queryKey: ['reviews', effectiveId] });
       // Reviews are moderated server-side (saved as `en_attente`, only shown
       // once an admin publishes them), so it won't appear in the list yet —
       // tell the user instead of silently returning, which reads as "nothing
@@ -169,4 +214,17 @@ const styles = StyleSheet.create({
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 10 },
   emptyTitle: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 20, color: colors.ink },
   emptyBody: { ...typography.small, fontSize: 14, textAlign: 'center', lineHeight: 20 },
+
+  pickerEyebrow: { textAlign: 'center', marginTop: 8, marginBottom: 4 },
+  pickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.line,
+  },
+  pickerName: { ...typography.bodyMedium, fontSize: 15 },
+  pickerSub: { ...typography.small, fontSize: 12, marginTop: 2 },
 });

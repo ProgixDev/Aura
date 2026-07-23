@@ -145,6 +145,8 @@ export default function PractitionerProfile() {
               <Pressable
                 style={styles.iconCircle}
                 onPress={() => router.push(`/report?praticienId=${id}` as any)}
+                accessibilityRole="button"
+                accessibilityLabel="Signaler ce praticien"
               >
                 <Icon name="flag" size={16} color={colors.ink} />
               </Pressable>

@@ -40,11 +40,17 @@ interface PraticienAuthResponse {
 export default function Auth() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ mode?: string }>();
+  const params = useLocalSearchParams<{ mode?: string; presetRole?: string }>();
   const [mode, setMode] = useState<'signup' | 'login'>(params.mode === 'login' ? 'login' : 'signup');
   const [submitting, setSubmitting] = useState(false);
   const sessionRole = useSession((s) => s.role);
-  const [authRole, setAuthRole] = useState<Role>(sessionRole ?? 'seeker');
+  const sessionFirstName = useSession((s) => s.firstName);
+  const sessionLastName = useSession((s) => s.lastName);
+  // Set when an already-authenticated client taps "Devenir praticien" in
+  // profil.tsx — skips the role-picker screen (intent is unambiguous) and
+  // prefills what we already know about them.
+  const isUpgrade = params.presetRole === 'practitioner';
+  const [authRole, setAuthRole] = useState<Role>(isUpgrade ? 'practitioner' : sessionRole ?? 'seeker');
   const setRole = useSession((s) => s.setRole);
   const setAuthenticated = useSession((s) => s.setAuthenticated);
   const setOnboardingSeen = useSession((s) => s.setOnboardingSeen);
@@ -52,7 +58,13 @@ export default function Auth() {
 
   const { control, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { firstName: '', lastName: '', city: '', email: '', password: '' },
+    defaultValues: {
+      firstName: isUpgrade ? sessionFirstName ?? '' : '',
+      lastName: isUpgrade ? sessionLastName ?? '' : '',
+      city: '',
+      email: '',
+      password: '',
+    },
   });
 
   const submit = async (data: FormValues) => {
@@ -155,31 +167,39 @@ export default function Auth() {
           )}
         </Text>
         <Text style={styles.small}>
-          {mode === 'login' ? 'Ravie de vous revoir.' : 'Quelques informations, en toute discrétion.'}
+          {mode === 'login'
+            ? 'Ravie de vous revoir.'
+            : isUpgrade
+            ? 'Cet espace praticien est distinct de votre compte actuel : choisissez un email et un mot de passe dédiés.'
+            : 'Quelques informations, en toute discrétion.'}
         </Text>
 
         <View style={{ height: 20 }} />
 
-        <View style={styles.roleToggle}>
-          <Pressable
-            style={[styles.roleOption, authRole === 'seeker' && styles.roleOptionActive]}
-            onPress={() => setAuthRole('seeker')}
-          >
-            <Text style={[styles.roleOptionTxt, authRole === 'seeker' && styles.roleOptionTxtActive]}>
-              Je cherche un soin
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[styles.roleOption, authRole === 'practitioner' && styles.roleOptionActive]}
-            onPress={() => setAuthRole('practitioner')}
-          >
-            <Text style={[styles.roleOptionTxt, authRole === 'practitioner' && styles.roleOptionTxtActive]}>
-              Je suis praticien
-            </Text>
-          </Pressable>
-        </View>
+        {!isUpgrade && (
+          <>
+            <View style={styles.roleToggle}>
+              <Pressable
+                style={[styles.roleOption, authRole === 'seeker' && styles.roleOptionActive]}
+                onPress={() => setAuthRole('seeker')}
+              >
+                <Text style={[styles.roleOptionTxt, authRole === 'seeker' && styles.roleOptionTxtActive]}>
+                  Je cherche un soin
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.roleOption, authRole === 'practitioner' && styles.roleOptionActive]}
+                onPress={() => setAuthRole('practitioner')}
+              >
+                <Text style={[styles.roleOptionTxt, authRole === 'practitioner' && styles.roleOptionTxtActive]}>
+                  Je suis praticien
+                </Text>
+              </Pressable>
+            </View>
 
-        <View style={{ height: 20 }} />
+            <View style={{ height: 20 }} />
+          </>
+        )}
 
         {mode === 'signup' && (
           <>

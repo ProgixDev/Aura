@@ -34,11 +34,9 @@ export const ADMIN_NAV = [
   { group: 'Contenu', items: [
     { href: '/admin/contenu', label: 'Journal', icon: 'book' },
     { href: '/admin/disciplines', label: 'Disciplines', icon: 'grid' },
-    { href: '/admin/notifications', label: 'Notifications', icon: 'bell' },
     { href: '/admin/emails', label: 'Emails', icon: 'mail' },
   ]},
   { group: 'Système', items: [
-    { href: '/admin/support', label: 'Support', icon: 'ticket' },
     { href: '/admin/equipe', label: 'Équipe', icon: 'users' },
     { href: '/admin/roles', label: 'Rôles & accès', icon: 'shield' },
     { href: '/admin/audit', label: "Journal d'audit", icon: 'clock' },

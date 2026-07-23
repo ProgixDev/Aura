@@ -104,14 +104,14 @@ export default function Profil() {
           />
           <MenuRow
             icon={<Icon name="card" size={18} color={colors.ink} />}
-            label="Moyens de paiement"
+            label="Historique des paiements"
             onPress={() => router.push('/payment-history' as any)}
           />
         </Section>
 
         <Section title="Praticien ?">
           <Pressable
-            onPress={() => router.push('/onboarding/role' as any)}
+            onPress={() => router.push('/onboarding/auth?mode=signup&presetRole=practitioner' as any)}
             style={styles.becomeRow}
           >
             <AuroraBackground variant="soft" rounded={10} style={styles.becomeIc}>
