@@ -403,16 +403,22 @@ create table favorites (
 );
 create unique index uq_favorites_client_praticien on favorites (client_id, praticien_id);
 
+-- Polymorphic like `signalements`: exactly one of client_id/praticien_id is set
+-- per row (enforced at the app layer). Postgres UNIQUE allows multiple NULLs,
+-- so a nullable client_id/praticien_id can each still stay unique per non-null value.
 create table notification_preferences (
   id integer generated always as identity primary key,
-  client_id integer not null unique,
+  client_id integer unique,
+  praticien_id integer unique,
   rappels_seance boolean not null default true,
   nouveaux_messages boolean not null default true,
   reponses_avis boolean not null default false,
   newsletter boolean not null default true,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
-  constraint fk_np_client foreign key (client_id) references clients(id) on delete cascade
+  constraint fk_np_client foreign key (client_id) references clients(id) on delete cascade,
+  constraint fk_np_praticien foreign key (praticien_id) references praticiens(id) on delete cascade,
+  constraint chk_np_target check (praticien_id is not null or client_id is not null)
 );
 
 create table conversations (

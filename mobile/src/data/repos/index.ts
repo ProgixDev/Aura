@@ -207,6 +207,12 @@ export const notificationPreferencesRepo = {
     api.get<{ data: NotificationPreferences }>('/client/notification-preferences').then((res) => res.data),
   update: (patch: Partial<NotificationPreferences>): Promise<NotificationPreferences> =>
     api.put<{ data: NotificationPreferences }>('/client/notification-preferences', patch).then((res) => res.data),
+  // Praticien-side equivalent — a separate polymorphic row server-side (see
+  // notification_preferences' client_id/praticien_id columns), same shape.
+  praticienGet: (): Promise<NotificationPreferences> =>
+    api.get<{ data: NotificationPreferences }>('/praticien/notification-preferences').then((res) => res.data),
+  praticienUpdate: (patch: Partial<NotificationPreferences>): Promise<NotificationPreferences> =>
+    api.put<{ data: NotificationPreferences }>('/praticien/notification-preferences', patch).then((res) => res.data),
 };
 
 // ---------- Disciplines ----------

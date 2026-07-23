@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NotificationPreference } from '../database/entities/notification-preference.entity';
-import { Client } from '../database/entities/client.entity';
 import { success } from '../common/envelope';
 import { UpdateNotificationPreferencesDto } from './dto/update-notification-preferences.dto';
 
@@ -13,6 +12,10 @@ const DEFAULTS = {
   newsletter: true,
 };
 
+// Polymorphic like `signalements` — exactly one of client_id/praticien_id is
+// ever set, matching which role owns the row.
+type Actor = { client_id: number } | { praticien_id: number };
+
 @Injectable()
 export class NotificationPreferencesService {
   constructor(
@@ -20,15 +23,15 @@ export class NotificationPreferencesService {
     private readonly prefs: Repository<NotificationPreference>,
   ) {}
 
-  async get(client: Client) {
-    const row = await this.prefs.findOneBy({ client_id: client.id });
+  async get(actor: Actor) {
+    const row = await this.prefs.findOneBy(actor);
     if (!row) return success({ ...DEFAULTS });
     const { rappels_seance, nouveaux_messages, reponses_avis, newsletter } = row;
     return success({ rappels_seance, nouveaux_messages, reponses_avis, newsletter });
   }
 
-  async update(client: Client, dto: UpdateNotificationPreferencesDto) {
-    const row = await this.prefs.findOneBy({ client_id: client.id });
+  async update(actor: Actor, dto: UpdateNotificationPreferencesDto) {
+    const row = await this.prefs.findOneBy(actor);
     const merged = {
       rappels_seance: dto.rappels_seance ?? row?.rappels_seance ?? DEFAULTS.rappels_seance,
       nouveaux_messages: dto.nouveaux_messages ?? row?.nouveaux_messages ?? DEFAULTS.nouveaux_messages,
@@ -38,7 +41,7 @@ export class NotificationPreferencesService {
     if (row) {
       await this.prefs.update(row.id, merged);
     } else {
-      await this.prefs.save({ client_id: client.id, ...merged });
+      await this.prefs.save({ ...actor, ...merged });
     }
     return success(merged, 'Préférences de notification mises à jour');
   }

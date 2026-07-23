@@ -7,12 +7,20 @@ import { Toggle } from '@components/Toggle';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { notificationPreferencesRepo } from '@data/repos';
+import { useSession } from '@store/session';
 import type { NotificationPreferences } from '@data/types';
 
-const FIELDS: { key: keyof NotificationPreferences; label: string; desc: string }[] = [
+const CLIENT_FIELDS: { key: keyof NotificationPreferences; label: string; desc: string }[] = [
   { key: 'rappels_seance', label: 'Rappels de séance', desc: 'Un rappel 24h et 1h avant chaque rendez-vous.' },
   { key: 'nouveaux_messages', label: 'Nouveaux messages', desc: "Soyez averti dès qu'un praticien vous répond." },
   { key: 'reponses_avis', label: 'Réponses à mes avis', desc: 'Quand un praticien réagit à votre retour.' },
+  { key: 'newsletter', label: 'Newsletter GUÉRIENERGIES', desc: 'Inspirations, événements et nouveautés, une fois par mois.' },
+];
+
+const PRATICIEN_FIELDS: { key: keyof NotificationPreferences; label: string; desc: string }[] = [
+  { key: 'rappels_seance', label: 'Rappels de séance', desc: 'Un rappel 24h et 1h avant chaque rendez-vous booké.' },
+  { key: 'nouveaux_messages', label: 'Nouveaux messages', desc: "Soyez averti dès qu'un client ou un autre praticien vous écrit." },
+  { key: 'reponses_avis', label: 'Nouveaux avis reçus', desc: 'Quand un chercheur de soin laisse un avis sur votre profil.' },
   { key: 'newsletter', label: 'Newsletter GUÉRIENERGIES', desc: 'Inspirations, événements et nouveautés, une fois par mois.' },
 ];
 
@@ -23,17 +31,22 @@ const DEFAULTS: NotificationPreferences = {
 export default function NotificationSettings() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+  const isPraticien = useSession((s) => s.userType) === 'praticien';
+  const FIELDS = isPraticien ? PRATICIEN_FIELDS : CLIENT_FIELDS;
+  const getFn = isPraticien ? notificationPreferencesRepo.praticienGet : notificationPreferencesRepo.get;
+  const updateFn = isPraticien ? notificationPreferencesRepo.praticienUpdate : notificationPreferencesRepo.update;
+
   const { data: prefs = DEFAULTS } = useQuery({
-    queryKey: ['notification-preferences'],
-    queryFn: notificationPreferencesRepo.get,
+    queryKey: ['notification-preferences', isPraticien],
+    queryFn: getFn,
   });
 
   const toggle = async (key: keyof NotificationPreferences, value: boolean) => {
-    queryClient.setQueryData(['notification-preferences'], { ...prefs, [key]: value });
+    queryClient.setQueryData(['notification-preferences', isPraticien], { ...prefs, [key]: value });
     try {
-      await notificationPreferencesRepo.update({ [key]: value });
+      await updateFn({ [key]: value });
     } finally {
-      queryClient.invalidateQueries({ queryKey: ['notification-preferences'] });
+      queryClient.invalidateQueries({ queryKey: ['notification-preferences', isPraticien] });
     }
   };
 

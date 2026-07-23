@@ -112,7 +112,16 @@ export default function Dashboard() {
     <View style={{ flex: 1, backgroundColor: colors.pearl }}>
       <ScreenHeader
         title="Mon espace praticien"
-        rightAction={<Icon name="bell" size={20} color={colors.ink} />}
+        rightAction={
+          <Pressable
+            onPress={() => router.push('/notification-settings' as any)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Notifications"
+          >
+            <Icon name="bell" size={20} color={colors.ink} />
+          </Pressable>
+        }
       />
       <ScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
