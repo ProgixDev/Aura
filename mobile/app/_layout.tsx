@@ -126,6 +126,7 @@ export default function RootLayout() {
               <Stack.Screen name="praticien-profile-edit" />
               <Stack.Screen name="founder" />
               <Stack.Screen name="dashboard" />
+              <Stack.Screen name="praticien-documents-status" />
               <Stack.Screen name="praticien-messages/index" />
               <Stack.Screen name="praticien-messages/[id]" />
               <Stack.Screen name="peer-messages/index" />

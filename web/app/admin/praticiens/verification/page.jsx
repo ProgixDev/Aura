@@ -7,6 +7,7 @@ import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
 import { useUI } from '@/lib/store';
 import { api, apiFetchBlob } from '@/lib/api';
+import { contactRecipient } from '@/lib/adminContact';
 import { dateFr } from '@/lib/format';
 
 const DOC_TYPES = ['piece_identite', 'diplome', 'charte', 'justificatif_siret'];
@@ -51,6 +52,25 @@ export default function VerificationQueuePage() {
     onSuccess: () => toast('Relance envoyée avec succès', 'success'),
     onError: (err) => toast(err.message || 'Erreur', 'danger'),
   });
+  // Same /verify endpoint the bulk "Vérifier" button uses, but with a single-item
+  // documents[] — the backend already recomputes the praticien's overall status from
+  // every document's real state, so a one-doc call is a fully correct partial decision,
+  // not a special case.
+  const verifyOneMutation = useMutation({
+    mutationFn: ({ praticienId, docId }) => api.post(`/v1/admin/praticiens/verification/${praticienId}/verify`, {
+      documents: [{ id: docId, statut: 'valide' }],
+    }),
+    onSuccess: () => { invalidate(); toast('Document validé', 'success'); },
+    onError: (err) => toast(err.message || 'Erreur', 'danger'),
+  });
+  const rejectOneMutation = useMutation({
+    mutationFn: ({ praticienId, docId, reason }) => api.post(`/v1/admin/praticiens/verification/${praticienId}/verify`, {
+      documents: [{ id: docId, statut: 'rejete', commentaire_rejet: reason }],
+      commentaire_global: reason,
+    }),
+    onSuccess: () => { invalidate(); toast('Document rejeté', 'success'); },
+    onError: (err) => toast(err.message || 'Erreur', 'danger'),
+  });
 
   return (
     <>
@@ -63,7 +83,7 @@ export default function VerificationQueuePage() {
 
       <div className="note tint-gold" style={{ marginBottom: 22 }}>
         <Icon name="shield" size={16} color="var(--gold-2)" />
-        <span className="small">Vérifiez chaque document avant d'approuver. Une fois les {DOC_TYPES.length} documents validés, le praticien obtient le statut <strong>validé</strong> et apparaît dans les résultats de recherche.</span>
+        <span className="small">Validez ou rejetez chaque document individuellement avec ✓/✗, ou utilisez Vérifier/Rejeter pour statuer sur l'ensemble du dossier en une fois. Une fois les {DOC_TYPES.length} documents validés, le praticien obtient le statut <strong>validé</strong> et apparaît dans les résultats de recherche.</span>
       </div>
 
       {isError && <div className="empty"><div className="glyph">❍</div>Impossible de charger la file de vérification.</div>}
@@ -94,6 +114,7 @@ export default function VerificationQueuePage() {
                 {DOC_TYPES.map((type) => {
                   const doc = docs.find((d) => d.type === type);
                   const ok = doc?.statut === 'valide';
+                  const rejected = doc?.statut === 'rejete';
                   const submitted = !!doc;
                   return (
                     <div key={type} className="row gap-2 between">
@@ -104,6 +125,25 @@ export default function VerificationQueuePage() {
                       <div className="row gap-2">
                         <Badge variant={ok ? 'success' : submitted ? 'warning' : 'danger'}>{submitted ? doc.statut : 'manquant'}</Badge>
                         {submitted && <button className="btn btn-link btn-sm" onClick={() => openDocument(doc, toast)}>Voir</button>}
+                        {submitted && !ok && (
+                          <button
+                            className="btn btn-icon btn-soft btn-sm" title="Valider ce document"
+                            onClick={() => verifyOneMutation.mutate({ praticienId: p.id, docId: doc.id })}
+                          >
+                            <Icon name="check" size={13} color="var(--sage-2)" />
+                          </button>
+                        )}
+                        {submitted && !rejected && (
+                          <ModalButton modal="confirm" payload={{
+                            title: 'Rejeter ce document', danger: true, withReason: true,
+                            reasonLabel: 'Motif du rejet (visible par le praticien)',
+                            message: `Rejeter « ${DOC_LABELS[type]} » ? Le praticien pourra en soumettre un nouveau.`,
+                            confirmLabel: 'Rejeter', successToast: null,
+                            onConfirm: (reason) => rejectOneMutation.mutateAsync({ praticienId: p.id, docId: doc.id, reason }),
+                          }} className="btn btn-icon btn-soft btn-sm" title="Rejeter ce document">
+                            <Icon name="x" size={13} color="var(--danger)" />
+                          </ModalButton>
+                        )}
                       </div>
                     </div>
                   );
@@ -134,7 +174,10 @@ export default function VerificationQueuePage() {
                 }} className="btn btn-danger-soft btn-sm flex-1">
                   <Icon name="x" size={15} /> Rejeter
                 </ModalButton>
-                <ModalButton modal="contact" payload={{ name: `${p.firstname} ${p.lastname}` }} className="btn btn-soft btn-sm btn-icon" as="button" title="Contacter">
+                <ModalButton modal="contact" payload={{
+                  name: `${p.firstname} ${p.lastname}`,
+                  onSubmit: (values) => contactRecipient('praticien', p.id, values),
+                }} className="btn btn-soft btn-sm btn-icon" as="button" title="Contacter">
                   <Icon name="mail" size={15} />
                 </ModalButton>
               </div>

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
 import { api } from '@/lib/api';
+import { contactRecipient } from '@/lib/adminContact';
 import { mapPraticien } from '@/lib/data/praticien-adapter';
 import { euro, dateFr } from '@/lib/format';
 
@@ -102,7 +103,7 @@ export default function AdminReservationDetail() {
               </dl>
               <div className="row gap-2 mt-3">
                 <Link href={`/admin/praticien/${prat?.id}`} className="btn btn-soft btn-sm">Voir le profil</Link>
-                <ModalButton modal="contact" payload={{ name: prat?.name }} className="btn btn-ghost btn-sm"><Icon name="message" size={14} /> Contacter</ModalButton>
+                <ModalButton modal="contact" payload={{ name: prat?.name, onSubmit: (values) => contactRecipient('praticien', prat?.id, values) }} className="btn btn-ghost btn-sm"><Icon name="message" size={14} /> Contacter</ModalButton>
               </div>
             </div>
 
@@ -120,7 +121,7 @@ export default function AdminReservationDetail() {
               </dl>
               <div className="row gap-2 mt-3">
                 <Link href={`/admin/client/${client?.id}`} className="btn btn-soft btn-sm">Voir le client</Link>
-                <ModalButton modal="contact" payload={{ name: clientName }} className="btn btn-ghost btn-sm"><Icon name="message" size={14} /> Contacter</ModalButton>
+                <ModalButton modal="contact" payload={{ name: clientName, onSubmit: (values) => contactRecipient('client', client?.id, values) }} className="btn btn-ghost btn-sm"><Icon name="message" size={14} /> Contacter</ModalButton>
               </div>
             </div>
           </div>

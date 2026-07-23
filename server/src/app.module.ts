@@ -38,6 +38,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { SupportModule } from './support/support.module';
 import { StatsModule } from './stats/stats.module';
 import { ClientActivityModule } from './client-activity/client-activity.module';
+import { AdminContactModule } from './admin-contact/admin-contact.module';
 
 @Module({
   imports: [
@@ -77,6 +78,7 @@ import { ClientActivityModule } from './client-activity/client-activity.module';
     SupportModule,
     StatsModule,
     ClientActivityModule,
+    AdminContactModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -10,6 +10,7 @@ import { Rating } from '@/components/ui/Rating';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
 import { api } from '@/lib/api';
+import { contactRecipient } from '@/lib/adminContact';
 import { euro } from '@/lib/format';
 import PractitionerTabs from './PractitionerTabs';
 
@@ -69,7 +70,7 @@ export default function PractitionerDetailPage() {
         crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Praticiens', href: '/admin/praticiens' }, { label: name }]}
         actions={<>
           <Link href={`/praticien/${p.id}`} className="btn btn-soft btn-sm"><Icon name="user" size={15} /> Profil public</Link>
-          <ModalButton modal="contact" payload={{ name }} className="btn btn-soft btn-sm"><Icon name="mail" size={15} /> Contacter</ModalButton>
+          <ModalButton modal="contact" payload={{ name, onSubmit: (values) => contactRecipient('praticien', p.id, values) }} className="btn btn-soft btn-sm"><Icon name="mail" size={15} /> Contacter</ModalButton>
           <ModalButton modal="payout" payload={{ name }} successToast="Versement programmé" className="btn btn-soft btn-sm"><Icon name="euro" size={15} /> Versement</ModalButton>
           <ModalButton modal="suspendUser" payload={{ name }} className="btn btn-danger-soft btn-sm"><Icon name="shield" size={15} /> Suspendre</ModalButton>
         </>}
