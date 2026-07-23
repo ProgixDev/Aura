@@ -22,7 +22,7 @@ export default function AdminTopbar() {
 
   const handleSignOut = () => {
     signOut();
-    router.replace('/admin/connexion');
+    router.replace('/connexion');
   };
 
   return (

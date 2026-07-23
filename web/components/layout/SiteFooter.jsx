@@ -34,7 +34,6 @@ export default function SiteFooter() {
           <span>© 2026 GuériEnergies — Fait avec soin en France.</span>
           <span className="row gap-4">
             <Link href="/application">Application mobile</Link>
-            <Link href="/admin">Espace admin</Link>
           </span>
         </div>
       </div>

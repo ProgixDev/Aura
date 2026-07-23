@@ -1,8 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useUI } from '@/lib/store';
+import { useAuthStore } from '@/lib/auth-store';
 import { Lotus } from '@/components/ui/Lotus';
 import { Icon } from '@/components/ui/Icon';
 
@@ -16,9 +16,17 @@ const LINKS = [
 
 export default function SiteNav() {
   const pathname = usePathname();
-  const open = useUI((s) => s.openModal);
   const [menu, setMenu] = useState(false);
   const active = (h) => pathname === h || (h !== '/' && pathname.startsWith(h));
+
+  const hasHydrated = useAuthStore((s) => s.hasHydrated);
+  const token = useAuthStore((s) => s.token);
+  // SiteNav mounts on every (site) page, not just /compte — compte/layout.jsx's own
+  // rehydrate() call only fires once that layout mounts, so a public page loaded
+  // directly (e.g. a fresh tab landing on "/") would never rehydrate otherwise.
+  useEffect(() => {
+    useAuthStore.persist.rehydrate();
+  }, []);
 
   return (
     <header className="site-nav">
@@ -31,8 +39,16 @@ export default function SiteNav() {
         </nav>
         <div className="spacer" />
         <div className="actions">
-          <button className="btn btn-ghost btn-sm hide-mobile" onClick={() => open('login')}>Connexion</button>
-          <button className="btn btn-primary btn-sm" onClick={() => open('signup')}>Commencer</button>
+          {hasHydrated && (
+            token ? (
+              <Link href="/compte" className="btn btn-primary btn-sm">Mon compte</Link>
+            ) : (
+              <>
+                <Link href="/connexion" className="btn btn-ghost btn-sm hide-mobile">Connexion</Link>
+                <Link href="/inscription" className="btn btn-primary btn-sm">Commencer</Link>
+              </>
+            )
+          )}
           <button className="btn btn-icon btn-ghost" style={{ display: 'none' }} onClick={() => setMenu((m) => !m)} aria-label="Menu"><Icon name="grid" size={18} /></button>
         </div>
       </div>

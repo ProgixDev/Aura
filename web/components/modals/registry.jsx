@@ -7,7 +7,6 @@ import { ConfirmModal } from './ConfirmModal';
 import { FormModal } from './FormModal';
 import { ShareModal } from './ShareModal';
 import { LightboxModal } from './LightboxModal';
-import { AuthModal } from './AuthModal';
 import { FiltersModal } from './FiltersModal';
 
 export const MODAL_REGISTRY = {
@@ -16,13 +15,9 @@ export const MODAL_REGISTRY = {
   form: (p) => <FormModal {...p} />,
   share: (p) => <ShareModal {...p} />,
   lightbox: (p) => <LightboxModal {...p} />,
-  auth: (p) => <AuthModal {...p} />,
   filters: (p) => <FiltersModal {...p} />,
 
   // ---- public / client modals ----
-  login: (p) => <AuthModal mode="login" {...p} />,
-  signup: (p) => <AuthModal mode="signup" {...p} />,
-  forgot: (p) => <AuthModal mode="forgot" {...p} />,
   contact: (p) => <FormModal title={`Contacter ${p?.name || 'le praticien'}`} subtitle="Posez vos questions avant la séance. Aucun paiement en privé."
     fields={[{ name: 'subject', label: 'Objet', type: 'select', options: ['Première prise de contact', 'Question sur une séance', 'Disponibilités', 'Autre'], required: true }, { name: 'message', label: 'Votre message', type: 'textarea', placeholder: 'Bonjour…', required: true }]}
     submitLabel="Envoyer le message" successToast="Message envoyé" {...p} />,

@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@/components/ui/Icon';
 import { useUI } from '@/lib/store';
@@ -7,9 +8,9 @@ import { useAuthStore } from '@/lib/auth-store';
 import { api } from '@/lib/api';
 
 export function FavoriteButton({ praticienId, style }) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useUI((s) => s.toast);
-  const openModal = useUI((s) => s.openModal);
   const isLoggedIn = useAuthStore((s) => !!s.token);
   const [pending, setPending] = useState(false);
 
@@ -22,7 +23,7 @@ export function FavoriteButton({ praticienId, style }) {
   const isFavorite = favorites.some((f) => f.praticien_id === Number(praticienId));
 
   const toggle = async () => {
-    if (!isLoggedIn) { openModal('login'); return; }
+    if (!isLoggedIn) { router.push('/connexion'); return; }
     if (pending) return;
     setPending(true);
     try {

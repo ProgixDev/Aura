@@ -9,6 +9,7 @@ import { AdminAuthModule } from './auth/admin-auth/admin-auth.module';
 import { PraticienAuthModule } from './auth/praticien-auth/praticien-auth.module';
 import { PraticienVerificationModule } from './auth/praticien-verification/praticien-verification.module';
 import { ClientAuthModule } from './auth/client-auth/client-auth.module';
+import { UnifiedAuthModule } from './auth/unified-auth/unified-auth.module';
 import { CerclesModule } from './cercles/cercles.module';
 import { EventsModule } from './events/events.module';
 import { PromotionsModule } from './promotions/promotions.module';
@@ -47,6 +48,7 @@ import { ClientActivityModule } from './client-activity/client-activity.module';
     PraticienAuthModule,
     PraticienVerificationModule,
     ClientAuthModule,
+    UnifiedAuthModule,
     CerclesModule,
     EventsModule,
     PromotionsModule,

@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@/components/ui/Icon';
 import { Lotus } from '@/components/ui/Lotus';
-import { ModalButton } from '@/components/ui/ModalButton';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
+import { useAdminAuth } from '@/lib/admin-auth-store';
 import { useUI } from '@/lib/store';
 
 const POINTS = [
@@ -20,21 +20,30 @@ const POINTS = [
 export default function ConnexionPage() {
   const router = useRouter();
   const setSession = useAuthStore((s) => s.setSession);
+  const setAdminSession = useAdminAuth((s) => s.setSession);
   const toast = useUI((s) => s.toast);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // One form, one endpoint — /login checks the same credentials against both
+  // client and admin accounts server-side and reports back which one matched,
+  // so a visitor never has to know or pick their own role up front.
   const submit = async (e) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const res = await api.post('/client/login', { email, password });
-      setSession(res.data.token, res.data.client);
+      const res = await api.post('/login', { email, password });
       toast('Bienvenue', 'success');
-      router.push('/compte');
+      if (res.data.role === 'admin') {
+        setAdminSession(res.data.token, res.data.user);
+        router.push('/admin');
+      } else {
+        setSession(res.data.token, res.data.client);
+        router.push('/compte');
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Une erreur est survenue');
     } finally {
@@ -109,16 +118,6 @@ export default function ConnexionPage() {
                   {loading ? 'Connexion…' : 'Se connecter'}
                 </button>
               </form>
-
-              <div className="row gap-3" style={{ alignItems: 'center', margin: '20px 0' }}>
-                <div className="divider flex-1" style={{ margin: 0 }} />
-                <span className="tiny muted">ou</span>
-                <div className="divider flex-1" style={{ margin: 0 }} />
-              </div>
-
-              <ModalButton modal="login" className="btn btn-soft btn-block">
-                <span className="row gap-2"><Icon name="mail" size={16} /> Continuer avec Google</span>
-              </ModalButton>
 
               <p className="small center" style={{ marginTop: 24 }}>
                 Pas encore de compte ?{' '}

@@ -5,11 +5,12 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { setAuthToken } from './api';
 
 /**
- * Admin identity store — a separate token slot from any client-facing auth
- * store (e.g. a future `web/lib/auth-store.js` for client login). Admin and
- * client sessions must never share storage: this store owns its own
- * `localStorage` key (`aura.admin.session`) and is never imported by
- * client-facing (non-`/admin`) pages.
+ * Admin identity store — a separate token slot from `web/lib/auth-store.js`
+ * (client login). Admin and client sessions must never share storage: this
+ * store owns its own `localStorage` key (`aura.admin.session`). The one
+ * exception to "never imported outside /admin" is the unified `/connexion`
+ * page — a single login form checks credentials against both account types
+ * server-side and populates whichever store actually matched.
  *
  * `skipHydration: true` + a manual `useAdminAuth.persist.rehydrate()` call
  * (done once, by `AdminAuthGate` — Task 14) avoids a server/client hydration
