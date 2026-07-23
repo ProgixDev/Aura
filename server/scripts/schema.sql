@@ -35,6 +35,7 @@ drop table if exists programmes cascade;
 drop table if exists event_inscriptions cascade;
 drop table if exists event_praticien cascade;
 drop table if exists events cascade;
+drop table if exists cercle_inscriptions cascade;
 drop table if exists cercles cascade;
 drop table if exists praticien_documents cascade;
 drop table if exists praticiens cascade;
@@ -123,10 +124,25 @@ create table cercles (
   description text,
   color varchar(50),
   animateur varchar(255),
+  praticien_id integer,
+  prix decimal(10,2) not null default 0,
   image varchar(500),
   created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  updated_at timestamptz default now(),
+  constraint fk_cercle_praticien foreign key (praticien_id) references praticiens(id) on delete cascade
 );
+
+create table cercle_inscriptions (
+  id integer generated always as identity primary key,
+  cercle_id integer not null,
+  client_id integer not null,
+  statut varchar(20) not null default 'inscrit',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  constraint fk_ci_cercle foreign key (cercle_id) references cercles(id) on delete cascade,
+  constraint fk_ci_client foreign key (client_id) references clients(id) on delete cascade
+);
+create unique index uq_cercle_inscriptions_cercle_client on cercle_inscriptions (cercle_id, client_id);
 
 create table events (
   id integer generated always as identity primary key,

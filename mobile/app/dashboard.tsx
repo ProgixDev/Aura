@@ -215,6 +215,12 @@ export default function Dashboard() {
           onPress={() => router.push('/blog' as any)}
         />
         <Row
+          icon={<Icon name="star" size={20} color={colors.ink} />}
+          title="Cercles"
+          sub="Créez et gérez vos cercles"
+          onPress={() => router.push('/cercles' as any)}
+        />
+        <Row
           icon={<Icon name="back" size={20} color={colors.danger} />}
           title="Se déconnecter"
           onPress={logout}

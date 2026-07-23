@@ -44,6 +44,8 @@ export interface Circle {
   color: string | null;
   animateur: string | null;
   image: string | null;
+  prix: number;
+  praticienId: string | null;
 }
 
 export interface Article {

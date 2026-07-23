@@ -119,8 +119,14 @@ export function mapCircle(row: any): Circle {
     nom: row.nom,
     description: row.description,
     color: row.color,
-    animateur: row.animateur,
+    // Praticien-created cercles derive the display name from the joined praticien;
+    // admin-curated ones fall back to the free-text `animateur` column.
+    animateur: row.praticien
+      ? `${row.praticien.firstname} ${row.praticien.lastname}`.trim()
+      : row.animateur,
     image: row.image ?? null,
+    prix: Number(row.prix ?? 0),
+    praticienId: row.praticien_id != null ? String(row.praticien_id) : null,
   };
 }
 
@@ -236,11 +242,29 @@ export const eventRepo = {
 };
 
 // ---------- Cercles ----------
+export interface CercleInscription {
+  id: number;
+  cercle_id: number;
+  client_id: number;
+  statut: string;
+}
+
 export const cercleRepo = {
   list: (): Promise<Circle[]> =>
     api.get<{ data: any[] }>('/cercles?per_page=50').then((res) => res.data.map(mapCircle)),
   byId: (id: string): Promise<Circle | undefined> =>
     api.get<{ data: any }>(`/cercles/${id}`).then((res) => mapCircle(res.data)).catch(() => undefined),
+  // Praticien-facing: create/list their own cercles (paid or free — prix defaults to 0).
+  create: (payload: { nom: string; description?: string; color?: string; prix?: number }): Promise<Circle> =>
+    api.post<{ data: any }>('/cercles/praticien/mine', payload).then((res) => mapCircle(res.data)),
+  myCercles: (): Promise<Circle[]> =>
+    api.get<{ data: any[] }>('/cercles/praticien/mine').then((res) => res.data.map(mapCircle)),
+  // Client-facing: subscribe (free membership regardless of prix, same as events — see
+  // CercleInscription entity comment server-side).
+  register: (cercleId: string): Promise<CercleInscription> =>
+    api.post<{ data: CercleInscription }>(`/cercles/${cercleId}/inscription`, {}).then((res) => res.data),
+  myInscription: (cercleId: string): Promise<CercleInscription | null> =>
+    api.get<{ data: CercleInscription | null }>(`/cercles/${cercleId}/inscription/me`).then((res) => res.data),
 };
 
 // ---------- Articles ----------

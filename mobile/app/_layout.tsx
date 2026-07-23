@@ -112,6 +112,7 @@ export default function RootLayout() {
               <Stack.Screen name="refund-request" options={{ presentation: 'modal', title: 'Remboursement' }} />
               <Stack.Screen name="cercles/index" />
               <Stack.Screen name="cercles/[id]" />
+              <Stack.Screen name="cercles/create" options={{ presentation: 'modal' }} />
               <Stack.Screen name="blog/index" />
               <Stack.Screen name="blog/[slug]" />
               <Stack.Screen name="review" options={{ presentation: 'modal' }} />

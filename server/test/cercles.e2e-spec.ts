@@ -1,18 +1,24 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { createTestApp, seedAdmin, seedClientUser } from './utils/create-test-app';
+import { createTestApp, seedAdmin, seedClientUser, seedPraticienUser } from './utils/create-test-app';
 import { CerclesModule } from '../src/cercles/cercles.module';
 
 describe('cercles', () => {
   let app: INestApplication;
   let adminToken: string;
+  let praticienToken: string;
+  let clientToken: string;
   beforeAll(async () => {
     app = await createTestApp({ imports: [CerclesModule] });
     adminToken = (await seedAdmin(app, 'cercles-admin@aura.io')).token;
+    praticienToken = (await seedPraticienUser(app, 'cercles-prat@aura.io')).token;
+    clientToken = (await seedClientUser(app, 'cercles-client@aura.io')).token;
   });
   afterAll(async () => { await app.close(); });
   const http = () => request(app.getHttpServer());
   const asAdmin = (r: request.Test) => r.set('Authorization', `Bearer ${adminToken}`);
+  const asPraticien = (r: request.Test) => r.set('Authorization', `Bearer ${praticienToken}`);
+  const asClient = (r: request.Test) => r.set('Authorization', `Bearer ${clientToken}`);
 
   it('write routes require admin auth; reads stay public', async () => {
     await http().post('/api/cercles').send({ nom: 'Sans Token' }).expect(401);
@@ -51,5 +57,42 @@ describe('cercles', () => {
     await asAdmin(http().delete(`/api/cercles/${id}`)).expect(200);
     const nf = await http().get(`/api/cercles/${id}`).expect(404);
     expect(nf.body).toEqual({ status: 'error', message: 'Cercle non trouvé' });
+  });
+
+  it('praticien routes require praticien auth; a praticien creates and lists their own cercles', async () => {
+    await http().get('/api/cercles/praticien/mine').expect(401);
+    await asClient(http().get('/api/cercles/praticien/mine')).expect(403);
+
+    const created = await asPraticien(http().post('/api/cercles/praticien/mine'))
+      .send({ nom: 'Cercle du praticien', description: 'Un cercle payant', prix: 15 }).expect(201);
+    expect(created.body.data.prix).toBe(15);
+
+    const mine = await asPraticien(http().get('/api/cercles/praticien/mine')).expect(200);
+    expect(mine.body.data.some((c: any) => c.nom === 'Cercle du praticien')).toBe(true);
+
+    // Shows up in the public list with the praticien relation joined.
+    const list = await http().get('/api/cercles?per_page=100').expect(200);
+    const row = list.body.data.find((c: any) => c.nom === 'Cercle du praticien');
+    expect(row.praticien).toBeDefined();
+  });
+
+  it('client subscribes to a cercle — duplicate 422s, myInscription reflects state', async () => {
+    const cercle = await asAdmin(http().post('/api/cercles'))
+      .send({ nom: 'Cercle à rejoindre', prix: 0 }).expect(201);
+    const cercleId = cercle.body.data.id;
+
+    const before = await asClient(http().get(`/api/cercles/${cercleId}/inscription/me`)).expect(200);
+    expect(before.body.data).toBeNull();
+
+    await http().post(`/api/cercles/${cercleId}/inscription`).expect(401);
+
+    const sub = await asClient(http().post(`/api/cercles/${cercleId}/inscription`)).expect(201);
+    expect(sub.body.message).toBe('Votre inscription a bien été enregistrée.');
+
+    const dup = await asClient(http().post(`/api/cercles/${cercleId}/inscription`)).expect(422);
+    expect(dup.body.errors.cercle).toBeDefined();
+
+    const after = await asClient(http().get(`/api/cercles/${cercleId}/inscription/me`)).expect(200);
+    expect(after.body.data).toMatchObject({ cercle_id: cercleId, statut: 'inscrit' });
   });
 });

@@ -96,12 +96,27 @@ describe('mapCircle', () => {
     const row = { id: 3, nom: 'Cercle GuériEnergies — Paris', description: 'Un espace de partage.', color: '#7B5FCF', animateur: 'Camille Rossi', image: 'https://x/cercle.jpg' };
     expect(mapCircle(row)).toEqual({
       id: '3', nom: 'Cercle GuériEnergies — Paris', description: 'Un espace de partage.', color: '#7B5FCF', animateur: 'Camille Rossi', image: 'https://x/cercle.jpg',
+      prix: 0, praticienId: null,
     });
   });
 
   it('passes through null fields as-is', () => {
     const row = { id: 5, nom: 'Cercle sans détails', description: null, color: null, animateur: null, image: null };
-    expect(mapCircle(row)).toEqual({ id: '5', nom: 'Cercle sans détails', description: null, color: null, animateur: null, image: null });
+    expect(mapCircle(row)).toEqual({
+      id: '5', nom: 'Cercle sans détails', description: null, color: null, animateur: null, image: null,
+      prix: 0, praticienId: null,
+    });
+  });
+
+  it('praticien-created cercle: derives animateur from the joined praticien, carries prix/praticienId', () => {
+    const row = {
+      id: 7, nom: 'Cercle du praticien', description: null, color: null, animateur: null, image: null,
+      prix: 15, praticien_id: 42, praticien: { firstname: 'Camille', lastname: 'Rossi' },
+    };
+    expect(mapCircle(row)).toEqual({
+      id: '7', nom: 'Cercle du praticien', description: null, color: null, animateur: 'Camille Rossi', image: null,
+      prix: 15, praticienId: '42',
+    });
   });
 });
 
