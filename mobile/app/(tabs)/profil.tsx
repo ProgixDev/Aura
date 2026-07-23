@@ -17,7 +17,7 @@ import { MenuRow } from '@components/MenuRow';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { useSession } from '@store/session';
-import { favoriteRepo, rendezVousRepo, exchangeRepo } from '@data/repos';
+import { favoriteRepo, rendezVousRepo, exchangeRepo, clientProfileRepo } from '@data/repos';
 
 export default function Profil() {
   const router = useRouter();
@@ -29,6 +29,7 @@ export default function Profil() {
   const { data: favorites = [] } = useQuery({ queryKey: ['favorites'], queryFn: favoriteRepo.list });
   const { data: rendezVous = [] } = useQuery({ queryKey: ['rendez-vous', 'client'], queryFn: rendezVousRepo.list });
   const { data: exchanges = [] } = useQuery({ queryKey: ['exchanges'], queryFn: exchangeRepo.list });
+  const { data: profile } = useQuery({ queryKey: ['client-profile'], queryFn: clientProfileRepo.me });
   const activeExchanges = exchanges.filter((e) => ['en_attente', 'lu', 'en_cours'].includes(e.statut)).length;
   const distinctPraticiens = new Set(rendezVous.map((r) => r.praticien_id)).size;
 
@@ -45,10 +46,20 @@ export default function Profil() {
         contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 140 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.head}>
-          <Avatar size="xl" gradient={[colors.violet, colors.sky]} />
+        <Pressable style={styles.head} onPress={() => router.push('/profile-edit' as any)}>
+          <View>
+            <Avatar
+              size="xl"
+              source={profile?.photo ? { uri: profile.photo } : undefined}
+              gradient={[colors.violet, colors.sky]}
+            />
+            <View style={styles.editBadge}>
+              <Icon name="camera" size={13} color="#fff" />
+            </View>
+          </View>
           <Text style={styles.name}>{[firstName, lastName].filter(Boolean).join(' ')}</Text>
-        </View>
+          <Text style={styles.editHint}>Modifier mon profil</Text>
+        </Pressable>
 
         <View style={styles.stats}>
           <Stat label="SÉANCES" value={String(rendezVous.length)} />
@@ -160,7 +171,21 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   head: { alignItems: 'center', padding: 20 },
+  editBadge: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.pearl,
+  },
   name: { ...typography.h2, fontSize: 26, marginTop: 14 },
+  editHint: { ...typography.small, fontSize: 12, color: colors.violet2, marginTop: 4 },
   sub: { ...typography.small, fontSize: 13, marginTop: 2 },
   stats: {
     flexDirection: 'row',

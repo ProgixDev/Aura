@@ -10,17 +10,34 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { AuroraBackground } from '@components/AuroraBackground';
 import { Icon } from '@components/Icon';
 import { ScreenHeader } from '@components/ScreenHeader';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { praticienMessageRepo, praticienProfileRepo, subscriptionRepo, stripeConnectRepo, rendezVousRepo } from '@data/repos';
+import type { PraticienDocumentStatus } from '@data/repos';
 import { effectivePlan } from '@utils/subscriptionPlan';
 import { errorMessage } from '@data/api/client';
 import { useSession } from '@store/session';
 import type { Subscription, RendezVous } from '@data/types';
+
+const DOC_TYPES = ['piece_identite', 'diplome', 'charte', 'justificatif_siret'] as const;
+const DOC_LABELS: Record<string, string> = {
+  piece_identite: "Pièce d'identité",
+  diplome: 'Diplôme',
+  charte: 'Charte GuériEnergies signée',
+  justificatif_siret: 'Justificatif SIRET',
+};
+const DOC_STATUT_LABEL: Record<string, string> = {
+  valide: 'Validé', en_attente: 'En attente', rejete: 'Refusé', manquant: 'Manquant',
+};
+const DOC_STATUT_COLOR: Record<string, string> = {
+  valide: colors.sage2, en_attente: colors.muted, rejete: colors.danger, manquant: colors.danger,
+};
 
 // Appointment date/time — formatted in UTC to match the UTC-pinned slot the
 // client booked (see mobile/src/utils/booking.ts), so 15:00 stays 15:00.
@@ -137,6 +154,10 @@ export default function Dashboard() {
           </View>
         )}
 
+        {profile && profile.statut_verification !== 'valide' && (
+          <DocumentsStatusSection documents={profile.documents ?? []} />
+        )}
+
         <View style={{ paddingHorizontal: 20, paddingBottom: 16 }}>
           <AuroraBackground variant="soft" rounded={22} style={styles.trial}>
             <Text style={styles.trialEyebrow}>MON ABONNEMENT</Text>
@@ -199,6 +220,12 @@ export default function Dashboard() {
         </View>
 
         <Row
+          icon={<Icon name="inperson" size={20} color={colors.ink} />}
+          title="Mon profil"
+          sub="Voir et modifier mes informations"
+          onPress={() => router.push('/praticien-profile-edit' as any)}
+        />
+        <Row
           icon={<Icon name="exchange" size={20} color={colors.ink} />}
           title="Mes échanges"
           onPress={() => router.push('/exchange/mine' as any)}
@@ -243,6 +270,90 @@ export default function Dashboard() {
           onPress={logout}
         />
       </ScrollView>
+    </View>
+  );
+}
+
+function DocumentsStatusSection({ documents }: { documents: PraticienDocumentStatus[] }) {
+  const queryClient = useQueryClient();
+  const [busyType, setBusyType] = React.useState<string | null>(null);
+
+  const resubmitMutation = useMutation({
+    mutationFn: ({ type, asset }: { type: string; asset: { uri: string; name: string; mimeType: string } }) =>
+      praticienProfileRepo.resubmitDocument(type, asset),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['praticien-profile'] }),
+    onError: (err) => Alert.alert('Envoi impossible', errorMessage(err)),
+    onSettled: () => setBusyType(null),
+  });
+
+  const pickFromFiles = async (type: string) => {
+    const res = await DocumentPicker.getDocumentAsync({
+      type: ['image/jpeg', 'image/png', 'application/pdf'],
+      copyToCacheDirectory: true,
+    });
+    if (res.canceled || !res.assets?.[0]) return;
+    const asset = res.assets[0];
+    setBusyType(type);
+    resubmitMutation.mutate({
+      type, asset: { uri: asset.uri, name: asset.name, mimeType: asset.mimeType ?? 'application/octet-stream' },
+    });
+  };
+
+  const pickFromCamera = async (type: string) => {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Accès caméra refusé', "Autorisez l'accès à la caméra dans les réglages pour prendre une photo.");
+      return;
+    }
+    const res = await ImagePicker.launchCameraAsync({ quality: 0.8 });
+    if (res.canceled || !res.assets?.[0]) return;
+    const asset = res.assets[0];
+    setBusyType(type);
+    resubmitMutation.mutate({
+      type, asset: { uri: asset.uri, name: `${type}-${Date.now()}.jpg`, mimeType: asset.mimeType ?? 'image/jpeg' },
+    });
+  };
+
+  const choose = (type: string) => {
+    Alert.alert('Ajouter un document', undefined, [
+      { text: 'Prendre une photo', onPress: () => pickFromCamera(type) },
+      { text: 'Choisir un fichier', onPress: () => pickFromFiles(type) },
+      { text: 'Annuler', style: 'cancel' },
+    ]);
+  };
+
+  return (
+    <View style={styles.docsBox}>
+      <Text style={styles.docsTitle}>Mes documents</Text>
+      {DOC_TYPES.map((type) => {
+        const doc = documents.find((d) => d.type === type);
+        const statut = doc?.statut ?? 'manquant';
+        const canRetry = statut === 'rejete' || statut === 'manquant';
+        return (
+          <View key={type} style={styles.docRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.docLabel}>{DOC_LABELS[type]}</Text>
+              <Text style={[styles.docStatut, { color: DOC_STATUT_COLOR[statut] }]}>
+                {DOC_STATUT_LABEL[statut]}
+              </Text>
+              {statut === 'rejete' && doc?.commentaire_rejet && (
+                <Text style={styles.docMotif}>{doc.commentaire_rejet}</Text>
+              )}
+            </View>
+            {canRetry && (
+              <Pressable
+                onPress={() => choose(type)}
+                disabled={busyType === type}
+                style={styles.docRetryBtn}
+              >
+                <Text style={styles.docRetryTxt}>
+                  {busyType === type ? 'Envoi…' : statut === 'rejete' ? 'Réessayer' : 'Ajouter'}
+                </Text>
+              </Pressable>
+            )}
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -409,6 +520,37 @@ const styles = StyleSheet.create({
   paiementsSub: { ...typography.small, fontSize: 12, lineHeight: 17 },
   paiementsCta: { marginTop: 10, alignSelf: 'flex-start' },
   paiementsCtaTxt: { color: colors.ink, fontFamily: 'Outfit_500Medium', fontSize: 13 },
+
+  docsBox: {
+    marginHorizontal: 20,
+    marginBottom: 18,
+    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  docsTitle: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 17, marginBottom: 10 },
+  docRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: colors.line,
+  },
+  docLabel: { fontFamily: 'Outfit_500Medium', fontSize: 14, marginBottom: 2 },
+  docStatut: { ...typography.tiny, fontSize: 12, fontFamily: 'Outfit_500Medium' },
+  docMotif: { ...typography.tiny, fontSize: 11, marginTop: 2 },
+  docRetryBtn: {
+    paddingHorizontal: 14,
+    height: 34,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.mist,
+  },
+  docRetryTxt: { ...typography.button, fontSize: 12, color: colors.ink },
 
   row: {
     flexDirection: 'row',

@@ -1,5 +1,5 @@
 import {
-  ForbiddenException, Injectable, NotFoundException,
+  BadRequestException, ForbiddenException, Injectable, NotFoundException,
   UnauthorizedException, UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,6 +15,7 @@ import { success } from '../../common/envelope';
 import { StorageService } from '../../common/storage.service';
 import { assertUpload } from '../../common/upload.util';
 import { RegisterPraticienDto } from './dto/register-praticien.dto';
+import { UpdatePraticienProfileDto } from './dto/update-praticien-profile.dto';
 import { LoginDto } from '../admin-auth/dto/login.dto';
 
 export const DOC_TYPES = ['piece_identite', 'diplome', 'charte', 'justificatif_siret'] as const;
@@ -24,11 +25,20 @@ export class PraticienAuthService {
   constructor(
     @InjectRepository(User) private readonly users: Repository<User>,
     @InjectRepository(Praticien) private readonly praticiens: Repository<Praticien>,
+    @InjectRepository(PraticienDocument) private readonly documents: Repository<PraticienDocument>,
     private readonly dataSource: DataSource,
     private readonly hash: HashService,
     private readonly tokens: TokenService,
     private readonly storage: StorageService,
   ) {}
+
+  private async findSelf(user: User): Promise<Praticien> {
+    const praticien = await this.praticiens.findOneBy({ email: user.email });
+    if (!praticien) {
+      throw new NotFoundException({ status: 'error', message: 'Profil praticien non trouvé' });
+    }
+    return praticien;
+  }
 
   private validationError(errors: Record<string, string[]>): never {
     throw new UnprocessableEntityException({
@@ -164,5 +174,95 @@ export class PraticienAuthService {
 
   checkToken(user: User) {
     return success({ user: sanitizeUser(user), is_admin: user.is_admin }, 'Token valide');
+  }
+
+  async updateProfile(user: User, dto: UpdatePraticienProfileDto) {
+    const praticien = await this.findSelf(user);
+    if (dto.email !== undefined && dto.email !== user.email) {
+      if (await this.users.findOneBy({ email: dto.email })) {
+        this.validationError({ email: ['Cette adresse email est déjà utilisée.'] });
+      }
+      if (await this.praticiens.findOneBy({ email: dto.email })) {
+        this.validationError({ email: ['Cette adresse email est déjà utilisée.'] });
+      }
+    }
+
+    // Same dual-write shape as ClientAuthService.updateProfile — one transaction so a
+    // mid-way failure never leaves the users/praticiens rows out of sync with each other.
+    await this.dataSource.transaction(async (em) => {
+      const fields = [
+        'firstname', 'lastname', 'email', 'telephone', 'ville',
+        'niveau', 'specialite', 'mode', 'tarif', 'experience', 'bio',
+      ] as const;
+      const update: Partial<Praticien> = {};
+      for (const key of fields) {
+        if (dto[key] !== undefined) (update as any)[key] = dto[key];
+      }
+      if (Object.keys(update).length) {
+        await em.getRepository(Praticien).update(praticien.id, update);
+      }
+
+      const userUpdate: Partial<User> = {};
+      if (dto.email !== undefined) userUpdate.email = dto.email;
+      if (dto.firstname !== undefined || dto.lastname !== undefined) {
+        userUpdate.name = `${dto.firstname ?? praticien.firstname} ${dto.lastname ?? praticien.lastname}`;
+      }
+      if (Object.keys(userUpdate).length) {
+        await em.getRepository(User).update(user.id, userUpdate);
+      }
+    });
+
+    const fresh = await this.praticiens.findOneByOrFail({ id: praticien.id });
+    return success({ praticien: fresh }, 'Profil mis à jour');
+  }
+
+  async uploadPhoto(user: User, file?: Express.Multer.File) {
+    const praticien = await this.findSelf(user);
+    if (!file) {
+      throw new UnprocessableEntityException({
+        status: 'error', message: 'Erreur de validation', errors: { photo: ['Une photo est requise.'] },
+      });
+    }
+    assertUpload(file, 'photo', ['jpg', 'jpeg', 'png'], 2048);
+    const photo = await this.storage.savePublic(file, `praticiens/${praticien.id}/avatar`);
+    await this.praticiens.update(praticien.id, { photo });
+    return success({ photo }, 'Photo de profil mise à jour');
+  }
+
+  async resubmitDocument(user: User, type: string, file?: Express.Multer.File) {
+    const praticien = await this.findSelf(user);
+    if (!(DOC_TYPES as readonly string[]).includes(type)) {
+      throw new BadRequestException({ status: 'error', message: 'Type de document inconnu.' });
+    }
+    if (!file) {
+      throw new UnprocessableEntityException({
+        status: 'error', message: 'Erreur de validation', errors: { document: ['Un fichier est requis.'] },
+      });
+    }
+    assertUpload(file, 'document', ['jpg', 'jpeg', 'png', 'pdf']);
+    const chemin = await this.storage.save(file, `praticiens/${praticien.id}/documents`);
+
+    const existing = await this.documents.findOneBy({ praticien_id: praticien.id, type });
+    if (existing) {
+      await this.documents.update(existing.id, {
+        nom_fichier: file.originalname, chemin, mime_type: file.mimetype, taille: file.size,
+        statut: 'en_attente', commentaire_rejet: null, verifie_a: null, verifie_par: null,
+      });
+    } else {
+      await this.documents.save({
+        praticien_id: praticien.id, type, nom_fichier: file.originalname, chemin,
+        mime_type: file.mimetype, taille: file.size, statut: 'en_attente',
+      });
+    }
+
+    // Reopens the whole file for review regardless of prior state — including 'rejete',
+    // which findPending() in praticien-verification.service.ts otherwise excludes forever,
+    // leaving a rejected praticien with no re-entry path anywhere in the app.
+    await this.praticiens.update(praticien.id, { statut_verification: 'en_attente', motif_rejet: null });
+
+    const fresh = await this.praticiens.findOne({
+      where: { id: praticien.id }, relations: { documents: true },
+    });
+    return success(fresh, 'Document envoyé, en attente de vérification.');
   }
 }

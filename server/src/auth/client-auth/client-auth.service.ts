@@ -11,6 +11,8 @@ import { HashService } from '../hash.service';
 import { TokenService } from '../token.service';
 import { sanitizeUser } from '../user.util';
 import { success } from '../../common/envelope';
+import { StorageService } from '../../common/storage.service';
+import { assertUpload } from '../../common/upload.util';
 import { RegisterClientDto } from './dto/register-client.dto';
 import { LoginDto } from '../admin-auth/dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -25,6 +27,7 @@ export class ClientAuthService {
     private readonly dataSource: DataSource,
     private readonly hash: HashService,
     private readonly tokens: TokenService,
+    private readonly storage: StorageService,
   ) {}
 
   private validationError(errors: Record<string, string[]>): never {
@@ -141,6 +144,18 @@ export class ClientAuthService {
     const freshUser = await this.users.findOneByOrFail({ id: user.id });
     const freshClient = await this.clients.findOneByOrFail({ id: client.id });
     return success({ user: sanitizeUser(freshUser), client: freshClient }, 'Profil mis à jour');
+  }
+
+  async uploadPhoto(user: User, client: Client, file?: Express.Multer.File) {
+    if (!file) {
+      throw new UnprocessableEntityException({
+        status: 'error', message: 'Erreur de validation', errors: { photo: ['Une photo est requise.'] },
+      });
+    }
+    assertUpload(file, 'photo', ['jpg', 'jpeg', 'png'], 2048);
+    const photo = await this.storage.savePublic(file, `clients/${client.id}/avatar`);
+    await this.clients.update(client.id, { photo });
+    return success({ photo }, 'Photo de profil mise à jour');
   }
 
   async changePassword(user: User, dto: ChangeClientPasswordDto) {

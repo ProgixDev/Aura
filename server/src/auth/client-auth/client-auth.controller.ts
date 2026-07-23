@@ -1,6 +1,7 @@
 import {
-  Body, Controller, Delete, Get, HttpCode, Post, Put, Req, UseGuards,
+  Body, Controller, Delete, Get, HttpCode, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request } from 'express';
 import { ClientAuthService } from './client-auth.service';
 import { RegisterClientDto } from './dto/register-client.dto';
@@ -60,6 +61,18 @@ export class ClientAuthController {
     @Body() dto: UpdateClientProfileDto,
   ) {
     return this.service.updateProfile(user, client, dto);
+  }
+
+  @UseGuards(JwtAuthGuard, ClientGuard)
+  @HttpCode(200)
+  @Post('profile/photo')
+  @UseInterceptors(FileInterceptor('photo', { limits: { fileSize: 2 * 1024 * 1024 } }))
+  uploadPhoto(
+    @CurrentUser() user: User,
+    @CurrentClient() client: Client,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.service.uploadPhoto(user, client, file);
   }
 
   @UseGuards(JwtAuthGuard, ClientGuard)

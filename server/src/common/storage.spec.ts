@@ -3,7 +3,10 @@ import { assertUpload } from './upload.util';
 
 const uploadMock = jest.fn().mockResolvedValue({ data: {}, error: null });
 const downloadMock = jest.fn();
-const fromMock = jest.fn(() => ({ upload: uploadMock, download: downloadMock }));
+const getPublicUrlMock = jest.fn((key: string) => ({
+  data: { publicUrl: `https://test.supabase.co/storage/v1/object/public/aura-public/${key}` },
+}));
+const fromMock = jest.fn(() => ({ upload: uploadMock, download: downloadMock, getPublicUrl: getPublicUrlMock }));
 
 jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn(() => ({ storage: { from: fromMock } })),
@@ -59,6 +62,28 @@ describe('StorageService.save', () => {
     const filename = objectKey.split('/').pop()!;
     expect(filename).not.toContain('some name');
     expect(filename).toMatch(/^[0-9a-f-]{36}\.pdf$/);
+  });
+});
+
+describe('StorageService.savePublic', () => {
+  let service: StorageService;
+
+  beforeEach(() => {
+    uploadMock.mockClear();
+    getPublicUrlMock.mockClear();
+    service = new StorageService();
+  });
+
+  it('uploads to the public bucket (upsert) and returns a real fetchable URL, not an object key', async () => {
+    const file = fakeFile({ originalname: 'avatar.png', mimetype: 'image/png' });
+    const url = await service.savePublic(file, 'clients/1/avatar');
+
+    expect(uploadMock).toHaveBeenCalledWith(
+      expect.stringMatching(/^clients\/1\/avatar\/[0-9a-f-]{36}\.png$/),
+      file.buffer,
+      { contentType: 'image/png', upsert: true },
+    );
+    expect(url).toMatch(/^https:\/\/.+\/clients\/1\/avatar\/[0-9a-f-]{36}\.png$/);
   });
 });
 

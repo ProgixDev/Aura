@@ -485,34 +485,98 @@ export const peerMessageRepo = {
       .then((res) => mapPeerConversation(res.data.conversation)),
 };
 
-// ---------- Client self-profile (real backend, GET /client/profile) ----------
+// ---------- Client self-profile (real backend, GET/PUT /client/profile) ----------
 export interface ClientProfile {
   firstname: string;
   lastname: string;
   email: string;
   city: string;
   phone: string | null;
+  photo: string | null;
+}
+
+export interface UpdateClientProfileInput {
+  firstname?: string;
+  lastname?: string;
+  email?: string;
+  phone?: string;
+  city?: string;
 }
 
 export const clientProfileRepo = {
   me: (): Promise<ClientProfile> =>
     api.get<{ data: { client: ClientProfile } }>('/client/profile').then((res) => res.data.client),
+  update: (patch: UpdateClientProfileInput): Promise<ClientProfile> =>
+    api.put<{ data: { client: ClientProfile } }>('/client/profile', patch).then((res) => res.data.client),
+  uploadPhoto: (doc: { uri: string; name: string; mimeType: string }): Promise<string> => {
+    const fd = new FormData();
+    fd.append('photo', { uri: doc.uri, name: doc.name, type: doc.mimeType } as any);
+    return api.post<{ data: { photo: string } }>('/client/profile/photo', fd).then((res) => res.data.photo);
+  },
 };
 
-// ---------- Praticien self-profile (real backend, GET /praticien/profile) ----------
+// ---------- Praticien self-profile (real backend, GET/PUT /praticien/profile) ----------
+export interface PraticienDocumentStatus {
+  id: number;
+  type: string;
+  nom_fichier: string;
+  statut: 'en_attente' | 'valide' | 'rejete';
+  commentaire_rejet: string | null;
+}
+
 interface PraticienProfile {
   id: number;
   firstname: string;
   lastname: string;
+  email: string;
+  siret: string;
+  telephone: string;
+  ville: string;
+  niveau: string;
+  specialite: string;
+  mode: string;
+  tarif: number;
+  experience: number;
+  bio: string;
+  photo: string | null;
   statut_verification: 'en_attente' | 'en_cours' | 'valide' | 'rejete';
   motif_rejet: string | null;
+  documents: PraticienDocumentStatus[];
   documents_stats: { total: number; en_attente: number; valide: number; rejete: number };
+}
+
+export interface UpdatePraticienProfileInput {
+  firstname?: string;
+  lastname?: string;
+  email?: string;
+  telephone?: string;
+  ville?: string;
+  niveau?: string;
+  specialite?: string;
+  mode?: string;
+  tarif?: number;
+  experience?: number;
+  bio?: string;
 }
 
 export const praticienProfileRepo = {
   me: (): Promise<PraticienProfile> =>
     api.get<{ data: { praticien: PraticienProfile; documents_stats: PraticienProfile['documents_stats'] } }>('/praticien/profile')
       .then((res) => ({ ...res.data.praticien, documents_stats: res.data.documents_stats })),
+  update: (patch: UpdatePraticienProfileInput): Promise<PraticienProfile> =>
+    api.put<{ data: { praticien: PraticienProfile } }>('/praticien/profile', patch).then((res) => res.data.praticien),
+  uploadPhoto: (doc: { uri: string; name: string; mimeType: string }): Promise<string> => {
+    const fd = new FormData();
+    fd.append('photo', { uri: doc.uri, name: doc.name, type: doc.mimeType } as any);
+    return api.post<{ data: { photo: string } }>('/praticien/profile/photo', fd).then((res) => res.data.photo);
+  },
+  // Re-uploads one document (missing or previously rejected) — reopens the whole
+  // account for review server-side (see praticien-auth.service.ts's resubmitDocument).
+  resubmitDocument: (type: string, doc: { uri: string; name: string; mimeType: string }): Promise<PraticienProfile> => {
+    const fd = new FormData();
+    fd.append('document', { uri: doc.uri, name: doc.name, type: doc.mimeType } as any);
+    return api.post<{ data: PraticienProfile }>(`/praticien/documents/${type}`, fd).then((res) => res.data);
+  },
 };
 
 // ---------- Praticien registration (real backend, multipart POST /praticien/register) ----------

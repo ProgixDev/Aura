@@ -123,7 +123,7 @@ describe('praticiens ratings', () => {
     return ds.getRepository(Praticien).save({
       firstname: 'P', lastname: 'L', email, siret: '11111111111111', telephone: '06',
       ville: 'Nice', niveau: 'n', specialite: 's', mode: 'm', status: 'actif',
-      tarif: 10, experience: 1, bio: 'b'.repeat(60),
+      tarif: 10, experience: 1, bio: 'b'.repeat(60), statut_verification: 'valide',
     });
   }
 

@@ -18,7 +18,7 @@ export default function PractitionerDetailPage() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin', 'praticien', id],
-    queryFn: () => api.get(`/praticiens/${id}`),
+    queryFn: () => api.get(`/admin/praticiens/${id}`),
   });
   const p = data?.data;
 

@@ -14,7 +14,7 @@ const VERIF_TONE = { valide: 'success', en_attente: 'warning', en_cours: 'info',
 export default function AdminPractitionersPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin', 'praticiens'],
-    queryFn: () => api.get('/praticiens?per_page=100'),
+    queryFn: () => api.get('/admin/praticiens?per_page=100'),
   });
   const practitioners = data?.data ?? [];
   const verifiedCount = practitioners.filter((p) => p.statut_verification === 'valide').length;

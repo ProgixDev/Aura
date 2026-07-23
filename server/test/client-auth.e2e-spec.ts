@@ -4,12 +4,22 @@ import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { createTestApp, seedClientUser, signToken } from './utils/create-test-app';
 import { ClientAuthModule } from '../src/auth/client-auth/client-auth.module';
+import { StorageService } from '../src/common/storage.service';
 import { User } from '../src/database/entities/user.entity';
 import { Client } from '../src/database/entities/client.entity';
 
+const fakeStorage = {
+  savePublic: jest.fn((_file, subdir) => Promise.resolve(`https://test.supabase.co/storage/v1/object/public/aura-public/${subdir}/fake.png`)),
+};
+
 describe('client auth', () => {
   let app: INestApplication;
-  beforeAll(async () => { app = await createTestApp({ imports: [ClientAuthModule] }); });
+  beforeAll(async () => {
+    app = await createTestApp(
+      { imports: [ClientAuthModule] },
+      [{ provide: StorageService, useValue: fakeStorage }],
+    );
+  });
   afterAll(async () => { await app.close(); });
   const http = () => request(app.getHttpServer());
 
@@ -243,5 +253,30 @@ describe('client auth', () => {
 
   it('DELETE /api/client/account requires client auth', async () => {
     await http().delete('/api/client/account').expect(401);
+  });
+
+  it('POST /api/client/profile/photo uploads and persists a public URL, reflected in GET /profile', async () => {
+    const { token } = await seedClientUser(app, 'avatar@aura.io');
+    const res = await http().post('/api/client/profile/photo')
+      .set('Authorization', `Bearer ${token}`)
+      .attach('photo', Buffer.from('fake-png-bytes'), { filename: 'me.png', contentType: 'image/png' })
+      .expect(200);
+    expect(res.body.data.photo).toMatch(/^https:\/\//);
+
+    const prof = await http().get('/api/client/profile')
+      .set('Authorization', `Bearer ${token}`).expect(200);
+    expect(prof.body.data.client.photo).toBe(res.body.data.photo);
+  });
+
+  it('POST /api/client/profile/photo rejects a non-image file and requires client auth', async () => {
+    const { token } = await seedClientUser(app, 'avatar-bad@aura.io');
+    await http().post('/api/client/profile/photo')
+      .set('Authorization', `Bearer ${token}`)
+      .attach('photo', Buffer.from('%PDF-1.4'), { filename: 'not-an-image.pdf', contentType: 'application/pdf' })
+      .expect(422);
+
+    await http().post('/api/client/profile/photo')
+      .attach('photo', Buffer.from('x'), { filename: 'me.png', contentType: 'image/png' })
+      .expect(401);
   });
 });

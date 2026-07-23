@@ -8,6 +8,7 @@ export class Client {
   @Column() email: string;
   @Column() city: string;
   @Column({ type: 'varchar', nullable: true }) phone: string | null;
+  @Column({ type: 'varchar', length: 500, nullable: true }) photo: string | null;
   @CreateDateColumn({ name: 'created_at' }) created_at: Date;
   @UpdateDateColumn({ name: 'updated_at' }) updated_at: Date;
 }

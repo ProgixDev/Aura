@@ -7,6 +7,11 @@ import { randomUUID } from 'crypto';
 export class StorageService {
   private readonly supabase: SupabaseClient;
   private readonly bucket = process.env.SUPABASE_STORAGE_BUCKET ?? 'aura-uploads';
+  // Separate PUBLIC bucket for content meant to be directly linkable (avatars) — the same
+  // one seed.ts already hardcodes URLs into for demo praticien photos (see IMAGE_BASE there).
+  // Verification documents stay in the private bucket above, served only via the
+  // authenticated download()/StreamableFile route — never given a public URL.
+  private readonly publicBucket = process.env.SUPABASE_PUBLIC_BUCKET ?? 'aura-public';
 
   constructor() {
     this.supabase = createClient(process.env.SUPABASE_URL ?? '', process.env.SUPABASE_SERVICE_ROLE_KEY ?? '');
@@ -32,5 +37,23 @@ export class StorageService {
     const { data, error } = await this.supabase.storage.from(this.bucket).download(chemin);
     if (error || !data) throw new NotFoundException('Fichier introuvable');
     return Buffer.from(await data.arrayBuffer());
+  }
+
+  /**
+   * Uploads to the public bucket and returns a real, directly-fetchable URL (not an object
+   * key) — the shape every `photo` consumer (mobile `<Image source={{uri}}>`, web `<Avatar
+   * src>`) already expects, matching seed.ts's hardcoded demo URLs exactly.
+   */
+  async savePublic(file: Express.Multer.File, subdir: string): Promise<string> {
+    const ext = extname(file.originalname).toLowerCase().replace(/[^a-z0-9.]/g, '');
+    const name = `${randomUUID()}${ext}`;
+    const objectKey = `${subdir}/${name}`;
+    const { error } = await this.supabase.storage.from(this.publicBucket).upload(objectKey, file.buffer, {
+      contentType: file.mimetype,
+      upsert: true,
+    });
+    if (error) throw new InternalServerErrorException(error.message);
+    const { data } = this.supabase.storage.from(this.publicBucket).getPublicUrl(objectKey);
+    return data.publicUrl;
   }
 }

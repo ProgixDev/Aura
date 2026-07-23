@@ -32,6 +32,11 @@ interface SessionState {
   setRole: (role: Role) => void;
   setAuthenticated: (payload: AuthenticatedPayload) => void;
   setQuizAnswer: (step: number, optionIndex: number) => void;
+  // Keeps the header/menu display in sync after a profile edit — without this,
+  // (tabs)/profil.tsx and dashboard.tsx would keep showing the pre-edit name until
+  // the next full login, since they read firstName/lastName from this store, not
+  // from a live profile fetch.
+  setName: (firstName: string, lastName: string | null) => void;
   signOut: () => void;
 }
 
@@ -60,6 +65,7 @@ export const useSession = create<SessionState>()(
       },
       setQuizAnswer: (step, optionIndex) =>
         set((s) => ({ quizAnswers: withQuizAnswer(s.quizAnswers, step, optionIndex) })),
+      setName: (firstName, lastName) => set({ firstName, lastName }),
       signOut: () => {
         setAuthToken(null);
         set({
