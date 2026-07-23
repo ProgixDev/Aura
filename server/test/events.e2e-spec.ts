@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { createTestApp, seedAdmin, seedClientUser } from './utils/create-test-app';
+import { createTestApp, seedAdmin, seedClientUser, seedPraticienUser } from './utils/create-test-app';
 import { EventsModule } from '../src/events/events.module';
 import { Praticien } from '../src/database/entities/praticien.entity';
 import { Event } from '../src/database/entities/event.entity';
@@ -78,6 +78,39 @@ describe('events', () => {
 
     const drafts = await http().get('/api/events?status=brouillon').expect(200);
     expect(drafts.body.data.some((e: any) => e.id === created.body.data.id)).toBe(true);
+  });
+
+  describe('praticien-created events', () => {
+    it('requires praticien auth; creates as brouillon, self-attached as animateur', async () => {
+      await http().post('/api/events/praticien/mine').send({
+        titre: 'Atelier du praticien', type: 'atelier', dates: ['2026-09-01'],
+        lieu: 'Nantes', prix: 30, nombre_places: 12, description: 'Un atelier maison.',
+      }).expect(401);
+
+      const client = await seedClientUser(app, 'events-prat-reader@aura.io');
+      await http().post('/api/events/praticien/mine')
+        .set('Authorization', `Bearer ${client.token}`)
+        .send({
+          titre: 'Atelier du praticien', type: 'atelier', dates: ['2026-09-01'],
+          lieu: 'Nantes', prix: 30, nombre_places: 12, description: 'Un atelier maison.',
+        }).expect(403);
+
+      const praticien = await seedPraticienUser(app, 'events-prat-creator@aura.io');
+      const res = await http().post('/api/events/praticien/mine')
+        .set('Authorization', `Bearer ${praticien.token}`)
+        .send({
+          titre: 'Atelier du praticien', type: 'atelier', dates: ['2026-09-01'],
+          lieu: 'Nantes', prix: 30, nombre_places: 12, description: 'Un atelier maison.',
+        }).expect(201);
+      expect(res.body.data.status).toBe('brouillon');
+      expect(res.body.data.animateurs).toHaveLength(1);
+      expect(res.body.data.animateurs[0].id).toBe(praticien.praticien.id);
+      expect(res.body.message).toContain('en attente de validation');
+
+      // Not visible to clients until an admin publishes it.
+      const published = await http().get('/api/events?status=publié').expect(200);
+      expect(published.body.data.find((e: any) => e.id === res.body.data.id)).toBeUndefined();
+    });
   });
 
   describe('client pre-registration', () => {

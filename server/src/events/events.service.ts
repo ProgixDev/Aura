@@ -12,6 +12,7 @@ import { parsePagination, paginateQb, paginationUrls } from '../common/paginatio
 import { CreateEventDto, EventAnimateurDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { CreateInscriptionDto } from './dto/create-inscription.dto';
+import { CreatePraticienEventDto } from './dto/create-praticien-event.dto';
 
 @Injectable()
 export class EventsService {
@@ -107,6 +108,17 @@ export class EventsService {
     await this.links.delete({ event_id: id });
     await this.events.delete(id);
     return success(undefined, 'Événement supprimé avec succès');
+  }
+
+  // ---- praticien-created events ----
+
+  async storePraticien(praticien: Praticien, dto: CreatePraticienEventDto) {
+    // Starts as 'brouillon' (same default as admin-created events left unpublished) so it
+    // goes through the same admin review/publish step before clients can see or register
+    // for it — matches how avis/praticien registrations are moderated elsewhere.
+    const event = await this.events.save({ ...dto, status: 'brouillon' });
+    await this.links.save({ event_id: event.id, praticien_id: praticien.id, role: 'animateur' });
+    return success(await this.withAnimateurs(event), 'Événement créé avec succès, en attente de validation par notre équipe.');
   }
 
   // ---- client pre-registration ----

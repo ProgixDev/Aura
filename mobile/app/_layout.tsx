@@ -104,6 +104,7 @@ export default function RootLayout() {
               <Stack.Screen name="booking/confirmation" options={{ animation: 'fade' }} />
               <Stack.Screen name="chat/[id]" />
               <Stack.Screen name="event/[id]" />
+              <Stack.Screen name="event/create" options={{ presentation: 'modal' }} />
               <Stack.Screen name="exchange/index" />
               <Stack.Screen name="exchange/mine" />
               <Stack.Screen name="exchange/[id]" />

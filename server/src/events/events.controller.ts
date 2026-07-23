@@ -6,11 +6,14 @@ import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { CreateInscriptionDto } from './dto/create-inscription.dto';
+import { CreatePraticienEventDto } from './dto/create-praticien-event.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { ClientGuard } from '../auth/guards/client.guard';
-import { CurrentClient } from '../auth/decorators';
+import { PraticienGuard } from '../auth/guards/praticien.guard';
+import { CurrentClient, CurrentPraticien } from '../auth/decorators';
 import { Client } from '../database/entities/client.entity';
+import { Praticien } from '../database/entities/praticien.entity';
 
 @Controller('events')
 export class EventsController {
@@ -24,6 +27,14 @@ export class EventsController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Post('create-event')
   store(@Body() dto: CreateEventDto) { return this.service.store(dto); }
+
+  // ---- praticien-created events ----
+
+  @UseGuards(JwtAuthGuard, PraticienGuard)
+  @Post('praticien/mine')
+  storePraticien(@CurrentPraticien() praticien: Praticien, @Body() dto: CreatePraticienEventDto) {
+    return this.service.storePraticien(praticien, dto);
+  }
 
   // ---- client pre-registration ----
 

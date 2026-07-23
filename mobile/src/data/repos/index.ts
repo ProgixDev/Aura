@@ -239,6 +239,14 @@ export const eventRepo = {
   // The current client's registration for this event, or null if not registered.
   myInscription: (eventId: string): Promise<EventInscription | null> =>
     api.get<{ data: EventInscription | null }>(`/events/${eventId}/inscription/me`).then((res) => res.data),
+  // Praticien-facing: create an event (paid or free — prix accepts 0). Self-attached as
+  // animateur server-side; starts as 'brouillon' pending admin review, same moderation
+  // checkpoint as avis/praticien registration.
+  create: (payload: {
+    titre: string; type: string; dates: string[]; lieu: string;
+    prix: number; nombre_places: number; description: string;
+  }): Promise<Event> =>
+    api.post<{ data: any }>('/events/praticien/mine', payload).then((res) => mapEvent(res.data)),
 };
 
 // ---------- Cercles ----------

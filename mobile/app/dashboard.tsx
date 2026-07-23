@@ -221,6 +221,12 @@ export default function Dashboard() {
           onPress={() => router.push('/cercles' as any)}
         />
         <Row
+          icon={<Icon name="cal" size={20} color={colors.ink} />}
+          title="Créer un événement"
+          sub="Retraite, atelier, formation…"
+          onPress={() => router.push('/event/create' as any)}
+        />
+        <Row
           icon={<Icon name="back" size={20} color={colors.danger} />}
           title="Se déconnecter"
           onPress={logout}
