@@ -8,6 +8,7 @@ import { FormModal } from './FormModal';
 import { ShareModal } from './ShareModal';
 import { LightboxModal } from './LightboxModal';
 import { FiltersModal } from './FiltersModal';
+import { contactPublic } from '@/lib/contact';
 
 export const MODAL_REGISTRY = {
   // ---- generic primitives ----
@@ -18,9 +19,39 @@ export const MODAL_REGISTRY = {
   filters: (p) => <FiltersModal {...p} />,
 
   // ---- public / client modals ----
-  contact: (p) => <FormModal title={`Contacter ${p?.name || 'le praticien'}`} subtitle="Posez vos questions avant la séance. Aucun paiement en privé."
-    fields={[{ name: 'subject', label: 'Objet', type: 'select', options: ['Première prise de contact', 'Question sur une séance', 'Disponibilités', 'Autre'], required: true }, { name: 'message', label: 'Votre message', type: 'textarea', placeholder: 'Bonjour…', required: true }]}
-    submitLabel="Envoyer le message" successToast="Message envoyé" {...p} />,
+  // Two shapes share this one modal: (1) pages that already know a real
+  // recipient/channel pass their own `onSubmit` (admin pages email a specific
+  // praticien/client; praticien profile + reservation pages start a real
+  // in-app conversation) — those get the original subject/message-only form.
+  // (2) anonymous public "contact us" pages (about, disciplines, blog, events…)
+  // pass no `onSubmit` — those get name/email fields added too, since there's
+  // no logged-in identity to send a reply to otherwise, and fall back to
+  // contactPublic() (a real email to the platform inbox), not a fake toast.
+  contact: (p) => {
+    const isPreWired = typeof p?.onSubmit === 'function';
+    const fields = isPreWired
+      ? [
+          { name: 'subject', label: 'Objet', type: 'select', options: ['Première prise de contact', 'Question sur une séance', 'Disponibilités', 'Autre'], required: true },
+          { name: 'message', label: 'Votre message', type: 'textarea', placeholder: 'Bonjour…', required: true },
+        ]
+      : [
+          { name: 'name', label: 'Votre nom', type: 'text', required: true },
+          { name: 'email', label: 'Votre email', type: 'email', required: true },
+          { name: 'subject', label: 'Objet', type: 'text', placeholder: 'Votre demande en quelques mots', required: true },
+          { name: 'message', label: 'Votre message', type: 'textarea', placeholder: 'Bonjour…', required: true },
+        ];
+    return (
+      <FormModal
+        title={p?.name ? `Contacter ${p.name}` : 'Nous contacter'}
+        subtitle={isPreWired ? 'Posez vos questions avant la séance. Aucun paiement en privé.' : 'Nous vous répondrons rapidement par email.'}
+        submitLabel="Envoyer le message"
+        successToast="Message envoyé"
+        {...p}
+        fields={fields}
+        onSubmit={p?.onSubmit || contactPublic}
+      />
+    );
+  },
   report: (p) => <FormModal title="Signaler" subtitle="Aidez-nous à garder GuériEnergies sûr et bienveillant." danger
     fields={[{ name: 'reason', label: 'Motif', type: 'select', options: ['Contenu inapproprié', 'Comportement déplacé', 'Fausse information', 'Tentative de paiement hors plateforme', 'Autre'], required: true }, { name: 'details', label: 'Détails', type: 'textarea', placeholder: 'Décrivez la situation…' }]}
     submitLabel="Envoyer le signalement" successToast="Signalement transmis à la modération" {...p} />,

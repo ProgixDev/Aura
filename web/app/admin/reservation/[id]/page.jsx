@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
 import { api } from '@/lib/api';
-import { contactRecipient } from '@/lib/adminContact';
+import { contactRecipient } from '@/lib/contact';
 import { mapPraticien } from '@/lib/data/praticien-adapter';
 import { euro, dateFr } from '@/lib/format';
 

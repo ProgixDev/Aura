@@ -7,7 +7,7 @@ import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
 import { useUI } from '@/lib/store';
 import { api, apiFetchBlob } from '@/lib/api';
-import { contactRecipient } from '@/lib/adminContact';
+import { contactRecipient } from '@/lib/contact';
 import { dateFr } from '@/lib/format';
 
 const DOC_TYPES = ['piece_identite', 'diplome', 'charte', 'justificatif_siret'];

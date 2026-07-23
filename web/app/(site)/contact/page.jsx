@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Icon } from '@/components/ui/Icon';
-import { ModalButton } from '@/components/ui/ModalButton';
+import { ContactForm } from './ContactForm';
 
 export const metadata = { title: 'Contact — GuériEnergies' };
 
@@ -14,13 +14,6 @@ const LINKS = [
   { t: 'Centre d’aide', d: 'Articles, guides et réponses immédiates.', href: '/aide', i: 'book' },
   { t: 'Questions fréquentes', d: 'Réservation, paiement, vérification.', href: '/faq', i: 'message' },
   { t: 'Devenir praticien', d: 'Rejoignez la communauté GuériEnergies.', href: '/devenir-praticien', i: 'sparkle' },
-];
-
-const FORM_FIELDS = [
-  { name: 'name', label: 'Votre nom', type: 'text', required: true },
-  { name: 'email', label: 'Votre email', type: 'email', required: true },
-  { name: 'sujet', label: 'Sujet', type: 'select', options: ['Question générale', 'Réservation', 'Paiement', 'Praticiens', 'Presse', 'Autre'], required: true },
-  { name: 'message', label: 'Votre message', type: 'textarea', required: true },
 ];
 
 export default function ContactPage() {
@@ -91,23 +84,7 @@ export default function ContactPage() {
               <h2 className="h-2" style={{ margin: '8px 0 6px' }}>Nous écrire</h2>
               <p className="body" style={{ marginBottom: 22 }}>Remplissez ce court formulaire, nous revenons vers vous au plus vite.</p>
 
-              <div className="field"><label>Votre nom</label><input className="input" placeholder="Camille Dupont" /></div>
-              <div className="field" style={{ marginTop: 14 }}><label>Votre email</label><input className="input" placeholder="vous@email.fr" /></div>
-              <div className="field" style={{ marginTop: 14 }}><label>Sujet</label>
-                <select className="input"><option>Question générale</option><option>Réservation</option><option>Paiement</option><option>Praticiens</option><option>Presse</option><option>Autre</option></select>
-              </div>
-              <div className="field" style={{ marginTop: 14 }}><label>Votre message</label><textarea className="input" rows={5} placeholder="Dites-nous tout…" /></div>
-
-              <div className="mt-3">
-                <ModalButton
-                  modal="form"
-                  payload={{ title: 'Nous écrire', fields: FORM_FIELDS, submitLabel: 'Envoyer le message', successToast: 'Message envoyé — nous revenons vers vous sous 24h.' }}
-                  className="btn btn-primary btn-block btn-lg"
-                >
-                  Envoyer le message
-                </ModalButton>
-              </div>
-              <p className="tiny muted center mt-2">En envoyant, vous acceptez notre politique de confidentialité.</p>
+              <ContactForm />
             </div>
           </div>
         </div>

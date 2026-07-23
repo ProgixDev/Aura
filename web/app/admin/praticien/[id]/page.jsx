@@ -10,7 +10,7 @@ import { Rating } from '@/components/ui/Rating';
 import { Icon } from '@/components/ui/Icon';
 import { ModalButton } from '@/components/ui/ModalButton';
 import { api } from '@/lib/api';
-import { contactRecipient } from '@/lib/adminContact';
+import { contactRecipient } from '@/lib/contact';
 import { euro } from '@/lib/format';
 import PractitionerTabs from './PractitionerTabs';
 
