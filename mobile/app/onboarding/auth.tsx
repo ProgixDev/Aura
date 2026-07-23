@@ -120,7 +120,9 @@ export default function Auth() {
           password: data.password,
           ville: data.city,
         });
-        router.push('/onboarding/praticien-profil' as any);
+        // Replace, not push — keeps this chain consistent with the rest of
+        // onboarding (linear progression, no back into an earlier step).
+        router.replace('/onboarding/praticien-profil' as any);
         return;
       }
 
@@ -139,7 +141,9 @@ export default function Auth() {
         lastName: res.data.client.lastname,
       });
       setOnboardingSeen();
-      router.push('/onboarding/quiz?step=0' as any);
+      // Replace, not push — the signup form must not be reachable via back
+      // once the account is actually created and the user is authenticated.
+      router.replace('/onboarding/quiz?step=0' as any);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Une erreur est survenue.';
       Alert.alert(mode === 'login' ? 'Connexion impossible' : 'Inscription impossible', message);

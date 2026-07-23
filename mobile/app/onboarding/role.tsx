@@ -23,7 +23,9 @@ export default function RoleChoice() {
 
   const continueFlow = () => {
     setRole(picked);
-    router.push('/onboarding/auth' as any);
+    // Replace, not push — the role picker shouldn't be reachable via back once
+    // the user moves into the auth form and beyond.
+    router.replace('/onboarding/auth' as any);
   };
 
   return (
@@ -86,7 +88,7 @@ export default function RoleChoice() {
         <Button label="Continuer" onPress={continueFlow} />
         <Text style={styles.connect}>
           Déjà membre ?{' '}
-          <Text style={styles.link} onPress={() => router.push('/onboarding/auth?mode=login' as any)}>
+          <Text style={styles.link} onPress={() => router.replace('/onboarding/auth?mode=login' as any)}>
             Se connecter
           </Text>
         </Text>

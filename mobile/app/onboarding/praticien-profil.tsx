@@ -91,7 +91,7 @@ export default function PraticienProfil() {
       experience: Number(data.experience),
       bio: data.bio,
     });
-    router.push('/onboarding/praticien-documents' as any);
+    router.replace('/onboarding/praticien-documents' as any);
   };
 
   return (

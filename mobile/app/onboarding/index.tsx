@@ -56,7 +56,9 @@ export default function Onboarding() {
       scrollRef.current?.scrollTo({ x: (index + 1) * width, animated: true });
       setIndex(index + 1);
     } else {
-      router.push('/onboarding/role' as any);
+      // Replace, not push — nothing before login/signup should ever be reachable
+      // via back once the user is authenticated further down this chain.
+      router.replace('/onboarding/role' as any);
     }
   };
 
@@ -113,7 +115,7 @@ export default function Onboarding() {
           ))}
         </View>
         <View style={styles.footerRow}>
-          <Pressable onPress={() => router.push('/onboarding/role' as any)}>
+          <Pressable onPress={() => router.replace('/onboarding/role' as any)}>
             <Text style={styles.skip}>Passer</Text>
           </Pressable>
           <Button
