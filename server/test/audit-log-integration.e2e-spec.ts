@@ -129,7 +129,7 @@ describe('audit log integration (real mutation points)', () => {
       ville: 'Nice', niveau: 'n', specialite: 's', mode: 'm', status: 'actif',
       tarif: 10, experience: 1, bio: 'b'.repeat(60), statut_verification: 'en_attente',
     });
-    const types = ['piece_identite', 'diplome', 'charte'];
+    const types = ['piece_identite', 'diplome', 'charte', 'justificatif_siret'];
     const docs: PraticienDocument[] = [];
     for (const type of types) {
       docs.push(await ds.getRepository(PraticienDocument).save({

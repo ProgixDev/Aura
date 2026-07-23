@@ -15,6 +15,7 @@ import { DOC_TYPES } from '../praticien-auth/praticien-auth.service';
 
 const DOC_LABELS: Record<string, string> = {
   piece_identite: "Pièce d'identité", diplome: 'Diplôme', charte: 'Charte signée',
+  justificatif_siret: 'Justificatif SIRET',
 };
 
 // The only content types a verification document is ever legitimately submitted as.

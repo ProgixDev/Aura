@@ -17,7 +17,7 @@ import { assertUpload } from '../../common/upload.util';
 import { RegisterPraticienDto } from './dto/register-praticien.dto';
 import { LoginDto } from '../admin-auth/dto/login.dto';
 
-export const DOC_TYPES = ['piece_identite', 'diplome', 'charte'] as const;
+export const DOC_TYPES = ['piece_identite', 'diplome', 'charte', 'justificatif_siret'] as const;
 
 @Injectable()
 export class PraticienAuthService {

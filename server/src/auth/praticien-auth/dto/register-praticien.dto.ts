@@ -1,6 +1,7 @@
 import { IsEmail, IsInt, IsNumber, IsString, Matches, MaxLength, Min, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Match } from '../../../common/match.decorator';
+import { IsSiret } from '../../../common/is-siret.decorator';
 
 export class RegisterPraticienDto {
   @IsString() @MaxLength(255) firstname: string;
@@ -8,7 +9,10 @@ export class RegisterPraticienDto {
   @IsEmail() email: string;
   @IsString() @MinLength(8) password: string;
   @IsString() @Match('password') password_confirmation: string;
-  @IsString() @Matches(/^\d{14}$/, { message: 'Le numéro de SIRET doit contenir exactement 14 chiffres.' }) siret: string;
+  @IsString()
+  @Matches(/^\d{14}$/, { message: 'Le numéro de SIRET doit contenir exactement 14 chiffres.' })
+  @IsSiret()
+  siret: string;
   @IsString() @MaxLength(20) telephone: string;
   @IsString() @MaxLength(255) ville: string;
   @IsString() @MaxLength(255) niveau: string;

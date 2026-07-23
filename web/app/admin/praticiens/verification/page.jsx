@@ -9,9 +9,10 @@ import { useUI } from '@/lib/store';
 import { api, apiFetchBlob } from '@/lib/api';
 import { dateFr } from '@/lib/format';
 
-const DOC_TYPES = ['piece_identite', 'diplome', 'charte'];
+const DOC_TYPES = ['piece_identite', 'diplome', 'charte', 'justificatif_siret'];
 const DOC_LABELS = {
   piece_identite: "Pièce d'identité", diplome: 'Diplôme', charte: 'Charte signée',
+  justificatif_siret: 'Justificatif SIRET',
 };
 
 async function openDocument(doc, toast) {

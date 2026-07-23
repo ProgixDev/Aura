@@ -264,7 +264,7 @@ export interface PraticienRegistrationDraft {
   tarif?: number;
   experience?: number;
   bio?: string;
-  documents?: Partial<Record<'piece_identite' | 'diplome' | 'charte', { uri: string; name: string; mimeType: string }>>;
+  documents?: Partial<Record<'piece_identite' | 'diplome' | 'charte' | 'justificatif_siret', { uri: string; name: string; mimeType: string }>>;
 }
 
 export interface RendezVousPraticien {

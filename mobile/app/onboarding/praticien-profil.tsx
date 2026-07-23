@@ -13,12 +13,15 @@ import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { disciplineRepo } from '@data/repos';
 import { usePraticienRegistration } from '@store/praticienRegistration';
+import { isValidSiret } from '@utils/siret';
 
 const NIVEAUX = ['Novice', 'Praticien confirmé', 'Expert'];
 const MODES = ['présentiel', 'visio uniquement', 'présentiel & visio'];
 
 const schema = z.object({
-  siret: z.string().regex(/^\d{14}$/, 'Le SIRET doit contenir exactement 14 chiffres'),
+  siret: z.string()
+    .regex(/^\d{14}$/, 'Le SIRET doit contenir exactement 14 chiffres')
+    .refine(isValidSiret, 'Numéro de SIRET invalide (échec de la clé de contrôle)'),
   telephone: z.string().min(6, 'Numéro invalide'),
   niveau: z.string().min(1, 'Choisissez votre niveau'),
   specialite: z.string().min(1, 'Choisissez votre spécialité'),

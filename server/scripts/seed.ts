@@ -143,7 +143,7 @@ const PHOTO_SETS: Array<{ photo: string; hero: string; gallery: string[] }> = [
 
 const NIVEAUX = ['Expert', 'Praticien confirmé', 'Novice'];
 const MODES = ['présentiel & visio', 'présentiel', 'visio uniquement'];
-const DOC_TYPES = ['piece_identite', 'diplome', 'charte'];
+const DOC_TYPES = ['piece_identite', 'diplome', 'charte', 'justificatif_siret'];
 const CERCLE_PALETTE = ['#8B5CF6', '#38BDF8', '#84A98C', '#D4AF37', '#F472B6', '#F59E0B'];
 
 /** 'YYYY-MM-DD' for `date`-typed columns (e.g. promotions.date_expiration) — that column
@@ -493,7 +493,7 @@ async function seedPraticienDocuments(ctx: SeedContext, prats: Praticien[]): Pro
   });
 
   await repo.save(rows);
-  console.log(`  praticien_documents: ${rows.length} rows (5 per praticien × ${prats.length})`);
+  console.log(`  praticien_documents: ${rows.length} rows (${DOC_TYPES.length} per praticien × ${prats.length})`);
 }
 
 // ---- pools for the activity/money/content/messaging seed functions ----

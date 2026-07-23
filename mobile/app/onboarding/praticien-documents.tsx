@@ -14,10 +14,11 @@ import { usePraticienRegistration } from '@store/praticienRegistration';
 import { praticienAuthRepo } from '@data/repos';
 import { errorMessage } from '@data/api/client';
 
-const DOC_TYPES: Array<{ key: 'piece_identite' | 'diplome' | 'charte'; label: string; hint: string }> = [
+const DOC_TYPES: Array<{ key: 'piece_identite' | 'diplome' | 'charte' | 'justificatif_siret'; label: string; hint: string }> = [
   { key: 'piece_identite', label: "Pièce d'identité", hint: 'Carte nationale, passeport…' },
   { key: 'diplome', label: 'Diplôme', hint: 'Diplôme ou attestation de formation' },
   { key: 'charte', label: 'Charte GuériEnergies signée', hint: 'Téléchargée depuis votre email de bienvenue' },
+  { key: 'justificatif_siret', label: 'Justificatif SIRET', hint: 'Avis de situation SIRENE ou extrait Kbis' },
 ];
 
 export default function PraticienDocuments() {

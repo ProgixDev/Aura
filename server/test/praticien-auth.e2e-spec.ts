@@ -9,7 +9,7 @@ import { StorageService } from '../src/common/storage.service';
 
 const fakeStorage = { save: jest.fn((_file, subdir) => Promise.resolve(`${subdir}/${randomUUID()}.pdf`)) };
 
-const DOC_FIELDS = ['piece_identite', 'diplome', 'charte'];
+const DOC_FIELDS = ['piece_identite', 'diplome', 'charte', 'justificatif_siret'];
 
 function attachDocs(req: request.Test) {
   for (const f of DOC_FIELDS) {
@@ -23,7 +23,7 @@ function attachDocs(req: request.Test) {
 const FIELDS = {
   firstname: 'Jean', lastname: 'Dupont', email: 'jean@aura.io',
   password: 'secret123', password_confirmation: 'secret123',
-  siret: '12345678901234',
+  siret: '12345678901237',
   telephone: '0600000000', ville: 'Lyon', niveau: 'expert',
   specialite: 'yoga', mode: 'presentiel', tarif: '50', experience: '5',
   bio: 'Une biographie suffisamment longue pour dépasser la limite des cinquante caractères.',
@@ -40,21 +40,21 @@ describe('praticien auth', () => {
   afterAll(async () => { await app.close(); });
   const http = () => request(app.getHttpServer());
 
-  it('register creates user + praticien + 3 documents in one transaction', async () => {
+  it('register creates user + praticien + 4 documents in one transaction', async () => {
     let req = http().post('/api/praticien/register');
     for (const [k, v] of Object.entries(FIELDS)) req = req.field(k, v);
     const res = await attachDocs(req).expect(201);
     expect(res.body.message).toContain('En attente de vérification');
     expect(res.body.data.praticien.statut_verification).toBe('en_attente');
-    expect(res.body.data.documents_soumis).toBe(3);
-    expect(res.body.data.documents_requis).toBe(3);
+    expect(res.body.data.documents_soumis).toBe(4);
+    expect(res.body.data.documents_requis).toBe(4);
     expect(res.body.data.user.password).toBeUndefined();
 
     const ds = app.get(DataSource);
     const prat = await ds.getRepository(Praticien).findOneOrFail({
       where: { email: 'jean@aura.io' }, relations: { documents: true },
     });
-    expect(prat.documents).toHaveLength(3);
+    expect(prat.documents).toHaveLength(4);
   });
 
   it('register 422 when a document is missing', async () => {
@@ -65,6 +65,15 @@ describe('praticien auth', () => {
     }
     const res = await req.expect(422);
     expect(res.body.errors['documents.charte']).toBeDefined();
+  });
+
+  it('register 422 when siret fails the Luhn checksum', async () => {
+    let req = http().post('/api/praticien/register');
+    for (const [k, v] of Object.entries({ ...FIELDS, email: 'bad-siret@aura.io', siret: '12345678901234' })) {
+      req = req.field(k, v);
+    }
+    const res = await attachDocs(req).expect(422);
+    expect(res.body.errors.siret).toBeDefined();
   });
 
   it('login returns praticien payload; rejected praticien gets 403 with motif', async () => {
@@ -94,7 +103,7 @@ describe('praticien auth', () => {
 
     const prof = await http().get('/api/praticien/profile')
       .set('Authorization', `Bearer ${token}`).expect(200);
-    expect(prof.body.data.documents_stats).toEqual({ total: 3, en_attente: 3, valide: 0, rejete: 0 });
+    expect(prof.body.data.documents_stats).toEqual({ total: 4, en_attente: 4, valide: 0, rejete: 0 });
 
     const chk = await http().get('/api/praticien/check-token')
       .set('Authorization', `Bearer ${token}`).expect(200);

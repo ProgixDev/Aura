@@ -10,13 +10,15 @@ import { StorageService } from '../src/common/storage.service';
 const FAKE_FILE_BYTES = Buffer.from('%PDF-1.4 fake content');
 const fakeStorage = { save: jest.fn(), download: jest.fn().mockResolvedValue(FAKE_FILE_BYTES) };
 
-async function seedPraticien(ds: DataSource, email: string, nDocs = 3) {
+const DOC_TYPES = ['piece_identite', 'diplome', 'charte', 'justificatif_siret'];
+
+async function seedPraticien(ds: DataSource, email: string, nDocs = DOC_TYPES.length) {
   const praticien = await ds.getRepository(Praticien).save({
     firstname: 'P', lastname: 'T', email, siret: '11111111111111', telephone: '06', ville: 'Paris',
     niveau: 'expert', specialite: 'yoga', mode: 'presentiel', status: 'actif',
     tarif: 50, experience: 3, bio: 'b'.repeat(60), statut_verification: 'en_attente',
   });
-  const types = ['piece_identite', 'diplome', 'charte'];
+  const types = DOC_TYPES;
   const docs: PraticienDocument[] = [];
   for (const type of types.slice(0, nDocs)) {
     docs.push(await ds.getRepository(PraticienDocument).save({
@@ -66,11 +68,11 @@ describe('praticien verification (admin)', () => {
     const res = await auth(http().get(`/api/v1/admin/praticiens/verification/${praticien.id}`)).expect(200);
     expect(res.body.data.documents.charte.soumis).toBe(false);
     expect(res.body.data.resume_documents).toEqual({
-      soumis: 2, en_attente: 2, valides: 0, rejetes: 0, manquants: 1,
+      soumis: 2, en_attente: 2, valides: 0, rejetes: 0, manquants: 2,
     });
   });
 
-  it('verify: all 3 valide → praticien valide; any rejete → praticien rejete', async () => {
+  it('verify: all 4 valide → praticien valide; any rejete → praticien rejete', async () => {
     const ds = app.get(DataSource);
     const { praticien, docs } = await seedPraticien(ds, 'p3@aura.io');
     const ok = await auth(http().post(`/api/v1/admin/praticiens/verification/${praticien.id}/verify`))
@@ -102,7 +104,7 @@ describe('praticien verification (admin)', () => {
 
     const { praticien: p6 } = await seedPraticien(ds, 'p6@aura.io', 1);
     const rel = await auth(http().post(`/api/v1/admin/praticiens/verification/${p6.id}/relance`)).expect(200);
-    expect(rel.body.data.documents_manquants).toBe(2);
+    expect(rel.body.data.documents_manquants).toBe(3);
     expect(rel.body.data.documents_en_attente).toBe(1);
   });
 
